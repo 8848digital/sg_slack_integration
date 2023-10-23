@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include sg_slack_integration *.css
+recursive-include sg_slack_integration *.csv
+recursive-include sg_slack_integration *.html
+recursive-include sg_slack_integration *.ico
+recursive-include sg_slack_integration *.js
+recursive-include sg_slack_integration *.json
+recursive-include sg_slack_integration *.md
+recursive-include sg_slack_integration *.png
+recursive-include sg_slack_integration *.py
+recursive-include sg_slack_integration *.svg
+recursive-include sg_slack_integration *.txt
+recursive-exclude sg_slack_integration *.pyc
