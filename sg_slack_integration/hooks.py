@@ -118,13 +118,11 @@ app_license = "MIT"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-#	"*": {
-#		"on_update": "method",
-#		"on_cancel": "method",
-#		"on_trash": "method"
-#	}
-# }
+doc_events = {
+	"Project": {
+		"validate": "sg_slack_integration.doc_events.project.create_slack_channel",
+	}
+}
 
 # Scheduled Tasks
 # ---------------
