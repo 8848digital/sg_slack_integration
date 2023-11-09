@@ -7,12 +7,14 @@ from sg_slack_integration.doc_events.project import create_slack_channel
 
 def validate(self, method=None):
 	user_ids = get_user_ids(self)
-	channel = get_channel_id(self)
 	if self.ped_from == "Opportunity":
 		create_slack_channel(self)
+		channel = get_channel_id(self)
 		invite_users(user_ids, channel)
 	if self.ped_from == "Project":
+		channel = get_channel_id(self)
 		invite_users(user_ids, channel)
+	
 		
 
 
