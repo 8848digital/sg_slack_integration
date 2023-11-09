@@ -1,9 +1,22 @@
 import frappe
 import requests
 import json
-def invite_users(self, method=None):
+from sg_slack_integration.doc_events.project import create_slack_channel
+
+
+
+def validate(self, method=None):
 	user_ids = get_user_ids(self)
-	channel = get_channels(self)
+	channel = get_channel_id(self)
+	if self.ped_from == "Opportunity":
+		create_slack_channel(self)
+		invite_users(user_ids, channel)
+	if self.ped_from == "Project":
+		invite_users(user_ids, channel)
+		
+
+
+def invite_users(user_ids, channel):
 	try:
 		token = frappe.db.get_single_value('Token', 'token')
 		url = "https://slack.com/api/conversations.invite"
@@ -15,7 +28,9 @@ def invite_users(self, method=None):
 		response = requests.request("POST",url, data=data, headers=headers)
 		res = response.json()
 		if res['ok']:
-			frappe.msgprint("Users successfully invited")
+			frappe.msgprint("Users invited successfully")
+		if not res['ok']:
+			frappe.msgprint(res['error'])
 	except Exception as e:
 		frappe.throw("There is an error trying to invite users")
 
@@ -41,7 +56,11 @@ def get_user_ids(self,method=None):
 			frappe.throw("An error occurred: " + str(e))
 	return user_ids
 
-def get_channels(self, method=None):
+def get_channel_id(self, method=None):
+	if self.ped_from == "Opportunity":
+		channel_name = self.opportunity.lower()
+	if self.ped_from == "Project":
+		channel_name = self.project_name.lower().replace(' ','_')
 	token = frappe.db.get_single_value('Token', 'token')
 	url = "https://slack.com/api/conversations.list"
 	headers = {
@@ -52,7 +71,7 @@ def get_channels(self, method=None):
 	res = response.json()
 	if res['ok']:
 		for channel in res['channels']:
-			if channel.get('name') == self.project_name.lower().replace(' ','_'):
+			if channel.get('name') == channel_name:
 				return channel.get('id')
 	
 

@@ -120,10 +120,10 @@ app_license = "MIT"
 
 doc_events = {
 	"Project": {
-		"validate": "sg_slack_integration.doc_events.project.create_slack_channel",
+		"validate": "sg_slack_integration.doc_events.project.validate",
 	},
     "Project Employee Distribution": {
-		"validate": "sg_slack_integration.doc_events.ped.invite_users",
+		"validate": "sg_slack_integration.doc_events.ped.validate",
 	}
 }
 
