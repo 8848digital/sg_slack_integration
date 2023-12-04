@@ -16,7 +16,7 @@ def create_slack_channel(self,method=None):
                 'Content-Type': 'application/json'
             }
             if self.doctype == "Project":
-                name = self.project_name.lower().replace(' ', '_')
+                name = self.name.lower().replace(' ', '_')
             if self.doctype == "Project Employee Distribution":
                 name = self.opportunity.lower()
             data =  json.dumps({"name": name})
