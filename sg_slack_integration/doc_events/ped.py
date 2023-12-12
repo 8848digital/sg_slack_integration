@@ -11,7 +11,7 @@ def validate(self, method=None):
 		create_slack_channel(self)
 		channel = get_channel_id(self)
 		invite_users(user_ids, channel)
-	if self.ped_from == "Projects
+	if self.ped_from == "Projects":
 		channel = get_channel_id(self)
 		invite_users(user_ids, channel)
 	
