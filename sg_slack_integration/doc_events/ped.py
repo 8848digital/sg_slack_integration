@@ -11,7 +11,7 @@ def validate(self, method=None):
 		create_slack_channel(self)
 		channel = get_channel_id(self)
 		invite_users(user_ids, channel)
-	if self.ped_from == "Project":
+	if self.ped_from == "Projects
 		channel = get_channel_id(self)
 		invite_users(user_ids, channel)
 	
@@ -26,8 +26,8 @@ def invite_users(user_ids, channel):
 			'Authorization': f'Bearer {token}',
 			'Content-Type': 'application/json'
 		}   
-		data = json.dumps({"users":user_ids, "channel":channel})
-		response = requests.request("POST",url, data=data, headers=headers)
+		data = json.dumps({"users":user_ids, "channel":channel, "forced":True})
+		response = requests.request("POST",url, data=data, headers=headers, )
 		res = response.json()
 		if res['ok']:
 			frappe.msgprint("Users invited successfully")
@@ -65,11 +65,12 @@ def get_channel_id(self, method=None):
 		channel_name = self.name.lower().replace(' ','_')
 	token = frappe.db.get_single_value('Token', 'token')
 	url = "https://slack.com/api/conversations.list"
-	headers = {
+	headers = {	
 		'Authorization': f'Bearer {token}',
 		'Content-Type': 'application/x-www-form-urlencoded'
 	}   
-	response = requests.request("POST",url, headers=headers)
+	payload = {"limit": 999}
+	response = requests.request("POST",url, headers=headers, data=payload)
 	res = response.json()
 	if res['ok']:
 		for channel in res['channels']:
