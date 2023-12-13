@@ -62,9 +62,9 @@ def get_channel_id(self, method=None):
 	if self.ped_from == "Opportunity":
 		channel_name = self.opportunity.lower()
 	if self.ped_from == "Project":
-		channel_name = self.name.lower().replace(' ','_')
+		channel_name = self.project.lower().replace(' ','_')
 	token = frappe.db.get_single_value('Token', 'token')
-	url = "https://slack.com/api/conversations.list"
+	url = "https://slack.com/api/conversations.list"	
 	headers = {	
 		'Authorization': f'Bearer {token}',
 		'Content-Type': 'application/x-www-form-urlencoded'
@@ -76,6 +76,7 @@ def get_channel_id(self, method=None):
 		for channel in res['channels']:
 			if channel.get('name') == channel_name:
 				return channel.get('id')
+			
 	
 
 
