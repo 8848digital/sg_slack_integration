@@ -6,7 +6,7 @@ from sg_slack_integration.doc_events.project import create_slack_channel
 
 
 def validate(self, method=None):
-	user_ids = get_user_ids(self)
+	user_ids = get_users(self)
 	if self.ped_from == "Opportunity":
 		create_slack_channel(self)
 		channel = get_channel_id(self)
@@ -15,9 +15,6 @@ def validate(self, method=None):
 		channel = get_channel_id(self)
 		invite_users(user_ids, channel)
 	
-		
-
-
 def invite_users(user_ids, channel):
 	try:
 		token = frappe.db.get_single_value('Token', 'token')
@@ -35,28 +32,41 @@ def invite_users(user_ids, channel):
 			frappe.msgprint(res['error'])
 	except Exception as e:
 		frappe.throw("There is an error trying to invite users")
-
-def get_user_ids(self,method=None):
-	user_ids = ""
+		
+def get_users(self,method=None):
+	slack_user_ids = ""
 	for user in self.distribution_detail:
-		try:
-			email = frappe.db.get_value("Employee",user.employee,'company_email')
-			if not email:
-				break
-			token = frappe.db.get_single_value('Token', 'token')
-			url = "https://slack.com/api/users.lookupByEmail"
-			headers = {
-				'Authorization': f'Bearer {token}',
-				'Content-Type': 'application/x-www-form-urlencoded'
-			}   
-			data = f"email={email}"
-			response = requests.request("POST",url, data=data, headers=headers)
-			res = response.json()
-			if res['ok']:
-				user_ids+=(res['user'].get('id'))+","
-		except Exception as e:
-			frappe.throw("An error occurred: " + str(e))
-	return user_ids
+		email = frappe.db.get_value("Employee",user.employee,'company_email')
+		if email:
+			slack_user_id = get_user_ids(email)
+			slack_user_ids += slack_user_id+","
+	if self.ped_from == "Opportunity":
+		doc = frappe.get_doc("Opportunity",self.opportunity)
+		tech_name = doc.custom_tech_name if doc.custom_tech_name else None
+		proposal_manager_name = doc.custom_proposal_manager_name if doc.custom_proposal_manager_name else None
+		partner_name = doc.custom_partner_name if doc.custom_partner_name else None
+		users = frappe.db.get_list("Employee", filters={'name':["in", [tech_name, proposal_manager_name, partner_name]]},fields='company_email')
+		if users:
+			for user in users:
+				slack_user_id = get_user_ids(user.company_email)
+				if slack_user_id:
+					slack_user_ids += slack_user_id+","
+	return slack_user_ids
+
+def get_user_ids(email):
+	token = frappe.db.get_single_value('Token', 'token')
+	url = "https://slack.com/api/users.lookupByEmail"
+	headers = {
+		'Authorization': f'Bearer {token}',
+		'Content-Type': 'application/x-www-form-urlencoded'
+	}   
+	data = f"email={email}"
+	response = requests.request("POST",url, data=data, headers=headers)
+	res = response.json()
+	if res['ok']:
+		return res['user'].get('id')
+	else:
+		frappe.log_error("Slack User not found")
 
 def get_channel_id(self, method=None):
 	if self.ped_from == "Opportunity":
@@ -77,6 +87,9 @@ def get_channel_id(self, method=None):
 			if channel.get('name') == channel_name:
 				return channel.get('id')
 			
+
+
+
 	
 
 
