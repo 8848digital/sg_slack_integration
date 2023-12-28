@@ -2,6 +2,7 @@ import frappe
 import requests
 import json
 from sg_slack_integration.doc_events.project import create_slack_channel
+from urllib.parse import quote
 
 
 
@@ -11,10 +12,38 @@ def validate(self, method=None):
 		create_slack_channel(self)
 		channel = get_channel_id(self)
 		invite_users(user_ids, channel)
+		send_file(self, channel)
 	if self.ped_from == "Project":
 		channel = get_channel_id(self)
 		invite_users(user_ids, channel)
-	
+
+def send_file(self,channel):
+	files = frappe.db.get_list("File",filters={'attached_to_name':self.opportunity,'attached_to_doctype':"Opportunity"},fields=['name'])
+	for file in files:
+		try:
+			token = frappe.db.get_single_value('Token', 'token')
+			url = "https://slack.com/api/files.upload"
+			headers = {
+				'Authorization': f'Bearer {token}',
+			}
+			data = {
+				'channels': channel,
+				'initial_comment': 'Here is a File!'
+			}
+			
+			file = frappe.utils.file_manager.get_file(file.name)
+			files = {
+				'file': (file),
+			}
+			response = requests.post(url, data=data, files=files, headers=headers)
+			res = response.json()
+			if res['ok']:
+				print("Image sent successfully on Slack")
+			else:
+				print("POST request failed with status code:", res)
+		except Exception as e:
+			print("An error occurred:", str(e))
+
 def invite_users(user_ids, channel):
 	try:
 		token = frappe.db.get_single_value('Token', 'token')
