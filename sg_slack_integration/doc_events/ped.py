@@ -38,11 +38,11 @@ def send_file(self,channel):
 			response = requests.post(url, data=data, files=files, headers=headers)
 			res = response.json()
 			if res['ok']:
-				print("Image sent successfully on Slack")
+				frappe.msgprint("File sent successfully on Slack")
 			else:
-				print("POST request failed with status code:", res)
+				frappe.msgprint("POST request failed with status code:", res)
 		except Exception as e:
-			print("An error occurred:", str(e))
+			frappe.log_error("An error occurred:", str(e))
 
 def invite_users(user_ids, channel):
 	try:
@@ -64,11 +64,12 @@ def invite_users(user_ids, channel):
 		
 def get_users(self,method=None):
 	slack_user_ids = ""
-	for user in self.distribution_detail:
-		email = frappe.db.get_value("Employee",user.employee,'company_email')
-		if email:
-			slack_user_id = get_user_ids(email)
-			slack_user_ids += slack_user_id+","
+	if self.distribution_detail:
+		for user in self.distribution_detail:
+			email = frappe.db.get_value("Employee",user.employee,'company_email')
+			if email:
+				slack_user_id = get_user_ids(email)
+				slack_user_ids += slack_user_id+","
 	if self.ped_from == "Opportunity":
 		doc = frappe.get_doc("Opportunity",self.opportunity)
 		tech_name = doc.custom_tech_name if doc.custom_tech_name else None
