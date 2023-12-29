@@ -12,7 +12,8 @@ def validate(self, method=None):
 		create_slack_channel(self)
 		channel = get_channel_id(self)
 		invite_users(user_ids, channel)
-		send_file(self, channel)
+		if self.is_new():
+			send_file(self, channel)
 	if self.ped_from == "Project":
 		channel = get_channel_id(self)
 		invite_users(user_ids, channel)
@@ -28,7 +29,7 @@ def send_file(self,channel):
 			}
 			data = {
 				'channels': channel,
-				'initial_comment': 'Here is a File!'
+				'initial_comment': 'Here is RFP file!'
 			}
 			
 			file = frappe.utils.file_manager.get_file(file.name)
