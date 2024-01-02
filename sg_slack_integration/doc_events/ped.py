@@ -64,25 +64,26 @@ def invite_users(user_ids, channel):
 		frappe.throw("There is an error trying to invite users")
 		
 def get_users(self,method=None):
-	slack_user_ids = ""
-	if self.distribution_detail:
-		for user in self.distribution_detail:
-			email = frappe.db.get_value("Employee",user.employee,'company_email')
-			if email:
-				slack_user_id = get_user_ids(email)
-				slack_user_ids += slack_user_id+","
-	if self.ped_from == "Opportunity":
-		doc = frappe.get_doc("Opportunity",self.opportunity)
-		tech_name = doc.custom_tech_name if doc.custom_tech_name else None
-		proposal_manager_name = doc.custom_proposal_manager_name if doc.custom_proposal_manager_name else None
-		partner_name = doc.custom_partner_name if doc.custom_partner_name else None
-		users = frappe.db.get_list("Employee", filters={'name':["in", [tech_name, proposal_manager_name, partner_name]]},fields='company_email')
-		if users:
-			for user in users:
-				slack_user_id = get_user_ids(user.company_email)
-				if slack_user_id:
-					slack_user_ids += slack_user_id+","
-	return slack_user_ids
+    slack_user_ids = ""
+    if self.distribution_detail:
+        for user in self.distribution_detail:
+            email = frappe.db.get_value("Employee",user.employee,'company_email')
+            if email:
+                slack_user_id = get_user_ids(email)
+                if slack_user_id:
+                    slack_user_ids += slack_user_id+","
+    if self.ped_from == "Opportunity":
+        doc = frappe.get_doc("Opportunity",self.opportunity)
+        tech_name = doc.custom_tech_name if doc.custom_tech_name else None
+        proposal_manager_name = doc.custom_proposal_manager_name if doc.custom_proposal_manager_name else None
+        partner_name = doc.custom_partner_name if doc.custom_partner_name else None
+        users = frappe.db.get_list("Employee", filters={'name':["in", [tech_name, proposal_manager_name, partner_name]]},fields='company_email')
+        if users:
+            for user in users:
+                slack_user_id = get_user_ids(user.company_email)
+                if slack_user_id:
+                    slack_user_ids += slack_user_id+","
+    return slack_user_ids
 
 def get_user_ids(email):
 	token = frappe.db.get_single_value('Token', 'token')
