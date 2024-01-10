@@ -1,19 +1,18 @@
 import frappe
 import requests
 import json
-from sg_slack_integration.doc_events.project import create_slack_channel
+from sg_slack_integration.doc_events.common_function import create_slack_channel,get_channel_id,set_topic,set_description
 from urllib.parse import quote
-
-
 
 def validate(self, method=None):
     user_ids = get_users(self)
     if self.ped_from == "Opportunity":
-        topic_and_description = frappe.get_value("Opportunity",self.opportunity,['title', 'party_name'])
-        create_slack_channel(self)
+        topic_and_description = frappe.get_value("Opportunity",self.opportunity,['title', 'party_name'], as_dict=1)
+        is_channel_exists = create_slack_channel(self)
         channel = get_channel_id(self)
-        set_topic(self,channel, topic_and_description.topic)
-        set_description(self,channel, topic_and_description.party_name)
+        if is_channel_exists != "name_taken":
+            set_topic(self,channel, topic_and_description.title)
+            set_description(self,channel, topic_and_description.party_name)
         invite_users(user_ids, channel)
         if self.is_new():
             send_file(self, channel)
@@ -47,48 +46,6 @@ def send_file(self,channel):
 				frappe.msgprint("POST request failed with status code:", res)
 		except Exception as e:
 			frappe.log_error("An error occurred:", str(e))
-
-def set_topic(self,channel, topic):
-    try:
-        token = frappe.db.get_single_value('Token', 'token')
-        url = "https://slack.com/api/conversations.setTopic"
-        headers = {
-			'Content-Type': 'application/json',
-			'Authorization': f'Bearer {token}',
-		}
-        payload = {
-			'channel': channel,
-			'topic': topic,
-		}
-        response = requests.post(url, headers=headers, json=payload)
-        res = response.json()
-        if res['ok']:
-            frappe.msgprint("Topic set successfully on Slack")
-        else:
-            frappe.msgprint("POST request failed with status code:", res)
-    except Exception as e:
-            frappe.log_error("An error occurred:", str(e))
-
-def set_description(self,channel, description):
-    try:
-        token = frappe.db.get_single_value('Token', 'token')
-        url = 'https://slack.com/api/conversations.setPurpose'
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {token}',
-        }
-        payload = {
-            'channel': channel,
-            'purpose': description,
-        }
-        response = requests.post(url, headers=headers, json=payload)
-        res = response.json()
-        if res['ok']:
-            frappe.msgprint("File sent successfully on Slack")
-        else:
-            frappe.msgprint("POST request failed with status code:", res)
-    except Exception as e:
-            frappe.log_error("An error occurred:", str(e))
 
 def invite_users(user_ids, channel):
 	try:
@@ -144,25 +101,6 @@ def get_user_ids(email):
 		return res['user'].get('id')
 	else:
 		frappe.log_error("Slack User not found")
-
-def get_channel_id(self, method=None):
-	if self.ped_from == "Opportunity":
-		channel_name = self.opportunity.lower()
-	if self.ped_from == "Project":
-		channel_name = self.project.lower().replace(' ','_')
-	token = frappe.db.get_single_value('Token', 'token')
-	url = "https://slack.com/api/conversations.list"	
-	headers = {	
-		'Authorization': f'Bearer {token}',
-		'Content-Type': 'application/x-www-form-urlencoded'
-	}   
-	payload = {"limit": 999}
-	response = requests.request("POST",url, headers=headers, data=payload)
-	res = response.json()
-	if res['ok']:
-		for channel in res['channels']:
-			if channel.get('name') == channel_name:
-				return channel.get('id')
 			
 
 
