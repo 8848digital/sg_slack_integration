@@ -18,7 +18,8 @@ def validate(self, method=None):
             send_file(self, channel)
     if self.ped_from == "Project":
         channel = get_channel_id(self)
-        invite_users(user_ids, channel)
+        if user_ids:
+        	invite_users(user_ids, channel)
 
 def send_file(self,channel):
 	files = frappe.db.get_list("File",filters={'attached_to_name':self.opportunity,'attached_to_doctype':"Opportunity"},fields=['name'])
