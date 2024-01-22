@@ -22,49 +22,54 @@ def validate(self, method=None):
         	invite_users(user_ids, channel)
 
 def send_file(self,channel):
-	files = frappe.db.get_list("File",filters={'attached_to_name':self.opportunity,'attached_to_doctype':"Opportunity"},fields=['name'])
-	for file in files:
-		try:
-			token = frappe.db.get_single_value('Token', 'token')
-			url = "https://slack.com/api/files.upload"
-			headers = {
-				'Authorization': f'Bearer {token}',
-			}
-			data = {
-				'channels': channel,
-				'initial_comment': 'Here is RFP file!'
-			}
-			
-			file = frappe.utils.file_manager.get_file(file.name)
-			files = {
-				'file': (file),
-			}
-			response = requests.post(url, data=data, files=files, headers=headers)
-			res = response.json()
-			if res['ok']:
-				frappe.msgprint("File sent successfully on Slack")
-			else:
-				frappe.msgprint("POST request failed with status code:", res)
-		except Exception as e:
-			frappe.log_error("An error occurred:", str(e))
+    files = frappe.db.get_list("File",filters={'attached_to_name':self.opportunity,'attached_to_doctype':"Opportunity"},fields=['name'])
+    for file in files:
+        try:
+            token = frappe.db.get_single_value('Token', 'token')
+            if token:
+                url = "https://slack.com/api/files.upload"
+                headers = {
+                    'Authorization': f'Bearer {token}'
+                    }
+                data = {
+                    'channels': channel,
+                    'initial_comment': 'Here is RFP file!'
+                    }
+                file = frappe.utils.file_manager.get_file(file.name)
+                files = {
+                    'file': (file),
+                    }
+                response = requests.post(url, data=data, files=files, headers=headers)
+                res = response.json()
+                if res['ok']:
+                    frappe.msgprint("File sent successfully on Slack")
+                else:
+                    frappe.msgprint("POST request failed with status code:", res)
+            else:
+                frappe.msgprint("Please set SLack Token First")
+        except Exception as e:
+            frappe.log_error("An error occurred:", str(e))
 
 def invite_users(user_ids, channel):
-	try:
-		token = frappe.db.get_single_value('Token', 'token')
-		url = "https://slack.com/api/conversations.invite"
-		headers = {
-			'Authorization': f'Bearer {token}',
-			'Content-Type': 'application/json'
-		}   
-		data = json.dumps({"users":user_ids, "channel":channel, "forced":True})
-		response = requests.request("POST",url, data=data, headers=headers, )
-		res = response.json()
-		if res['ok']:
-			frappe.msgprint("Users invited successfully")
-		if not res['ok']:
-			frappe.msgprint(res['error'])
-	except Exception as e:
-		frappe.throw("There is an error trying to invite users")
+    try:
+        token = frappe.db.get_single_value('Token', 'token')
+        if token:
+            url = "https://slack.com/api/conversations.invite"
+            headers = {
+                'Authorization': f'Bearer {token}',
+                'Content-Type': 'application/json'
+                }   
+            data = json.dumps({"users":user_ids, "channel":channel, "forced":True})
+            response = requests.request("POST",url, data=data, headers=headers, )
+            res = response.json()
+            if res['ok']:
+                frappe.msgprint("Users invited successfully")
+            if not res['ok']:
+                frappe.msgprint(res['error'])
+        else:
+            frappe.msgprint("Please set Slack Token First")
+    except Exception as e:
+        frappe.throw("There is an error trying to invite users")
 		
 def get_users(self,method=None):
     slack_user_ids = ""
@@ -89,19 +94,20 @@ def get_users(self,method=None):
     return slack_user_ids
 
 def get_user_ids(email):
-	token = frappe.db.get_single_value('Token', 'token')
-	url = "https://slack.com/api/users.lookupByEmail"
-	headers = {
-		'Authorization': f'Bearer {token}',
-		'Content-Type': 'application/x-www-form-urlencoded'
-	}   
-	data = f"email={email}"
-	response = requests.request("POST",url, data=data, headers=headers)
-	res = response.json()
-	if res['ok']:
-		return res['user'].get('id')
-	else:
-		frappe.log_error("Slack User not found")
+    token = frappe.db.get_single_value('Token', 'token')
+    if token:
+        url = "https://slack.com/api/users.lookupByEmail"
+        headers = {
+            'Authorization': f'Bearer {token}',
+            'Content-Type': 'application/x-www-form-urlencoded'
+            }   
+        data = f"email={email}"
+        response = requests.request("POST",url, data=data, headers=headers)
+        res = response.json()
+        if res['ok']:
+            return res['user'].get('id')
+        else:
+            frappe.log_error("Slack User not found")
 			
 
 

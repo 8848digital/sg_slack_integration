@@ -124,6 +124,9 @@ doc_events = {
 	},
     "Project Employee Distribution": {
 		"validate": "sg_slack_integration.doc_events.ped.validate",
+	},
+    "Opportunity": {
+		"validate": "sg_slack_integration.doc_events.opportunity.validate",
 	}
 }
 
