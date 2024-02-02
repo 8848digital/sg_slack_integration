@@ -7,15 +7,19 @@ from urllib.parse import quote
 def validate(self, method=None):
     user_ids = get_users(self)
     if self.ped_from == "Opportunity":
-        topic_and_description = frappe.get_value("Opportunity",self.opportunity,['title', 'party_name'], as_dict=1)
+        topic_and_description = frappe.get_value("Opportunity",self.opportunity,['title', 'name', 'party_name'], as_dict=1)
         is_channel_exists = create_slack_channel(self)
         channel = get_channel_id(self)
+        
         if is_channel_exists != "name_taken":
-            set_topic(self,channel, topic_and_description.title)
+            topic = f"{topic_and_description.title}-{topic_and_description.name}"
+            set_topic(self,channel, topic)
             set_description(self,channel, topic_and_description.party_name)
         invite_users(user_ids, channel)
+        
         if self.is_new():
             send_file(self, channel)
+            
     if self.ped_from == "Project":
         channel = get_channel_id(self)
         if user_ids:
@@ -108,12 +112,3 @@ def get_user_ids(email):
             return res['user'].get('id')
         else:
             frappe.log_error("Slack User not found")
-			
-
-
-
-	
-
-
-	
-			

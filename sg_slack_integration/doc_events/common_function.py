@@ -4,7 +4,7 @@ import json
 
 def create_slack_channel(self,method=None):
     try:
-        if self.is_new():                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+        if self.is_new():                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
             token = frappe.db.get_single_value('Token', 'token')
             if token:
                 url = "https://slack.com/api/conversations.create"
@@ -16,7 +16,9 @@ def create_slack_channel(self,method=None):
                 if self.doctype == "Project":
                     name = self.name.lower().replace(' ', '_')
                 if self.doctype == "Project Employee Distribution":
-                    name = self.opportunity.lower()
+                    name = frappe.get_value("Opportunity", self.opportunity, "proposal_name")
+                    name = name.lower().replace(' ', '_')
+                    
                 data =  json.dumps({"name": name})
                 response = requests.post(url, data=data, headers=headers)
                 res = response.json()
@@ -39,7 +41,8 @@ def get_channel_id(self, method=None):
         channel_name = self.name.lower().replace(' ', '_')
     elif self.doctype == "Project Employee Distribution":
         if self.ped_from == "Opportunity":
-            channel_name = self.opportunity.lower()
+            channel_name = frappe.get_value("Opportunity", self.opportunity, "proposal_name")
+            channel_name = channel_name.lower().replace(' ', '_')
         if self.ped_from == "Project":
             channel_name = self.project.lower().replace(' ','_')
             
