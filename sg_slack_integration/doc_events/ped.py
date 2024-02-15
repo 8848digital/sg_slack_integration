@@ -4,22 +4,29 @@ import json
 from sg_slack_integration.doc_events.common_function import create_slack_channel,get_channel_id,set_topic,set_description
 from urllib.parse import quote
 
+
 def validate(self, method=None):
     user_ids = get_users(self)
+    if user_ids:
+        removed_user_slack_ids = removed_user_slack_id(self,user_ids)
+    
     if self.ped_from == "Opportunity":
-        topic_and_description = frappe.get_value("Opportunity",self.opportunity,['title', 'name', 'party_name'], as_dict=1)
+        topic_and_description = frappe.get_value("Opportunity",self.opportunity,
+                                                 ['title', 'name', 'expected_closing'], as_dict=1)
         is_channel_exists = create_slack_channel(self)
         channel = get_channel_id(self)
         
-        if is_channel_exists != "name_taken":
-            topic = f"{topic_and_description.title}-{topic_and_description.name}"
-            set_topic(self,channel, topic)
-            set_description(self,channel, topic_and_description.party_name)
-        invite_users(user_ids, channel)
-        
         if self.is_new():
+            if is_channel_exists != "name_taken":
+                topic = f"{topic_and_description.title}-{topic_and_description.name}"
+                description = f"Expected closing Date: {str(topic_and_description.expected_closing)}"
+                set_topic(self, channel, topic)
+                set_description(self, channel, description)
             send_file(self, channel)
             
+        invite_users(user_ids, channel)
+        remove_member(removed_user_slack_ids, channel)
+        
     if self.ped_from == "Project":
         channel = get_channel_id(self)
         if user_ids:
@@ -48,7 +55,7 @@ def send_file(self,channel):
                 if res['ok']:
                     frappe.msgprint("File sent successfully on Slack")
                 else:
-                    frappe.msgprint("POST request failed with status code:", res)
+                    frappe.log_error("POST request failed with status code:", res)
             else:
                 frappe.msgprint("Please set SLack Token First")
         except Exception as e:
@@ -69,7 +76,7 @@ def invite_users(user_ids, channel):
             if res['ok']:
                 frappe.msgprint("Users invited successfully")
             if not res['ok']:
-                frappe.msgprint(res['error'])
+                frappe.log_error(res['error'])
         else:
             frappe.msgprint("Please set Slack Token First")
     except Exception as e:
@@ -112,3 +119,48 @@ def get_user_ids(email):
             return res['user'].get('id')
         else:
             frappe.log_error("Slack User not found")
+            
+            
+def remove_member(user_ids_to_remove, channel_id):
+    token = frappe.db.get_single_value('Token', 'token')
+    
+    url = f'https://slack.com/api/conversations.kick'
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': f'Bearer {token}'
+    }
+    for user_id_to_remove in user_ids_to_remove:
+        data = {
+            'channel': channel_id,
+            'user': user_id_to_remove
+        }
+        response = requests.post(url, headers=headers, params=data)
+        if response.ok:
+            frappe.msgprint(f"User removed from channel")
+        else:
+            frappe.log_error(f"Error removing user from channel: {response.text}")
+
+
+def removed_user_slack_id(self, user_ids):
+    present_user_ids = []
+    remove_slack_user_ids = []
+    
+    ped_exist = frappe.db.exists("Project Employee Distribution", self.name)
+    
+    if ped_exist:
+        old_doc = frappe.get_cached_doc("Project Employee Distribution", self.name)
+        for user in old_doc.distribution_detail:
+            email_to_remove = frappe.db.get_value("Employee",user.employee,'company_email')
+            if email_to_remove:
+                present_user_id = get_user_ids(email_to_remove)
+                if present_user_id:
+                    present_user_ids.append(present_user_id)
+                    
+    user_id_set = set(user_ids.split(','))
+    present_user_id_set = set(present_user_ids)
+    
+    for remove_slack_user_id in present_user_id_set:
+        if remove_slack_user_id not in user_id_set:
+            remove_slack_user_ids.append(remove_slack_user_id)
+            
+    return remove_slack_user_ids
