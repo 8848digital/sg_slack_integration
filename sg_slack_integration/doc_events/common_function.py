@@ -1,3 +1,4 @@
+import re
 import frappe
 import requests
 import json
@@ -18,6 +19,7 @@ def create_slack_channel(self,method=None):
                 if self.doctype == "Project Employee Distribution":
                     name = frappe.get_value("Opportunity", self.opportunity, "proposal_name")
                     name = name.lower().replace(' ', '_')
+                    name = re.sub(r'[^a-zA-Z0-9-_]', '', name)[:80]
                     
                 data =  json.dumps({"name": name})
                 response = requests.post(url, data=data, headers=headers)
@@ -36,7 +38,7 @@ def create_slack_channel(self,method=None):
         
 def get_channel_id(self, method=None):
     if self.doctype == "Opportunity":
-        channel_name = self.name.lower().replace(' ', '_')
+        channel_name = self.proposal_name.lower().replace(' ', '_')
     elif self.doctype == "Project":
         channel_name = self.name.lower().replace(' ', '_')
     elif self.doctype == "Project Employee Distribution":
@@ -46,6 +48,8 @@ def get_channel_id(self, method=None):
         if self.ped_from == "Project":
             channel_name = self.project.lower().replace(' ','_')
             
+    channel_name = re.sub(r'[^a-zA-Z0-9-_]', '', channel_name)[:80]
+    
     token = frappe.db.get_single_value('Token', 'token')
     
     if token:
