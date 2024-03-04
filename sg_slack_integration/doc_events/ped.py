@@ -7,8 +7,6 @@ from urllib.parse import quote
 
 def validate(self, method=None):
     user_ids = get_users(self)
-    if user_ids:
-        removed_user_slack_ids = removed_user_slack_id(self,user_ids)
     
     if self.ped_from == "Opportunity":
         topic_and_description = frappe.get_value("Opportunity",self.opportunity,
@@ -25,6 +23,8 @@ def validate(self, method=None):
             send_file(self, channel)
             
         invite_users(user_ids, channel)
+    if user_ids:
+        removed_user_slack_ids = removed_user_slack_id(self,user_ids)
         remove_member(removed_user_slack_ids, channel)
         
     if self.ped_from == "Project":
