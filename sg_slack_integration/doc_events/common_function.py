@@ -3,7 +3,6 @@ import frappe
 import requests
 import json
 
-
 def create_slack_channel(self,method=None):
     try:
         if self.is_new():                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
@@ -20,7 +19,7 @@ def create_slack_channel(self,method=None):
                 if self.doctype == "Project Employee Distribution":
                     name = frappe.get_value("Opportunity", self.opportunity, "proposal_name")
                     name = name.lower().replace(' ', '_')
-                    name = re.sub(r'[^\w\d\u0600-\u06FF-]', '', name)[:80]
+                    name = re.sub(r'[^a-zA-Z0-9-_]', '', name)[:80]
                     
                 data =  json.dumps({"name": name})
                 response = requests.post(url, data=data, headers=headers)
@@ -36,7 +35,6 @@ def create_slack_channel(self,method=None):
                 frappe.throw("Please set Slack Token First")
     except Exception as e:
         frappe.throw("An error occurred: " + str(e))
-
         
 def get_channel_id(self, method=None):
     if self.doctype == "Opportunity":
@@ -50,7 +48,7 @@ def get_channel_id(self, method=None):
         if self.ped_from == "Project":
             channel_name = self.project.lower().replace(' ','_')
             
-    channel_name = re.sub(r'[^\w\d\u0600-\u06FF-]', '', channel_name)[:80]
+    channel_name = re.sub(r'[^a-zA-Z0-9-_]', '', channel_name)[:80]
     
     token = frappe.db.get_single_value('Token', 'token')
     
@@ -69,8 +67,7 @@ def get_channel_id(self, method=None):
                     return channel.get('id')
     else:
         frappe.msgprint("Please set Slack Token First")
-    
-    
+        
 def set_topic(self,channel, topic):
     try:
         token = frappe.db.get_single_value('Token', 'token')
@@ -94,7 +91,6 @@ def set_topic(self,channel, topic):
             frappe.msgprint("Please set Slack Token First")
     except Exception as e:
             frappe.log_error("An error occurred:", str(e))
-
 
 def set_description(self,channel, description):
     try:
@@ -121,7 +117,6 @@ def set_description(self,channel, description):
     except Exception as e:
             frappe.log_error("An error occurred:", str(e))
 
-
 def archive_channel(self,channel):
     try:
         token = frappe.db.get_single_value('Token', 'token')
@@ -141,31 +136,6 @@ def archive_channel(self,channel):
                 frappe.msgprint("Channel Archived Successfully")
             else:
                 frappe.msgprint("POST request failed with status code:", res)
-        else:
-            frappe.msgprint("Please set Slack Token First")
-    except Exception as e:
-            frappe.log_error("An error occurred:", str(e))
-
-
-def unarchive_channel(self,channel):
-    try:
-        token = frappe.db.get_single_value('Token', 'token')
-        
-        if token:
-            url = 'https://slack.com/api/conversations.unarchive'
-            headers = {
-                'Authorization': f'Bearer {token}',
-                "Content-Type": 'application/json; charset=utf-8'
-            }
-            payload = {
-                'channel': channel,
-            }
-            response = requests.post(url, headers=headers, json=payload)
-            res = response.json()
-            if res['ok']:
-                frappe.msgprint("Channel Unarchived Successfully")
-            else:
-                frappe.msgprint("POST request failed with status code: ", res)
         else:
             frappe.msgprint("Please set Slack Token First")
     except Exception as e:
