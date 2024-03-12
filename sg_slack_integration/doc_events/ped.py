@@ -58,7 +58,7 @@ def send_file(self,channel):
                 if res['ok']:
                     frappe.msgprint("File sent successfully on Slack")
                 else:
-                    frappe.log_error("POST request failed with status code:", res)
+                    frappe.log_error("File send unsuccessfully with status code:", res)
             else:
                 frappe.msgprint("Please set SLack Token First")
         except Exception as e:
