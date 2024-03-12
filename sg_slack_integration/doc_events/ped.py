@@ -34,7 +34,6 @@ def validate(self, method=None):
             removed_user_slack_ids = removed_user_slack_id(self,user_ids)
             remove_member(removed_user_slack_ids, channel)
 
-
 def send_file(self,channel):
     files = frappe.db.get_list("File",filters={'attached_to_name':self.opportunity,'attached_to_doctype':"Opportunity"},fields=['name'])
     for file in files:
@@ -64,7 +63,6 @@ def send_file(self,channel):
         except Exception as e:
             frappe.log_error("An error occurred:", str(e))
 
-
 def invite_users(user_ids, channel):
     try:
         token = frappe.db.get_single_value('Token', 'token')
@@ -85,7 +83,6 @@ def invite_users(user_ids, channel):
             frappe.msgprint("Please set Slack Token First")
     except Exception as e:
         frappe.throw("There is an error trying to invite users")
-
 		
 def get_users(self,method=None):
     slack_user_ids = ""
@@ -108,7 +105,6 @@ def get_users(self,method=None):
                 if slack_user_id:
                     slack_user_ids += slack_user_id+","
     return slack_user_ids
-
 
 def get_user_ids(email):
     token = frappe.db.get_single_value('Token', 'token')
