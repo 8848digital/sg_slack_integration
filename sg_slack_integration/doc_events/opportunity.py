@@ -14,4 +14,4 @@ def handle_workflow_state(self):
         if self.workflow_state == "Client Approval Pending":
             archive_channel(self,channel)
         if previous_workflow == "Client Approval Pending" and self.workflow_state == "In Progress":
-            unarchive_channel(self,channel) 
+            unarchive_channel(self,channel)
