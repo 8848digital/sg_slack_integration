@@ -1,0 +1,50 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-04-05 14:49:53.664699",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "slack_error_notification_email",
+  "slack_error_notification_template"
+ ],
+ "fields": [
+  {
+   "fieldname": "slack_error_notification_email",
+   "fieldtype": "Table",
+   "label": "Slack Error Notification Email",
+   "options": "PED Email user"
+  },
+  {
+   "fieldname": "slack_error_notification_template",
+   "fieldtype": "Link",
+   "label": "Slack Error Notification Template",
+   "options": "Email Template"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-04-05 14:49:53.664699",
+ "modified_by": "Administrator",
+ "module": "sg_slack_integration",
+ "name": "Slack Error Notification",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
