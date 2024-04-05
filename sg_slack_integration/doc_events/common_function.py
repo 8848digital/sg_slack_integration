@@ -348,4 +348,4 @@ def send_mail(context):
 			print_letterhead=False,
 		)
 	except Exception as e:
-		return "error"
+		frappe.log_error("Slack Email Error", e)
