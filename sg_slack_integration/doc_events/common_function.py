@@ -29,10 +29,9 @@ def create_slack_channel(self, method=None):
 			frappe.msgprint("Channel Already exists")
 			return res["error"]
 		elif not res["ok"]:
-			error = "Channel creation failed"
+			error = f"Channel creation for {self.name} failed"
 			email_context = {
 				"record_name": self.name,
-				"channel_name": name,
 				"error": error,
 				"response": res,
 			}
@@ -77,7 +76,7 @@ def get_channel_id(self, method=None):
 					if channel.get("name") == channel_name:
 						return channel.get("id")
 			else:
-				error = "Channel ID dot found"
+				error = f"Channel ID for {self.name} not found"
 				email_context = {"record_name": self.name, "error": error, "response": res}
 				log_error_context = {"record_name": self.name, "error": error}
 				send_mail(email_context)
@@ -169,7 +168,7 @@ def archive_channel(self, channel):
 			if res["ok"]:
 				frappe.msgprint("Channel Archived Successfully")
 			else:
-				error = "Channel archiveing failed"
+				error = f"Channel archiving failed for {self.name}"
 				email_context = {"record_name": self.name, "error": error, "response": res}
 				log_error_context = {"record_name": self.name, "error": error}
 				send_mail(email_context)
@@ -199,7 +198,7 @@ def unarchive_channel(self, channel):
 			if res["ok"]:
 				frappe.msgprint("Channel Unarchived Successfully")
 			else:
-				error = "Channel unarchiveing failed"
+				error = f"Channel unarchiveing failed for {self.name}"
 				email_context = {"record_name": self.name, "error": error, "response": res}
 				log_error_context = {"record_name": self.name, "error": error}
 				send_mail(email_context)
@@ -246,7 +245,6 @@ def send_file(self, channel):
 
 
 def invite_users(self, user_ids, channel):
-	send_mail({"otp": "Remove member"})
 	token = frappe.db.get_single_value("Token", "token")
 	if token:
 		url = "https://slack.com/api/conversations.invite"
@@ -289,7 +287,7 @@ def get_user_ids(self, email):
 		if res["ok"]:
 			return res["user"].get("id")
 		else:
-			error = "Slack User not found"
+			error = f"Slack User {email} not found"
 			email_context = {"record_name": self.name, "error": error, "response": res}
 			log_error_context = {"record_name": self.name, "error": error}
 			send_mail(email_context)
@@ -298,8 +296,6 @@ def get_user_ids(self, email):
 
 
 def remove_member(self, user_ids_to_remove, channel_id):
-	frappe.log_error("hello", "hii")
-	send_mail({"otp": "Remove member"})
 	token = frappe.db.get_single_value("Token", "token")
 
 	url = f"https://slack.com/api/conversations.kick"
