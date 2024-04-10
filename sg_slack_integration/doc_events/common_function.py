@@ -3,7 +3,7 @@ import re
 
 import frappe
 import requests
-
+from frappe import _
 
 def create_slack_channel(self, method=None):
 	token = frappe.db.get_single_value("Token", "token")
@@ -29,7 +29,7 @@ def create_slack_channel(self, method=None):
 			frappe.msgprint(_("Channel Already exists"))
 			return res["error"]
 		elif not res["ok"]:
-			error = f"Channel creation for {0} failed".format(self.name)
+			error = "Channel creation for {0} failed".format(self.name)
 			email_context = {
 				"record_name": self.name,
 				"error": error,
@@ -168,7 +168,7 @@ def archive_channel(self, channel):
 			if res["ok"]:
 				frappe.msgprint(_("Channel Archived Successfully"))
 			else:
-				error = f"Channel archiving failed for {0}".format(self.name)
+				error = "Channel archiving failed for {0}".format(self.name)
 				email_context = {"record_name": self.name, "error": error, "response": res}
 				log_error_context = {"record_name": self.name, "error": error}
 				send_mail(email_context)
@@ -198,7 +198,7 @@ def unarchive_channel(self, channel):
 			if res["ok"]:
 				frappe.msgprint(_("Channel Unarchived Successfully"))
 			else:
-				error = f"Channel unarchiveing failed for {0}".format(self.name)
+				error = "Channel unarchiveing failed for {0}".format(self.name)
 				email_context = {"record_name": self.name, "error": error, "response": res}
 				log_error_context = {"record_name": self.name, "error": error}
 				send_mail(email_context)
@@ -287,7 +287,7 @@ def get_user_ids(self, email):
 		if res["ok"]:
 			return res["user"].get("id")
 		else:
-			error = f"Slack User {0} not found".format(email)
+			error = "Slack User {0} not found".format(email)
 			email_context = {"record_name": self.name, "error": error, "response": res}
 			log_error_context = {"record_name": self.name, "error": error}
 			send_mail(email_context)
