@@ -23,13 +23,13 @@ def create_slack_channel(self, method=None):
 		response = requests.post(url, data=data, headers=headers)
 		res = response.json()
 		if res["ok"]:
-			frappe.msgprint("Channel created successfully on Slack")
+			frappe.msgprint(_("Channel created successfully on Slack"))
 			return res["ok"]
 		elif not res["ok"] and res["error"] == "name_taken":
-			frappe.msgprint("Channel Already exists")
+			frappe.msgprint(_("Channel Already exists"))
 			return res["error"]
 		elif not res["ok"]:
-			error = f"Channel creation for {self.name} failed"
+			error = f"Channel creation for {0} failed".format(self.name)
 			email_context = {
 				"record_name": self.name,
 				"error": error,
@@ -37,12 +37,12 @@ def create_slack_channel(self, method=None):
 			}
 			log_error_context = {"record_name": self.name, "channel_name": name, "error": error}
 			send_mail(email_context)
-			frappe.msgprint(error)
+			frappe.msgprint(_(error))
 			frappe.log_error(error, log_error_context)
 		else:
-			frappe.throw("Please set Slack Token First")
+			frappe.throw(_("Please set Slack Token First"))
 	except Exception as e:
-		frappe.throw("An error occurred while creating channel: " + str(e))
+		frappe.throw(_("An error occurred while creating channel: " + str(e)))
 
 
 def get_channel_id(self, method=None):
@@ -84,7 +84,7 @@ def get_channel_id(self, method=None):
 		except Exception as e:
 			frappe.log_error("An error occurred while setting topic:", str(e))
 	else:
-		frappe.throw("Please set Slack Token First")
+		frappe.throw(_("Please set Slack Token First"))
 
 
 def set_topic(self, channel, topic):
@@ -103,19 +103,19 @@ def set_topic(self, channel, topic):
 			response = requests.post(url, headers=headers, json=payload)
 			res = response.json()
 			if res["ok"]:
-				frappe.msgprint("Topic set successfully on Slack")
+				frappe.msgprint(_("Topic set successfully on Slack"))
 			else:
 				error = "Topic set unsuccessful"
 				email_context = {"record_name": self.name, "error": error, "response": res}
 				log_error_context = {"record_name": self.name, "error": error}
 				send_mail(email_context)
-				frappe.msgprint(error)
+				frappe.msgprint(_(error))
 				frappe.log_error(error, log_error_context)
 
 		except Exception as e:
 			frappe.log_error("An error occurred while setting topic:", str(e))
 	else:
-		frappe.msgprint("Please set Slack Token First")
+		frappe.msgprint(_("Please set Slack Token First"))
 
 
 def set_description(self, channel, description):
@@ -135,19 +135,19 @@ def set_description(self, channel, description):
 			response = requests.post(url, headers=headers, json=payload)
 			res = response.json()
 			if res["ok"]:
-				frappe.msgprint("Description set successfully on Slack")
+				frappe.msgprint(_("Description set successfully on Slack"))
 			else:
 				error = "Description set Failed"
 				email_context = {"record_name": self.name, "error": error, "response": res}
 				log_error_context = {"record_name": self.name, "error": error}
 				send_mail(email_context)
-				frappe.msgprint(error)
+				frappe.msgprint(_(error))
 				frappe.log_error(error, log_error_context)
 
 		except Exception as e:
 			frappe.log_error("An error occurred while setting description:", str(e))
 	else:
-		frappe.msgprint("Please set Slack Token First")
+		frappe.msgprint(_("Please set Slack Token First"))
 
 
 def archive_channel(self, channel):
@@ -166,18 +166,18 @@ def archive_channel(self, channel):
 			response = requests.post(url, headers=headers, json=payload)
 			res = response.json()
 			if res["ok"]:
-				frappe.msgprint("Channel Archived Successfully")
+				frappe.msgprint(_("Channel Archived Successfully"))
 			else:
-				error = f"Channel archiving failed for {self.name}"
+				error = f"Channel archiving failed for {0}".format(self.name)
 				email_context = {"record_name": self.name, "error": error, "response": res}
 				log_error_context = {"record_name": self.name, "error": error}
 				send_mail(email_context)
-				frappe.msgprint(error)
+				frappe.msgprint(_(error))
 				frappe.log_error(error, log_error_context)
 		except Exception as e:
 			frappe.log_error("An error occurred:", str(e))
 	else:
-		frappe.msgprint("Please set Slack Token First")
+		frappe.msgprint(_("Please set Slack Token First"))
 
 
 def unarchive_channel(self, channel):
@@ -196,18 +196,18 @@ def unarchive_channel(self, channel):
 			response = requests.post(url, headers=headers, json=payload)
 			res = response.json()
 			if res["ok"]:
-				frappe.msgprint("Channel Unarchived Successfully")
+				frappe.msgprint(_("Channel Unarchived Successfully"))
 			else:
-				error = f"Channel unarchiveing failed for {self.name}"
+				error = f"Channel unarchiveing failed for {0}".format(self.name)
 				email_context = {"record_name": self.name, "error": error, "response": res}
 				log_error_context = {"record_name": self.name, "error": error}
 				send_mail(email_context)
-				frappe.msgprint(error)
+				frappe.msgprint(_(error))
 				frappe.log_error(error, log_error_context)
 		except Exception as e:
 			frappe.log_error("An error occurred:", str(e))
 	else:
-		frappe.msgprint("Please set Slack Token First")
+		frappe.msgprint(_("Please set Slack Token First"))
 
 
 def send_file(self, channel):
@@ -230,18 +230,18 @@ def send_file(self, channel):
 				response = requests.post(url, data=data, files=files, headers=headers)
 				res = response.json()
 				if res["ok"]:
-					frappe.msgprint("File sent successfully on Slack")
+					frappe.msgprint(_("File sent successfully on Slack"))
 				else:
 					error = "File send unsuccessfully"
 					email_context = {"record_name": self.name, "error": error, "response": res}
 					log_error_context = {"record_name": self.name, "error": error}
 					send_mail(email_context)
-					frappe.msgprint(error)
+					frappe.msgprint(_(error))
 					frappe.log_error(error, log_error_context)
 			except Exception as e:
 				frappe.log_error("An error occurred:", str(e))
 		else:
-			frappe.msgprint("Please set SLack Token First")
+			frappe.msgprint(_("Please set SLack Token First"))
 
 
 def invite_users(self, user_ids, channel):
@@ -259,18 +259,18 @@ def invite_users(self, user_ids, channel):
 			)
 			res = response.json()
 			if res["ok"]:
-				frappe.msgprint("Users invited successfully")
+				frappe.msgprint(_("Users invited successfully"))
 			else:
 				error = "User invitation failed"
 				email_context = {"record_name": self.name, "error": error, "response": res}
 				log_error_context = {"record_name": self.name, "error": error}
 				send_mail(email_context)
-				frappe.msgprint(error)
+				frappe.msgprint(_(error))
 				frappe.log_error(error, log_error_context)
 		except Exception as e:
-			frappe.throw("There is an error trying to invite users")
+			frappe.throw(_("There is an error trying to invite users"))
 	else:
-		frappe.throw("Please set Slack Token First")
+		frappe.throw(_("Please set Slack Token First"))
 
 
 def get_user_ids(self, email):
@@ -287,11 +287,11 @@ def get_user_ids(self, email):
 		if res["ok"]:
 			return res["user"].get("id")
 		else:
-			error = f"Slack User {email} not found"
+			error = f"Slack User {0} not found".format(email)
 			email_context = {"record_name": self.name, "error": error, "response": res}
 			log_error_context = {"record_name": self.name, "error": error}
 			send_mail(email_context)
-			frappe.msgprint(error)
+			frappe.msgprint(_(error))
 			frappe.log_error(error, log_error_context)
 
 
@@ -308,13 +308,13 @@ def remove_member(self, user_ids_to_remove, channel_id):
 		response = requests.post(url, headers=headers, params=data)
 		res = response.json()
 		if response.ok:
-			frappe.msgprint(f"User removed from channel")
+			frappe.msgprint(_("User removed from channel"))
 		else:
 			error = "Error removing user from channel"
 			email_context = {"record_name": self.name, "error": error, "response": res}
 			log_error_context = {"record_name": self.name, "error": error}
 			send_mail(email_context)
-			frappe.msgprint(error)
+			frappe.msgprint(_(error))
 			frappe.log_error(error, log_error_context)
 
 
