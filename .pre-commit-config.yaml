@@ -19,10 +19,10 @@ repos:
       - id: check-yaml
       - id: debug-statements
 
-  # - repo: https://github.com/frappe/black
-  #   rev: 951ccf4d5bb0d692b457a5ebc4215d755618eb68
-  #   hooks:
-  #     - id: black
+  - repo: https://github.com/frappe/black
+    rev: 951ccf4d5bb0d692b457a5ebc4215d755618eb68
+    hooks:
+      - id: black
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v2.7.1
@@ -39,16 +39,16 @@ repos:
         args: ['--quiet']
 
 
-  # - repo: https://github.com/PyCQA/isort
-  #   rev: 5.12.0
-  #   hooks:
-  #     - id: isort
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
 
-  # - repo: https://github.com/PyCQA/flake8
-  #   rev: 6.0.0
-  #   hooks:
-  #     - id: flake8
-  #       additional_dependencies: ['flake8-bugbear',]
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        additional_dependencies: ['flake8-bugbear',]
 
   - repo: local
     hooks:

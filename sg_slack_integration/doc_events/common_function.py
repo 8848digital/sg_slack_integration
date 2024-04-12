@@ -5,6 +5,7 @@ import frappe
 import requests
 from frappe import _
 
+
 def create_slack_channel(self, method=None):
 	token = frappe.db.get_single_value("Token", "token")
 	if token:
@@ -26,7 +27,7 @@ def create_slack_channel(self, method=None):
 			frappe.msgprint(_("Channel created successfully on Slack"))
 			return res["ok"]
 		elif not res["ok"] and res["error"] == "name_taken":
-			frappe.msgprint(_("Channel Already exists"))
+			# frappe.msgprint(_("Channel Already exists"))
 			return res["error"]
 		elif not res["ok"]:
 			error = "Channel creation for {0} failed".format(self.name)
@@ -262,9 +263,9 @@ def invite_users(self, user_ids, channel):
 				frappe.msgprint(_("Users invited successfully"))
 			else:
 				error = "User invitation failed"
-				email_context = {"record_name": self.name, "error": error, "response": res}
+				# email_context = {"record_name": self.name, "error": error, "response": res}
 				log_error_context = {"record_name": self.name, "error": error}
-				send_mail(email_context)
+				# send_mail(email_context)
 				frappe.msgprint(_(error))
 				frappe.log_error(error, log_error_context)
 		except Exception as e:
@@ -288,9 +289,9 @@ def get_user_ids(self, email):
 			return res["user"].get("id")
 		else:
 			error = "Slack User {0} not found".format(email)
-			email_context = {"record_name": self.name, "error": error, "response": res}
+			# email_context = {"record_name": self.name, "error": error, "response": res}
 			log_error_context = {"record_name": self.name, "error": error}
-			send_mail(email_context)
+			# send_mail(email_context)
 			frappe.msgprint(_(error))
 			frappe.log_error(error, log_error_context)
 
@@ -298,10 +299,10 @@ def get_user_ids(self, email):
 def remove_member(self, user_ids_to_remove, channel_id):
 	token = frappe.db.get_single_value("Token", "token")
 
-	url = f"https://slack.com/api/conversations.kick"
+	url = "https://slack.com/api/conversations.kick"
 	headers = {
 		"Content-Type": "application/x-www-form-urlencoded",
-		"Authorization": f"Bearer {token}",
+		"Authorization": "Bearer {0}".format(token),
 	}
 	for user_id_to_remove in user_ids_to_remove:
 		data = {"channel": channel_id, "user": user_id_to_remove}
