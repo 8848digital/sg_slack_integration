@@ -266,7 +266,7 @@ def invite_users(self, user_ids, channel):
 				# email_context = {"record_name": self.name, "error": error, "response": res}
 				log_error_context = {"record_name": self.name, "error": error}
 				# send_mail(email_context)
-				frappe.msgprint(_(error))
+				# frappe.msgprint(_(error))
 				frappe.log_error(error, log_error_context)
 		except Exception as e:
 			frappe.throw(_("There is an error trying to invite users"))
@@ -292,7 +292,7 @@ def get_user_ids(self, email):
 			# email_context = {"record_name": self.name, "error": error, "response": res}
 			log_error_context = {"record_name": self.name, "error": error}
 			# send_mail(email_context)
-			frappe.msgprint(_(error))
+			# frappe.msgprint(_(error))
 			frappe.log_error(error, log_error_context)
 
 
