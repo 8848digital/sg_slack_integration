@@ -5,6 +5,8 @@ app_description = "Cleartax Integration"
 app_email = "contact@8848digital.com"
 app_license = "MIT"
 
+
+# after_migrate = "cleartax_integration.migrate.after_migrate"
 # Includes in <head>
 # ------------------
 
@@ -127,23 +129,10 @@ app_license = "MIT"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"cleartax_integration.tasks.all"
-# 	],
-# 	"daily": [
-# 		"cleartax_integration.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"cleartax_integration.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"cleartax_integration.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"cleartax_integration.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"hourly_long":["cleartax_integration.cleartax_integration.doctype.cleartax_settings.cleartax_settings.push_to_cleartax",
+            "cleartax_integration.cleartax_integration.doctype.cleartax_settings.cleartax_settings.push_to_cleartax_scheduler"]
+}
 
 # Testing
 # -------
@@ -213,3 +202,21 @@ app_license = "MIT"
 # auth_hooks = [
 # 	"cleartax_integration.auth.validate"
 # ]
+
+fixtures = [
+    {"dt": "Custom Field", "filters": [
+        [
+            "module", "in", [
+                    "Cleartax Integration"
+            ],
+            # "fieldname", "in", ["state"]
+        ]
+    ]},
+    {"dt": "Server Script", "filters": [
+        [
+            "module", "in", [
+                "Cleartax Integration"
+            ]
+        ]
+    ]},
+]
