@@ -1,6 +1,7 @@
 import json
 import re
 
+from sg_slack_integration.doc_events.utils import create_slack_log
 import frappe
 import requests
 from frappe import _
@@ -24,22 +25,27 @@ def create_slack_channel(self, method=None):
 		response = requests.post(url, data=data, headers=headers)
 		res = response.json()
 		if res["ok"]:
-			frappe.msgprint(_("Channel created successfully on Slack"))
+			success_msg = "Channel created successfully"
+			frappe.msgprint(_(success_msg))
+			create_slack_log(self, success_msg, error=None)
 			return res["ok"]
 		elif not res["ok"] and res["error"] == "name_taken":
+			success_msg = "Channel Already exists"
+			create_slack_log(self, success_msg, error=str(res))
 			# frappe.msgprint(_("Channel Already exists"))
 			return res["error"]
 		elif not res["ok"]:
-			error = "Channel creation for {0} failed".format(self.name)
+			error_msg = "Channel creation failed"
 			email_context = {
 				"record_name": self.name,
-				"error": error,
+				"error": error_msg,
 				"response": res,
 			}
-			log_error_context = {"record_name": self.name, "channel_name": name, "error": error}
+			create_slack_log(self, error_msg, error=str(res))
+			log_error_context = {"record_name": self.name, "channel_name": name, "error": error_msg}
 			send_mail(email_context)
-			frappe.msgprint(_(error))
-			frappe.log_error(error, log_error_context)
+			frappe.msgprint(_(error_msg))
+			frappe.log_error(error_msg, log_error_context)
 		else:
 			frappe.throw(_("Please set Slack Token First"))
 	except Exception as e:
@@ -93,7 +99,7 @@ def set_topic(self, channel, topic):
 	if token:
 		url = "https://slack.com/api/conversations.setTopic"
 		headers = {
-			"Content-Type": "application/json",
+			"Content-Type": "application/json; charset=utf-8",
 			"Authorization": f"Bearer {token}",
 		}
 		payload = {
@@ -125,7 +131,7 @@ def set_description(self, channel, description):
 	if token:
 		url = "https://slack.com/api/conversations.setPurpose"
 		headers = {
-			"Content-Type": "application/json",
+			"Content-Type": "application/json; charset=utf-8",
 			"Authorization": f"Bearer {token}",
 		}
 		payload = {
@@ -261,6 +267,9 @@ def invite_users(self, user_ids, channel):
 			res = response.json()
 			if res["ok"]:
 				frappe.msgprint(_("Users invited successfully"))
+				return res["ok"]
+			elif not res["ok"] and res["error"] == "already_in_channel":
+				return True
 			else:
 				error = "User invitation failed"
 				# email_context = {"record_name": self.name, "error": error, "response": res}
