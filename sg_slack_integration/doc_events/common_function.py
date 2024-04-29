@@ -1,26 +1,18 @@
 import json
-import re
 
-from sg_slack_integration.doc_events.utils import create_slack_log
+from sg_slack_integration.doc_events.utils import compatible_slack_channel_name, create_slack_log
 import frappe
 import requests
 from frappe import _
 
 
-def create_slack_channel(self, method=None):
+def create_slack_channel(self, channel_name, method=None):
 	token = frappe.db.get_single_value("Token", "token")
 	if token:
 		url = "https://slack.com/api/conversations.create"
-		headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+		headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json; charset=utf-8"}
 
-		if self.doctype == "Project":
-			name = self.project_name.lower().replace(" ", "_")
-		if self.doctype == "Project Employee Distribution":
-			name = frappe.get_value("Opportunity", self.opportunity, "proposal_name")
-			name = name.lower().replace(" ", "_")
-
-		name = re.sub(r"[^\w\d\u0620-\u06FF-]", "", name)[:80]
-		data = json.dumps({"name": name, "is_private": "true"})
+		data = json.dumps({"name": channel_name, "is_private": "true"})
 	try:
 		response = requests.post(url, data=data, headers=headers)
 		res = response.json()
@@ -28,12 +20,17 @@ def create_slack_channel(self, method=None):
 			success_msg = "Channel created successfully"
 			frappe.msgprint(_(success_msg))
 			create_slack_log(self, success_msg, error=None)
-			return res["ok"]
+			return {"is_channel_created" : res["ok"],
+					"channel_name":channel_name,
+					"channel_id":res["channel"]["id"]
+					}
+
 		elif not res["ok"] and res["error"] == "name_taken":
-			success_msg = "Channel Already exists"
-			create_slack_log(self, success_msg, error=str(res))
-			# frappe.msgprint(_("Channel Already exists"))
-			return res["error"]
+			return {"is_channel_created" : res["error"],
+					"channel_name":channel_name,
+					"channel_id":None
+					}
+
 		elif not res["ok"]:
 			error_msg = "Channel creation failed"
 			email_context = {
@@ -42,7 +39,7 @@ def create_slack_channel(self, method=None):
 				"response": res,
 			}
 			create_slack_log(self, error_msg, error=str(res))
-			log_error_context = {"record_name": self.name, "channel_name": name, "error": error_msg}
+			log_error_context = {"record_name": self.name, "channel_name": channel_name, "error": error_msg}
 			send_mail(email_context)
 			frappe.msgprint(_(error_msg))
 			frappe.log_error(error_msg, log_error_context)
@@ -52,46 +49,59 @@ def create_slack_channel(self, method=None):
 		frappe.throw(_("An error occurred while creating channel: " + str(e)))
 
 
-def get_channel_id(self, method=None):
-	if self.doctype == "Opportunity":
-		channel_name = self.proposal_name.lower().replace(" ", "_")
-	elif self.doctype == "Project":
-		channel_name = self.project_name.lower().replace(" ", "_")
-	elif self.doctype == "Project Employee Distribution":
-		if self.ped_from == "Opportunity":
-			channel_name = frappe.get_value("Opportunity", self.opportunity, "proposal_name")
-		if self.ped_from == "Project":
-			channel_name = frappe.get_value("Project", self.project, "project_name")
 
-	channel_name = channel_name.lower().replace(" ", "_")
-	channel_name = re.sub(r"[^\w\d\u0620-\u06FF-]", "", channel_name)[:80]
+def get_channel_id(self, project_channel_name=None, method=None):
+    if self.doctype == "Opportunity":
+        channel_name = self.custom_channel_name
+    elif self.doctype == "Project":
+        channel_name = self.custom_channel_name
+        if project_channel_name:
+            channel_name = project_channel_name
+    elif self.doctype == "Project Employee Distribution":
+        if self.ped_from == "Opportunity":
+            channel_name = frappe.get_value("Opportunity", self.opportunity, "custom_channel_name")
+        elif self.ped_from == "Project":
+            channel_name = frappe.get_value("Project", self.project, "custom_channel_name")
 
-	token = frappe.db.get_single_value("Token", "token")
+    channel_name = compatible_slack_channel_name(channel_name)
+    if not channel_name:
+        return
 
-	if token:
-		url = "https://slack.com/api/conversations.list"
-		headers = {
-			"Authorization": f"Bearer {token}",
-			"Content-Type": "application/x-www-form-urlencoded",
-		}
-		payload = {"limit": 999, "types": "public_channel, private_channel"}
-		try:
-			response = requests.request("POST", url, headers=headers, data=payload)
-			res = response.json()
-			if res["ok"]:
-				for channel in res["channels"]:
-					if channel.get("name") == channel_name:
-						return channel.get("id")
-			else:
-				error = f"Channel ID for {self.name} not found"
-				email_context = {"record_name": self.name, "error": error, "response": res}
-				log_error_context = {"record_name": self.name, "error": error}
-				send_mail(email_context)
-				frappe.log_error(error, log_error_context)
-		except Exception as e:
-			frappe.log_error("An error occurred while setting topic:", str(e))
-	else:
-		frappe.throw(_("Please set Slack Token First"))
+    token = frappe.db.get_single_value("Token", "token")
+    if token:
+        url = "https://slack.com/api/conversations.list"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
+        payload = {"limit": 999, "types": "public_channel, private_channel"}
+        cursor = None
+        try:
+            while True:
+                if cursor:
+                    payload["cursor"] = cursor
+
+                response = requests.request("POST", url, headers=headers, data=payload)
+                res = response.json()
+                if res["ok"]:
+                    for channel in res["channels"]:
+                        if channel.get("name") == channel_name:
+                            return channel.get("id")
+                    if not res["response_metadata"]["next_cursor"]:
+                        break
+                    cursor = res["response_metadata"]["next_cursor"]
+                else:
+                    error = f"Channel ID for {self.name} not found"
+                    email_context = {"record_name": self.name, "error": error, "response": res}
+                    log_error_context = {"record_name": self.name, "error": error}
+                    send_mail(email_context)
+                    frappe.log_error(error, log_error_context)
+                    break
+
+        except Exception as e:
+            frappe.log_error("An error occurred while setting topic:", str(e))
+    else:
+        frappe.throw(_("Please set Slack Token First"))
 
 
 def set_topic(self, channel, topic):
@@ -251,6 +261,28 @@ def send_file(self, channel):
 			frappe.msgprint(_("Please set SLack Token First"))
 
 
+def get_user_ids(self, email):
+	token = frappe.db.get_single_value("Token", "token")
+	if token:
+		url = "https://slack.com/api/users.lookupByEmail"
+		headers = {
+			"Authorization": f"Bearer {token}",
+			"Content-Type": "application/x-www-form-urlencoded",
+		}
+		data = f"email={email}"
+		response = requests.request("POST", url, data=data, headers=headers)
+		res = response.json()
+		if res["ok"]:
+			return res["user"].get("id")
+		else:
+			error = "Slack User {0} not found".format(email)
+			# email_context = {"record_name": self.name, "error": error, "response": res}
+			log_error_context = {"record_name": self.name, "error": error}
+			# send_mail(email_context)
+			# frappe.msgprint(_(error))
+			frappe.log_error(error, log_error_context)
+
+
 def invite_users(self, user_ids, channel):
 	token = frappe.db.get_single_value("Token", "token")
 	if token:
@@ -281,28 +313,6 @@ def invite_users(self, user_ids, channel):
 			frappe.throw(_("There is an error trying to invite users"))
 	else:
 		frappe.throw(_("Please set Slack Token First"))
-
-
-def get_user_ids(self, email):
-	token = frappe.db.get_single_value("Token", "token")
-	if token:
-		url = "https://slack.com/api/users.lookupByEmail"
-		headers = {
-			"Authorization": f"Bearer {token}",
-			"Content-Type": "application/x-www-form-urlencoded",
-		}
-		data = f"email={email}"
-		response = requests.request("POST", url, data=data, headers=headers)
-		res = response.json()
-		if res["ok"]:
-			return res["user"].get("id")
-		else:
-			error = "Slack User {0} not found".format(email)
-			# email_context = {"record_name": self.name, "error": error, "response": res}
-			log_error_context = {"record_name": self.name, "error": error}
-			# send_mail(email_context)
-			# frappe.msgprint(_(error))
-			frappe.log_error(error, log_error_context)
 
 
 def remove_member(self, user_ids_to_remove, channel_id):
