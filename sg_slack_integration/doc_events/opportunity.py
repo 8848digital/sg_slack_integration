@@ -13,6 +13,8 @@ def validate(self, method=None):
 
 
 def handle_workflow_state(self):
+	if self.is_new():
+		return
 	channel = get_channel_id(self)
 	if channel:
 		opportunity_exist = frappe.db.exists("Opportunity", self.name)

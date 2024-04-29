@@ -3,6 +3,7 @@ import frappe
 from sg_slack_integration.doc_events.common_function import (
     create_slack_channel, get_channel_id, get_user_ids, invite_users,
     remove_member, send_file, set_description, set_topic)
+from sg_slack_integration.doc_events.utils import compatible_slack_channel_name
 
 
 def validate(self, method=None):
@@ -11,63 +12,105 @@ def validate(self, method=None):
 
 
 def opportunity_process(self):
-	if self.ped_from != "Opportunity":
-		return
-	user_ids = get_users(self)
+    if self.ped_from != "Opportunity":
+        return
 
-	topic_and_description = frappe.get_value(
-		"Opportunity", self.opportunity, ["title", "name", "expected_closing"], as_dict=1
-	)
+    opportunity_details = get_opportunity_details(self)
 
-	channel = get_channel_id(self)
+    if self.is_channel_created == 0:
+        channel_details = create_or_get_slack_channel(self, opportunity_details)
+        if not channel_details:
+            return
+        if channel_details["is_channel_created"] == True:
+            self.is_channel_created = 1
+            set_opportunity_channel_values(self, channel_details)
+            set_channel_properties(self, opportunity_details)
 
-	if self.is_channel_created == 0:
-		is_channel_exists = create_slack_channel(self)
-		channel = get_channel_id(self)
-		if is_channel_exists == True or is_channel_exists == "name_taken":
-			self.is_channel_created = 1
-
-		if is_channel_exists != "name_taken":
-			if channel:
-				topic = f"{topic_and_description.title}-{topic_and_description.name}"
-				description = (
-					f"Expected closing Date: {str(topic_and_description.expected_closing)}"
-				)
-				set_topic(self, channel, topic)
-				set_description(self, channel, description)
-				send_file(self, channel)
-
-	if channel:
-		if user_ids:
-			invite_users(self, user_ids, channel)
-			removed_user_slack_ids = removed_user_slack_id(self, user_ids)
-			if removed_user_slack_ids:
-				remove_member(self, removed_user_slack_ids, channel)
+    manage_channel_members(self)
 
 
 def project_process(self):
-	if self.ped_from == "Project":
-		user_ids = get_users(self)
-		channel = get_channel_id(self)
-		if channel:
-			self.is_channel_created = 1
-			if user_ids:
-				invite_users(self, user_ids, channel)
-				removed_user_slack_ids = removed_user_slack_id(self, user_ids)
-				if removed_user_slack_ids:
-					remove_member(self, removed_user_slack_ids, channel)
+	if self.ped_from != "Project":
+		return
+	channel = get_channel_id(self)
+	if channel:
+		self.is_channel_created = 1
+		add_or_remove_users(self, channel)
 
 
-def get_users(self, method=None):
-	slack_user_ids = ""
-	if self.distribution_detail:
-		for user in self.distribution_detail:
-			email = frappe.db.get_value("Employee", user.employee, "company_email")
-			if email:
-				slack_user_id = get_user_ids(self, email)
-				if slack_user_id:
-					slack_user_ids += slack_user_id + ","
-	if self.ped_from == "Opportunity":
+def get_opportunity_details(self):
+    return frappe.get_value(
+        "Opportunity", self.opportunity, ["proposal_name", "title", "name", "expected_closing"], as_dict=1
+    )
+
+
+def create_or_get_slack_channel(self, opportunity_details):
+    channel_name = compatible_slack_channel_name(opportunity_details.proposal_name)
+    channel_details = create_slack_channel(self, channel_name)
+    if not channel_details:
+        return
+    if channel_details["is_channel_created"] == "name_taken":
+        count = 1
+        while channel_details["is_channel_created"] != True:
+            channel_details = create_slack_channel(self, (channel_name+"_"+str(count)))
+            count += 1
+    return channel_details
+
+
+def set_opportunity_channel_values(self, channel_details):
+    frappe.db.set_value("Opportunity", self.opportunity,
+                        {"custom_channel_name": channel_details["channel_name"],
+                         "custom_channel_id": channel_details["channel_id"]})
+
+
+def set_channel_properties(self, opportunity_details):
+    channel = get_channel_id(self)
+    if channel:
+        topic = f"{opportunity_details.title}-{opportunity_details.name}"
+        description = (
+            f"Expected closing Date: {str(opportunity_details.expected_closing)}"
+        )
+        set_topic(self, channel, topic)
+        set_description(self, channel, description)
+        # send_file(self, channel)
+
+
+def manage_channel_members(self):
+    channel = get_channel_id(self)
+    if channel:
+        add_or_remove_users(self, channel)
+
+
+def add_or_remove_users(self, channel):
+    add_user_ids = get_users(self, add_or_remove_user="add")
+    if add_user_ids:
+        add_user_ids_str = ",".join(add_user_ids.values())
+        invite_user = invite_users(self, add_user_ids_str, channel)
+        if invite_user:
+            for user in self.distribution_detail:
+                for employee, slack_id in add_user_ids.items():
+                    if user.employee == employee:
+                        user.is_user_added = 1
+
+    remove_user_ids = get_users(self, add_or_remove_user="remove")
+    if remove_user_ids:
+        remove_member(self, remove_user_ids, channel)
+
+
+def get_users(self, add_or_remove_user, method=None):
+	slack_user_ids = {}
+	remove_slack_user_ids = []
+	if add_or_remove_user == "add":
+		if self.distribution_detail:
+			for user in self.distribution_detail:
+				if not user.custom_is_user_added:
+					email = frappe.db.get_value("Employee", user.employee, "company_email")
+					if email:
+						slack_user_id = get_user_ids(self, email)
+						if slack_user_id:
+							slack_user_ids[user.employee] = slack_user_id
+
+	if self.ped_from == "Opportunity" and self.is_channel_created != 1:
 		doc = frappe.get_doc("Opportunity", self.opportunity)
 		tech_name = doc.custom_tech_name if doc.custom_tech_name else None
 		proposal_manager_name = (
@@ -83,30 +126,26 @@ def get_users(self, method=None):
 			for user in users:
 				slack_user_id = get_user_ids(self, user.company_email)
 				if slack_user_id:
-					slack_user_ids += slack_user_id + ","
+					slack_user_ids[user.company_email] = slack_user_id
+
+	if add_or_remove_user == "remove":
+		user_list = []
+		old_user_list = []
+		if self.distribution_detail:
+			for user in self.distribution_detail:
+				user_list.append(user.employee)
+			ped_exist = frappe.db.exists("Project Employee Distribution", self.name)
+			if ped_exist:
+				old_doc = frappe.get_cached_doc("Project Employee Distribution", self.name)
+				for old_user in old_doc.distribution_detail:
+					old_user_list.append(old_user.employee)
+				remove_user_list = list(filter(lambda x: x not in user_list, old_user_list))
+
+				if remove_user_list:
+					for user in remove_user_list:
+						email = frappe.db.get_value("Employee", user, "company_email")
+						slack_user_id = get_user_ids(self, email)
+						if slack_user_id:
+							remove_slack_user_ids.append(slack_user_id)
+				return remove_slack_user_ids
 	return slack_user_ids
-
-
-def removed_user_slack_id(self, user_ids):
-	present_user_ids = []
-	remove_slack_user_ids = []
-
-	ped_exist = frappe.db.exists("Project Employee Distribution", self.name)
-
-	if ped_exist:
-		old_doc = frappe.get_cached_doc("Project Employee Distribution", self.name)
-		for user in old_doc.distribution_detail:
-			email_to_remove = frappe.db.get_value("Employee", user.employee, "company_email")
-			if email_to_remove:
-				present_user_id = get_user_ids(self, email_to_remove)
-				if present_user_id:
-					present_user_ids.append(present_user_id)
-
-	user_id_set = set(user_ids.split(","))
-	present_user_id_set = set(present_user_ids)
-
-	for remove_slack_user_id in present_user_id_set:
-		if remove_slack_user_id not in user_id_set:
-			remove_slack_user_ids.append(remove_slack_user_id)
-
-	return remove_slack_user_ids
