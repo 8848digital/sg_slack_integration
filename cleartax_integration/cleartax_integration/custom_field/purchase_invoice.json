@@ -1,0 +1,26 @@
+{
+    "Purchase Invoice": [
+     {
+      "default": "All Other ITC",
+      "fieldname": "eligibility_for_itc",
+      "fieldtype": "Select",
+      "insert_after": "gst_section",
+      "label": "Eligibility For ITC",
+      "print_hide": 1,
+      "is_system_generated": 1,
+      "options": "Input Service Distributor\nImport Of Service\nImport Of Capital Goods\nITC on Reverse Charge\nIneligible As Per Section 17(5)\nIneligible Others\nAll Other ITC",
+      "module": "Accounts"
+     },
+     {
+      "fieldname": "is_non_gst",
+      "fieldtype": "Check",
+      "insert_after": "eligibility_for_itc",
+      "label": "Is Non GST",
+      "print_hide": 1,
+      "is_system_generated": 1,
+      "translatable": 1,
+      "fetch_from": "item_code.is_non_gst",
+      "module": "Stock"
+     }
+    ]
+}

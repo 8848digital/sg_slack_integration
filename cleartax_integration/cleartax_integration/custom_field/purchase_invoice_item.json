@@ -1,0 +1,26 @@
+{
+    "Purchase Invoice Item": [
+    {
+     "fieldname": "is_nil_exempt",
+     "fieldtype": "Check",
+     "insert_after": "gst_hsn_code",
+     "label": "Is Nil Rated or Exempted",
+     "print_hide": 1,
+     "is_system_generated": 1,
+     "translatable": 1,
+     "fetch_from": "item_code.is_nil_exempt",
+     "module": "Accounts"
+    },
+     {
+      "fieldname": "is_non_gst",
+      "fieldtype": "Check",
+      "insert_after": "eligibility_for_itc",
+      "label": "Is Non GST",
+      "print_hide": 1,
+      "is_system_generated": 1,
+      "translatable": 1,
+      "fetch_from": "item_code.is_non_gst",
+      "module": "Accounts"
+     }
+    ]
+}
