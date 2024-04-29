@@ -6,7 +6,7 @@ app_email = "contact@8848digital.com"
 app_license = "MIT"
 
 
-# after_migrate = "cleartax_integration.migrate.after_migrate"
+after_migrate = "cleartax_integration.migrate.after_migrate"
 # Includes in <head>
 # ------------------
 
@@ -203,20 +203,20 @@ scheduler_events = {
 # 	"cleartax_integration.auth.validate"
 # ]
 
-fixtures = [
-    {"dt": "Custom Field", "filters": [
-        [
-            "module", "in", [
-                    "Cleartax Integration"
-            ],
-            # "fieldname", "in", ["state"]
-        ]
-    ]},
-    {"dt": "Server Script", "filters": [
-        [
-            "module", "in", [
-                "Cleartax Integration"
-            ]
-        ]
-    ]},
-]
+# fixtures = [
+#     {"dt": "Custom Field", "filters": [
+#         [
+#             "module", "in", [
+#                     "Cleartax Integration"
+#             ],
+#             # "fieldname", "in", ["state"]
+#         ]
+#     ]},
+#     {"dt": "Server Script", "filters": [
+#         [
+#             "module", "in", [
+#                 "Cleartax Integration"
+#             ]
+#         ]
+#     ]},
+# ]
