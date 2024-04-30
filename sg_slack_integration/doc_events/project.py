@@ -3,12 +3,12 @@ from sg_slack_integration.doc_events.common_function import (
 from sg_slack_integration.doc_events.utils import compatible_slack_channel_name
 
 
-def validate(self, method=None):
+def on_update(self, method=None):
     create_project_channel(self)
 
 
 def create_project_channel(self):
-    if self.custom_channel_id:
+    if not self.custom_channel_id:
         channel_name = compatible_slack_channel_name(self.project_name)
         channel_details = create_slack_channel(self, channel_name)
         if not channel_details:
@@ -33,8 +33,8 @@ def create_project_channel(self):
 
 
 def set_topic_and_description(self,project_channel_name):
-		channel = get_channel_id(self,project_channel_name)
-		if self.project_name:
-			set_topic(self, channel, self.project_name)
-		if self.customer:
-			set_description(self, channel, self.customer + "-" + self.customer_name)
+    channel = get_channel_id(self,project_channel_name)
+    if self.project_name:
+        set_topic(self, channel, self.project_name)
+    if self.customer:
+        set_description(self, channel, self.customer + "-" + self.customer_name)
