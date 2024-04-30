@@ -72,7 +72,7 @@ def set_channel_properties(self, opportunity_details):
         )
         set_topic(self, channel, topic)
         set_description(self, channel, description)
-        # send_file(self, channel)
+        send_file(self, channel)
 
 
 def manage_channel_members(self):
