@@ -120,7 +120,7 @@ app_license = "MIT"
 
 doc_events = {
 	"Project": {
-		"on_update": "sg_slack_integration.doc_events.project.on_update",
+		"validate": "sg_slack_integration.doc_events.project.validate",
 	},
 	"Project Employee Distribution": {
 		"validate": "sg_slack_integration.doc_events.ped.validate",
@@ -133,23 +133,23 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"sg_slack_integration.tasks.all"
-# 	],
-# 	"daily": [
-# 		"sg_slack_integration.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"sg_slack_integration.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"sg_slack_integration.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"sg_slack_integration.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	# "all": [
+	# 	"sg_slack_integration.tasks.all"
+	# ],
+	"daily": [
+		"sg_slack_integration.tasks.archive_opportunity_channel"
+	],
+	# "hourly": [
+	# 	"sg_slack_integration.tasks.hourly"
+	# ],
+	# "weekly": [
+	# 	"sg_slack_integration.tasks.weekly"
+	# ],
+	# "monthly": [
+	# 	"sg_slack_integration.tasks.monthly"
+	# ],
+}
 
 # Testing
 # -------
