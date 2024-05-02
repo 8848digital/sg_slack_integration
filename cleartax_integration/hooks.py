@@ -4,7 +4,7 @@ app_publisher = "8848 Digital LLP"
 app_description = "Cleartax Integration"
 app_email = "contact@8848digital.com"
 app_license = "MIT"
-
+required_apps = ["frappe/erpnext/india_compliance"]
 
 after_migrate = "cleartax_integration.migrate.after_migrate"
 # Includes in <head>
@@ -29,8 +29,67 @@ after_migrate = "cleartax_integration.migrate.after_migrate"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_js = {
+    "Address": "public/js/address_doctype.js",
+    "Delivery Note": "public/js/delivery_note_doctype.js",
+    "Purchase Invoice": "public/js/purchase_invoice_doctype.js",
+    "Sales Invoice": [
+         "public/js/sales_invoice_doctype.js",
+    ],
+    "Shipment": "public/js/shipment_doctype.js",
+}
+doctype_list_js = {
+    "Sales Invoice": [
+        "public/js/sales_invoice_list.js",
+    ],
+    "Purchase Invoice": "public/js/purchase_invoice_list.js",
+    "Delivery Note": "public/js/delivery_note_list.js"
+}
+
+doc_events = {
+    # "Company": {
+    #     "on_update": "gst_india.gst_india.overrides.company.create_default_tax_templates"
+    # },
+ 
+    "Delivery Note": {
+        "before_submit": "cleartax_integration.public.py.delivery_note_doctype.delivery_note_submit",
+        "before_save": "cleartax_integration.public.py.delivery_note_doctype.delivery_note_save",
+        "before_cancel": "cleartax_integration.public.py.delivery_note_doctype.delivery_note_cancel"
+    },
+    # "Item": {"validate": "gst_india.gst_india.overrides.item.validate_hsn_code"},
+    # "Payment Entry": {
+    #     "validate": (
+    #         "gst_india.gst_india.overrides.payment_entry.update_place_of_supply"
+    #     )
+    # },
+    "Purchase Invoice": {
+        "before_submit": ["cleartax_integration.public.py.purchase_invoice_doctype.group_id",
+            "cleartax_integration.public.py.purchase_invoice_doctype.purchase_invoice_submit"],
+        "before_cancel": "cleartax_integration.public.py.purchase_invoice_doctype.purchase_invoice_cancel",
+        "before_save": "cleartax_integration.public.py.purchase_invoice_doctype.purchase_invoice_save",
+        "on_submit":"cleartax_integration.public.py.purchase_invoice_doctype.group_id"
+    },
+    # "Purchase Receipt": {
+    #     "validate": (
+    #         "gst_india.gst_india.overrides.transaction.validate_transaction"
+    #     ),
+    # },
+    "Sales Invoice": {
+        # "onload": "gst_india.gst_india.overrides.sales_invoice.onload",
+        "validate": "cleartax_integration.public.py.sales_invoice_doctype.group_id",
+        "on_submit": ["cleartax_integration.public.py.purchase_invoice_doctype.sales_group_id",
+                      "cleartax_integration.public.py.sales_invoice_doctype.sales_invoice_submit",
+                      "cleartax_integration.public.py.sales_invoice_doctype.sales_invoice_submit"], 
+        "before_cancel": "cleartax_integration.public.py.sales_invoice_doctype.sales_invoice_cancel",
+        "before_save": "cleartax_integration.public.py.sales_invoice_doctype.sales_invoice_save"
+    },
+    "Shipment":{
+        "before_save": "cleartax_integration.public.py.shipment.before_save"
+    },
+}
+
+
+
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
