@@ -21,6 +21,24 @@
       "translatable": 1,
       "fetch_from": "item_code.is_non_gst",
       "module": "Stock"
-     }
+     },
+     {
+        "fieldname": "gst_import_supplier_gst_details_section",
+        "fieldtype": "Section Break",
+        "insert_after": "itc_cess_amount"
+       },
+     {
+        "fieldname": "import_supplier",
+        "fieldtype": "Check",
+        "label": "Import Supplier",
+        "insert_after": "is_return"
+    },
+     {
+        "fieldname": "gst_import_supplier_gst_details",
+        "fieldtype": "Table",
+        "insert_after": "gst_import_supplier_gst_details_section",
+        "label": "GST Import Supplier GST Details",
+        "options": "GST Import Supplier"
+    }
     ]
 }
