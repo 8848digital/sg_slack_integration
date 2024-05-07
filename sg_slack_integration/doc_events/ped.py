@@ -90,7 +90,7 @@ def add_or_remove_users(self, channel):
             for user in self.distribution_detail:
                 for employee, slack_id in add_user_ids.items():
                     if user.employee == employee:
-                        user.is_user_added = 1
+                        user.custom_is_user_added = 1
 
     remove_user_ids = get_users(self, add_or_remove_user="remove")
     if remove_user_ids:

@@ -3,12 +3,12 @@ from sg_slack_integration.doc_events.common_function import (
 from sg_slack_integration.doc_events.utils import compatible_slack_channel_name
 
 
-def validate(self, method=None):
+def on_update(self, method=None):
     create_project_channel(self)
 
 
 def create_project_channel(self):
-    if self.is_new():
+    if not self.custom_channel_id:
         channel_name = compatible_slack_channel_name(self.project_name)
         channel_details = create_slack_channel(self, channel_name)
         if not channel_details:
@@ -24,11 +24,17 @@ def create_project_channel(self):
 
             self.custom_channel_name = project_channel_name
             self.custom_channel_id = project_channel_id
+            print (1111111111111111111111111111111, self.custom_channel_id)
+            self.save()
+            print("self.custom_channel_id",self.custom_channel_id)
 
         elif channel_details["is_channel_created"]:
             self.custom_channel_name = channel_details["channel_name"]
             self.custom_channel_id = channel_details["channel_id"]
+            print (1111111111111111111111111111111, self.custom_channel_id)
             project_channel_name = channel_name
+            self.save()
+            print("self.custom_channel_id",self.custom_channel_id)
         set_topic_and_description(self,project_channel_name)
 
 

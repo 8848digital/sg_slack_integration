@@ -120,7 +120,7 @@ app_license = "MIT"
 
 doc_events = {
 	"Project": {
-		"validate": "sg_slack_integration.doc_events.project.validate",
+		"on_update": "sg_slack_integration.doc_events.project.on_update",
 	},
 	"Project Employee Distribution": {
 		"validate": "sg_slack_integration.doc_events.ped.validate",
