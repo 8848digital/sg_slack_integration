@@ -1,0 +1,25 @@
+{
+    "Sales Invoice": [
+        {
+         "depends_on": "eval:(doc.eway_bill_cancelled === 1)",
+         "fieldname": "eway_bill_cancelled",
+         "fieldtype": "Check",
+         "insert_after": "ewaybill",
+         "label": "Eway Bill Cancelled"
+        },
+     {
+        "fieldname": "ewb_date",
+        "fieldtype": "Data",
+        "insert_after": "eway_bill_cancelled",
+        "label": "Ewb Date",
+        "translatable": 1
+    },
+       {
+        "fieldname": "eway_bill_validity",
+        "fieldtype": "Data",
+        "insert_after": "ewb_date",
+        "label": "Eway Bill Validity",
+        "translatable": 1
+       }
+    ]
+}
