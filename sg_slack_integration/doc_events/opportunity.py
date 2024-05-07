@@ -3,7 +3,6 @@ import frappe
 from frappe import _
 
 from sg_slack_integration.doc_events.common_function import (
-	get_channel_id,
 	unarchive_channel,
 )
 
@@ -32,7 +31,11 @@ def handle_workflow_state(self):
 				if unarchive:
 					self.custom_is_channel_archived = 0
 					self.custom_archiving_date = None
-			elif (previous_workflow == "Client Approval Pending" and self.workflow_state == "In Progress" and self.custom_is_channel_archived == 0):
+			elif (
+       			previous_workflow == "Client Approval Pending" 
+         		and self.workflow_state == "In Progress" 
+           		and self.custom_is_channel_archived == 0
+            ):
 				self.custom_archiving_date = None
 		else:
 			frappe.throw(_("Slack channel already created with same proposal name"))

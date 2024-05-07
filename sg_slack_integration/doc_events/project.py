@@ -1,5 +1,5 @@
 from sg_slack_integration.doc_events.common_function import (
-    create_slack_channel, get_channel_id, set_description, set_topic)
+    create_slack_channel, set_description, set_topic)
 from sg_slack_integration.doc_events.utils import compatible_slack_channel_name
 
 
@@ -24,14 +24,12 @@ def create_project_channel(self):
 
             self.custom_channel_name = project_channel_name
             self.custom_channel_id = project_channel_id
-            print (1111111111111111111111111111111, self.custom_channel_id)
             self.save()
             print("self.custom_channel_id",self.custom_channel_id)
 
         elif channel_details["is_channel_created"]:
             self.custom_channel_name = channel_details["channel_name"]
             self.custom_channel_id = channel_details["channel_id"]
-            print (1111111111111111111111111111111, self.custom_channel_id)
             project_channel_name = channel_name
             self.save()
             print("self.custom_channel_id",self.custom_channel_id)
@@ -39,7 +37,7 @@ def create_project_channel(self):
 
 
 def set_topic_and_description(self,project_channel_name):
-    channel = get_channel_id(self,project_channel_name)
+    channel = self.custom_channel_id
     if self.project_name:
         set_topic(self, channel, self.project_name)
     if self.customer:
