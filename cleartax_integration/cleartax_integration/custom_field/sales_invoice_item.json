@@ -1,0 +1,29 @@
+{
+ "Sales Invoice Item": [
+  {
+    "dt": "Sales Invoice Item",
+    "fetch_from": "item_code.is_nil_exempt",
+    "fieldname": "is_nil_exempt",
+    "fieldtype": "Check",
+    "is_system_generated": 1,
+    "label": "Is Nil Rated or Exempted",
+    "print_hide": 1
+   },
+  {
+   "fetch_from": "item_code.is_non_gst",
+   "fieldname": "is_non_gst",
+   "fieldtype": "Check",
+   "is_system_generated": 1,
+   "label": "Is Non GST",
+   "print_hide": 1,
+   "translatable": 1
+  },
+  {
+   "fieldname": "item_type",
+   "fieldtype": "Select",
+   "label": "Item Type",
+   "options": "Product\nService",
+   "reqd": 1,
+   "translatable": 1
+  }
+ ]}

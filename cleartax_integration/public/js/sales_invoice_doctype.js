@@ -16,8 +16,11 @@ frappe.ui.form.on('Sales Invoice', {
 					name:frm.selected_doc.name
 				},
 				callback: function (r) {
+					console.log(r)
 					if (r.message == true) {
+						console.log(r)
 						if (frm.selected_doc.irn_cancelled == false && frm.selected_doc.irn == undefined) {
+							console.log("1111")
 							cur_frm.add_custom_button(__("IRN"), function () {
 								frappe.call({
 									method: "cleartax_integration.cleartax_integration.API.irn.generate_irn",

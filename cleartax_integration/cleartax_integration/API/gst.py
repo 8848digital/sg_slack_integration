@@ -19,15 +19,28 @@ def gstin_info(**kwargs):
         data = {
             'gstin': kwargs.get('gstin'),
             'company_gstin': gstin
-        } 
-        headers = {
-            'sandbox': str(settings.sandbox),
-            'Content-Type': 'application/json'
-        }
-        if settings.enterprise:
-            headers['token'] = settings.get_password('production_auth_token')
-            if settings.sandbox:
-                headers['token'] = settings.get_password('sandbox_auth_token')
+        }   
+        if settings.sandbox:
+            headers = {
+                'sandbox': str(settings.sandbox),
+                'Content-Type': 'application/json',
+                "token": settings.get_password('sandbox_auth_token')
+            }
+        elif settings.enterprise:
+            headers = {
+                'production': str(settings.enterprise),
+                'Content-Type': 'application/json',
+                "token": settings.get_password('production_auth_token')
+            }
+
+        # headers = {
+        #     'sandbox': str(settings.sandbox),
+        #     'Content-Type': 'application/json'
+        # }
+        # if settings.enterprise:
+        #     headers['token'] = settings.get_password('production_auth_token')
+        #     if settings.sandbox:
+        #         headers['token'] = settings.get_password('sandbox_auth_token')
         data = json.dumps(data, indent=4, sort_keys=False, default=str)
         response = requests.request("GET", url, headers=headers, data= data) 
         response = response.json()['message']

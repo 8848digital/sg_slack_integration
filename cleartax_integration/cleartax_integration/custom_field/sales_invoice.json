@@ -20,6 +20,95 @@
         "insert_after": "ewb_date",
         "label": "Eway Bill Validity",
         "translatable": 1
+       },
+       {
+        "fieldname": "taxes_and_charges_added",
+        "fieldtype": "Data",
+        "label": "Taxes and Charges Added"
+       },
+       {
+        "fieldname": "irn_status",
+        "fieldtype": "Data",
+        "insert_after": "signed_qr_code",
+        "label": "IRN Status"
+       },
+       {
+        "fieldname": "irn_cancelled",
+        "fieldtype": "Check",
+        "label": "IRN Cancelled",
+        "insert_after": "irn_status",
+        "depends_on": "eval: doc.irn"
+       },
+       {
+        "fieldname": "custom_group_id",
+        "fieldtype": "Data",
+        "label": "Group ID",
+        "depends_on": "eval: doc.irn",
+        "read_only": 1,
+        "translatable": 1
+       },
+       {
+        "fieldname": "custom_export_bill_number",
+        "fieldtype": "Data",
+        "label": "Export Bill Number",
+        "no_copy": 1,
+        "depends_on": "eval: doc.custom_export_customer == 1",
+        "mandatory_depends_on": "eval: doc.custom_export_customer == 1"
+       },
+       {
+        "fieldname": "custom_export_port_code",
+        "fieldtype": "Data",
+        "label": "Export Port Code",
+        "length": 30,
+        "no_copy": 1,
+        "depends_on": "eval: doc.custom_export_customer == 1",
+        "mandatory_depends_on": "eval: doc.custom_export_customer == 1"
+       },
+       {
+        "fieldname": "custom_export_type",
+        "fieldtype": "Select",
+        "label": "Export Type",
+        "options": "\nSEZWP\nDEXP\nEXPWOP\nEXPWP\nSEZWOP\nINTRA_STATE_ATTRACTING_IGST",
+        "length": 30,
+        "no_copy": 1,
+        "depends_on": "eval: doc.custom_export_customer == 1",
+        "mandatory_depends_on": "eval: doc.custom_export_customer == 1",
+        "translatable": 1
+       },
+       {
+        "fieldname": "custom_export_bill_date",
+        "fieldtype": "Date",
+        "label": "Export Bill Date",
+        "no_copy": 1,
+        "depends_on": "eval: doc.custom_export_customer == 1",
+        "mandatory_depends_on": "eval: doc.custom_export_customer == 1"
+       },
+       {
+        "fieldname": "custom_export_details",
+        "fieldtype": "Section Break",
+        "label": "Export Details",
+        "collapsible": 1
+       },
+       {
+        "fieldname": "custom_non_gst",
+        "fieldtype": "Check",
+        "label": "Non GST",
+        "no_copy": 1,
+        "Read_only": 1,
+        "depends_on": "eval: doc.custom_export_customer == 1",
+        "mandatory_depends_on": "eval: doc.custom_export_customer == 1"
+       },
+       {
+        "fieldname": "custom_export_customer",
+        "fieldtype": "Check",
+        "label": "Export Customer",
+        "no_copy": 1
+       },
+       {
+        "fieldname": "import_supplier",
+        "fieldtype": "Check",
+        "label": "Import Supplier",
+        "hidden": 1
        }
     ]
 }
