@@ -1,0 +1,20 @@
+{
+    "Item": [
+    {
+     "fieldname": "is_nil_exempt",
+     "fieldtype": "Check",
+     "insert_after": "gst_hsn_code",
+     "label": "Is Nil Rated or Exempted",
+     "print_hide": 1,
+     "translatable": 1
+    },
+     {
+      "fieldname": "is_non_gst",
+      "fieldtype": "Check",
+      "insert_after": "is_nil_exempt",
+      "label": "Is Non GST",
+      "print_hide": 1,
+      "translatable": 1
+     }
+    ]
+}

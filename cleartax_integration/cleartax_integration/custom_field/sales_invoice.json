@@ -109,6 +109,20 @@
         "fieldtype": "Check",
         "label": "Import Supplier",
         "hidden": 1
+       },
+       {
+        "fetch_from": "item_code.is_nil_exempt",
+        "fieldname": "is_nil_exempt",
+        "fieldtype": "Check",
+        "is_system_generated": 1,
+        "label": "Is Nil Rated or Exempted",
+        "print_hide": 1,
+        "hidden":1
+       },
+       {
+        "fieldname": "gst_invoice",
+        "fieldtype": "Check",
+        "label": "GST Invoice"
        }
     ]
 }

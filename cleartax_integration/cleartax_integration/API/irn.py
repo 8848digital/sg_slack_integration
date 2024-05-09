@@ -40,29 +40,15 @@ def create_irn_request(data,inv):
         settings = frappe.get_doc('Cleartax Settings')
         url = settings.host_url
         url+= "/api/method/cleartax.cleartax.API.irn.generate_irn"
-
-        if settings.sandbox:
-            headers = {
-                'sandbox': str(settings.sandbox),
-                'Content-Type': 'application/json',
-                "token": settings.get_password('sandbox_auth_token')
-            }
-        elif settings.enterprise:
-            headers = {
-                'production': str(settings.enterprise),
-                'Content-Type': 'application/json',
-                "token": settings.get_password('production_auth_token')
-            }
-
-        # headers = {
-        #     'sandbox': str(settings.sandbox),
-        #     'Content-Type': 'application/json'
-        # }
-        # if settings.enterprise:
-        #     if settings.sandbox:
-        #         headers['token'] = settings.get_password('sandbox_auth_token')
-        #     else:
-        #         headers['token'] = settings.get_password('production_auth_token')
+        headers = {
+            'sandbox': str(settings.sandbox),
+            'Content-Type': 'application/json'
+        }
+        if settings.enterprise:
+            if settings.sandbox:
+                headers['token'] = settings.get_password('sandbox_auth_token')
+            else:
+                headers['token'] = settings.get_password('production_auth_token')
 
         payload = json.dumps(data, indent=4, sort_keys=False, default=str)
         response = requests.request(
@@ -129,29 +115,15 @@ def cancel_irn_request(inv,data):
         settings = frappe.get_doc('Cleartax Settings')
         url = settings.host_url
         url+= "/api/method/cleartax.cleartax.API.irn.cancel_irn"
-
-        if settings.sandbox:
-            headers = {
-                'sandbox': str(settings.sandbox),
-                'Content-Type': 'application/json',
-                "token": settings.get_password('sandbox_auth_token')
-            }
-        elif settings.enterprise:
-            headers = {
-                'production': str(settings.enterprise),
-                'Content-Type': 'application/json',
-                "token": settings.get_password('production_auth_token')
-            }
-
-        # headers = {
-        #     'sandbox': str(settings.sandbox),
-        #     'Content-Type': 'application/json'
-        # }
-        # if settings.enterprise:
-        #     if settings.sandbox:
-        #         headers['token'] = settings.get_password('sandbox_auth_token')
-        #     else:
-        #         headers['token'] = settings.get_password('production_auth_token')
+        headers = {
+            'sandbox': str(settings.sandbox),
+            'Content-Type': 'application/json'
+        }
+        if settings.enterprise:
+            if settings.sandbox:
+                headers['token'] = settings.get_password('sandbox_auth_token')
+            else:
+                headers['token'] = settings.get_password('production_auth_token')
         payload = json.dumps(data, indent=4, sort_keys=False, default=str)
         response = requests.request(
             "POST", url, headers=headers, data=payload)
@@ -163,7 +135,6 @@ def cancel_irn_request(inv,data):
             frappe.db.set_value('Sales Invoice',inv,'irn_cancelled',1)
             return success_response()
         response_logger(response['request'],response['response'],"CANCEL IRN","Sales Invoice",inv,response_status)
-        frappe.db.commit()
         return response_error_handling(response)
     except Exception as e:
         frappe.logger('cleartax').exception(e)
@@ -188,6 +159,6 @@ def irn_bulk_processing(**kwargs):
 @frappe.whitelist()
 def bulk_irn(**kwargs):
     try:
-        frappe.enqueue("cleartax_integration.cleartax_integration.API.irn.irn_bulk_processing",**{'data':kwargs.get('data')})
+        frappe.enqueue("cleartax_integration.API.irn.irn_bulk_processing",**{'data':kwargs.get('data')})
     except Exception as e:
         frappe.logger('sfa_online').exception(e)

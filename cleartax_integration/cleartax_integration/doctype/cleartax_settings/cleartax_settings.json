@@ -50,14 +50,14 @@
    "fieldname": "sandbox",
    "fieldtype": "Check",
    "label": "Sandbox",
-   "read_only_depends_on": "eval: doc.enterprise == 1;"
+   "read_only_depends_on": "// eval: doc.enterprise == 1;"
   },
   {
    "default": "0",
    "fieldname": "enterprise",
    "fieldtype": "Check",
    "label": "Enterprise",
-   "read_only_depends_on": "eval: doc.sandbox == 1;"
+   "read_only_depends_on": "// eval: doc.sandbox == 1;"
   },
   {
    "fieldname": "enterprise_section",
@@ -145,7 +145,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-05-08 23:01:29.546530",
+ "modified": "2024-05-09 13:14:52.970567",
  "modified_by": "Administrator",
  "module": "Cleartax Integration",
  "name": "Cleartax Settings",

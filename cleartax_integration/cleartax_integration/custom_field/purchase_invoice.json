@@ -39,6 +39,26 @@
         "insert_after": "gst_import_supplier_gst_details_section",
         "label": "GST Import Supplier GST Details",
         "options": "GST Import Supplier"
+    },
+     {
+        "fieldname": "supplier_pan",
+        "fieldtype": "Data",
+        "label": "Supplier PAN",
+        "read_only": 1,
+        "translatable": 1,
+        "fetch_from": "supplier.pan"
+    },
+     {
+        "fieldname": "gst_invoice",
+        "fieldtype": "Check",
+        "label": "GST Invoice"
+    },
+     {
+        "fieldname": "custom_non_gst",
+        "fieldtype": "Check",
+        "label": "Non GST",
+        "read_only": 1,
+        "no_copy": 1
     }
     ]
 }
