@@ -25,18 +25,15 @@ def create_project_channel(self):
             self.custom_channel_name = project_channel_name
             self.custom_channel_id = project_channel_id
             self.save()
-            print("self.custom_channel_id",self.custom_channel_id)
 
         elif channel_details["is_channel_created"]:
             self.custom_channel_name = channel_details["channel_name"]
             self.custom_channel_id = channel_details["channel_id"]
-            project_channel_name = channel_name
             self.save()
-            print("self.custom_channel_id",self.custom_channel_id)
-        set_topic_and_description(self,project_channel_name)
+        set_topic_and_description(self)
 
 
-def set_topic_and_description(self,project_channel_name):
+def set_topic_and_description(self):
     channel = self.custom_channel_id
     if self.project_name:
         set_topic(self, channel, self.project_name)

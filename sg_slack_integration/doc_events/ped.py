@@ -32,7 +32,7 @@ def opportunity_process(self):
 def project_process(self):
 	if self.ped_from != "Project":
 		return
-	channel = frappe.get_value("Project", self.project, "custom_channel_id")
+	channel = frappe.db.get_value("Project", self.project, "custom_channel_id")
 	if channel:
 		self.is_channel_created = 1
 		add_or_remove_users(self, channel)
@@ -64,7 +64,7 @@ def set_opportunity_channel_values(self, channel_details):
 
 
 def set_channel_properties(self, opportunity_details):
-    channel = frappe.get_value("Opportunity", self.opportunity, "custom_channel_id")
+    channel = frappe.db.get_value("Opportunity", self.opportunity, "custom_channel_id")
     if channel:
         topic = f"{opportunity_details.title}-{opportunity_details.name}"
         description = (
@@ -76,7 +76,7 @@ def set_channel_properties(self, opportunity_details):
 
 
 def manage_channel_members(self):
-    channel = frappe.get_value("Opportunity", self.opportunity, "custom_channel_id")
+    channel = frappe.db.get_value("Opportunity", self.opportunity, "custom_channel_id")
     if channel:
         add_or_remove_users(self, channel)
 
