@@ -16,11 +16,14 @@
   {
    "fieldname": "slack_token",
    "fieldtype": "Data",
-   "label": "Slack Token"
+   "in_list_view": 1,
+   "label": "Slack Token",
+   "reqd": 1
   },
   {
+   "description": "(Set days after which Opportunity Slack Channel will get archived once workflow state changes to Client Approval Pending)",
    "fieldname": "days_to_archive_channel",
-   "fieldtype": "Data",
+   "fieldtype": "Int",
    "label": "Days to Archive Channel"
   },
   {
@@ -39,7 +42,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-04-30 11:31:43.268569",
+ "modified": "2024-05-13 14:47:24.286281",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",
