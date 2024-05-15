@@ -1,116 +1,44 @@
 {
     "Sales Invoice": [
         {
-         "depends_on": "eval:(doc.eway_bill_cancelled === 1)",
-         "fieldname": "eway_bill_cancelled",
-         "fieldtype": "Check",
-         "insert_after": "ewaybill",
-         "label": "Eway Bill Cancelled"
-        },
-     {
-        "fieldname": "ewb_date",
-        "fieldtype": "Data",
-        "insert_after": "eway_bill_cancelled",
-        "label": "Ewb Date",
-        "translatable": 1
-    },
-       {
-        "fieldname": "eway_bill_validity",
-        "fieldtype": "Data",
-        "insert_after": "ewb_date",
-        "label": "Eway Bill Validity",
-        "translatable": 1
-       },
-       {
-        "fieldname": "taxes_and_charges_added",
+            "fieldname": "taxes_and_charges_added",
         "fieldtype": "Data",
         "label": "Taxes and Charges Added"
-       },
-       {
-        "fieldname": "irn_status",
-        "fieldtype": "Data",
-        "insert_after": "signed_qr_code",
-        "label": "IRN Status"
-       },
-       {
-        "fieldname": "irn_cancelled",
-        "fieldtype": "Check",
-        "label": "IRN Cancelled",
-        "insert_after": "irn_status",
-        "depends_on": "eval: doc.irn"
-       },
-       {
+    },
+    {
         "fieldname": "custom_group_id",
         "fieldtype": "Data",
         "label": "Group ID",
         "depends_on": "eval: doc.irn",
         "read_only": 1,
-        "translatable": 1
-       },
-       {
-        "fieldname": "custom_export_bill_number",
-        "fieldtype": "Data",
-        "label": "Export Bill Number",
-        "no_copy": 1,
-        "depends_on": "eval: doc.custom_export_customer == 1",
-        "mandatory_depends_on": "eval: doc.custom_export_customer == 1"
-       },
-       {
-        "fieldname": "custom_export_port_code",
-        "fieldtype": "Data",
-        "label": "Export Port Code",
-        "length": 30,
-        "no_copy": 1,
-        "depends_on": "eval: doc.custom_export_customer == 1",
-        "mandatory_depends_on": "eval: doc.custom_export_customer == 1"
-       },
-       {
-        "fieldname": "custom_export_type",
-        "fieldtype": "Select",
-        "label": "Export Type",
-        "options": "\nSEZWP\nDEXP\nEXPWOP\nEXPWP\nSEZWOP\nINTRA_STATE_ATTRACTING_IGST",
-        "length": 30,
-        "no_copy": 1,
-        "depends_on": "eval: doc.custom_export_customer == 1",
-        "mandatory_depends_on": "eval: doc.custom_export_customer == 1",
-        "translatable": 1
-       },
-       {
-        "fieldname": "custom_export_bill_date",
-        "fieldtype": "Date",
-        "label": "Export Bill Date",
-        "no_copy": 1,
-        "depends_on": "eval: doc.custom_export_customer == 1",
-        "mandatory_depends_on": "eval: doc.custom_export_customer == 1"
-       },
-       {
-        "fieldname": "custom_export_details",
-        "fieldtype": "Section Break",
-        "label": "Export Details",
-        "collapsible": 1
-       },
-       {
+        "translatable": 1,
+        "insert_after": "tax_id"
+    },
+    {
         "fieldname": "custom_non_gst",
         "fieldtype": "Check",
         "label": "Non GST",
         "no_copy": 1,
         "Read_only": 1,
         "depends_on": "eval: doc.custom_export_customer == 1",
-        "mandatory_depends_on": "eval: doc.custom_export_customer == 1"
-       },
-       {
+        "mandatory_depends_on": "eval: doc.custom_export_customer == 1",
+        "insert_after": "is_return"
+    },
+    {
         "fieldname": "custom_export_customer",
         "fieldtype": "Check",
         "label": "Export Customer",
-        "no_copy": 1
-       },
-       {
+        "no_copy": 1,
+        "insert_after": "custom_non_gst"
+    },
+    {
         "fieldname": "import_supplier",
         "fieldtype": "Check",
         "label": "Import Supplier",
-        "hidden": 1
-       },
-       {
+        "hidden": 1,
+        "insert_after": "more_info_tab"
+    },
+    {
         "fetch_from": "item_code.is_nil_exempt",
         "fieldname": "is_nil_exempt",
         "fieldtype": "Check",
@@ -118,11 +46,165 @@
         "label": "Is Nil Rated or Exempted",
         "print_hide": 1,
         "hidden":1
-       },
-       {
+    },
+    {
+        "fieldname": "e_invoicing",
+        "fieldtype": "Section Break",
+        "label": "E Invoicing",
+        "collapsible": 1,
+        "insert_after": "against_income_account"
+    },
+    {
+        "fieldname": "irn",
+        "fieldtype": "Data",
+        "label": "IRN",
+        "read_only": 1,
+        "no_copy": 1,
+        "translatable": 1,
+        "insert_after": "e_invoicing"
+    },
+    {
+        "fieldname": "acknowledgement_number",
+        "fieldtype": "Data",
+        "label": "Acknowledgement Number",
+        "translatable": 1,
+        "insert_after": "irn"
+    },
+    {
+        "fieldname": "acknowledgement_date",
+        "fieldtype": "Data",
+        "label": "Acknowledgement Date",
+        "translatable": 1,
+        "insert_after": "acknowledgement_number"
+    },
+    {
+        "fieldname": "column_break_191",
+        "fieldtype": "Column Break",
+        "label": "Acknowledgement Date",
+        "insert_after": "acknowledgement_date"
+    },
+    {
+        "fieldname": "signed_invoice",
+        "fieldtype": "Code",
+        "label": "Signed Invoice",
+        "insert_after": "column_break_191"
+    },
+    {
+        "fieldname": "signed_qr_code",
+        "fieldtype": "Code",
+        "label": "Signed QR Code",
+        "insert_after": "signed_invoice"
+    },
+    {
+        "fieldname": "irn_status",
+        "fieldtype": "Data",
+        "label": "IRN Status",
+        "insert_after": "signed_qr_code"
+    },
+    {
+        "fieldname": "irn_cancelled",
+        "fieldtype": "Check",
+        "label": "IRN Cancelled",
+        "depends_on": "eval: doc.irn",
+        "insert_after": "irn_status"
+    },
+    {
+        "fieldname": "eway_bill",
+        "fieldtype": "Section Break",
+     "label": "EWay Bill",
+     "depends_on": "eval: doc.irn",
+     "insert_after": "irn_cancelled"
+    },
+    {
+        "fieldname": "ewaybill",
+        "fieldtype": "Data",
+        "label": "EwayBill",
+        "length": 20,
+        "translatable": 1,
+        "depends_on": "eval:((doc.docstatus === 1 || doc.ewaybill) && doc.eway_bill_cancelled === 0)",
+        "insert_after": "eway_bill"
+    },
+    {
+        "fieldname": "eway_bill_cancelled",
+     "depends_on": "eval:(doc.eway_bill_cancelled === 1)",
+     "fieldtype": "Check",
+     "label": "Eway Bill Cancelled",
+     "insert_after": "ewaybill"
+    },
+    {
+        "fieldname": "ewb_date",
+        "fieldtype": "Data",
+        "label": "Ewb Date",
+    "translatable": 1,
+    "insert_after": "eway_bill_cancelled"
+},
+{
+    "fieldname": "eway_bill_validity",
+    "fieldtype": "Data",
+    "insert_after": "ewb_date",
+    "label": "Eway Bill Validity",
+    "translatable": 1
+},
+
+   {
+       "fieldname": "gst_invoicing",
+       "fieldtype": "Section Break",
+       "label": "GST Invoicing",
+       "insert_after": "eway_bill_validity"
+    },
+    {
         "fieldname": "gst_invoice",
         "fieldtype": "Check",
-        "label": "GST Invoice"
-       }
+        "label": "GST Invoice",
+        "no_copy": 1,
+        "insert_after": "gst_invoicing"
+    },
+    {
+        "fieldname": "custom_export_details",
+        "fieldtype": "Section Break",
+        "label": "Export Details",
+        "collapsible": 1,
+        "insert_after": "gst_invoice"
+    },
+    {
+        "fieldname": "custom_export_type",
+        "fieldtype": "Select",
+        "label": "Export Type",
+        "options": "\nSEZWP\nDEXP\nEXPWOP\nEXPWP\nSEZWOP\nINTRA_STATE_ATTRACTING_IGST",
+        "length": 30,
+        "no_copy": 1,
+        "depends_on": "eval: doc.custom_export_customer == 1",
+     "mandatory_depends_on": "eval: doc.custom_export_customer == 1",
+     "translatable": 1,
+     "insert_after": "custom_export_details"
+    },
+    {
+        "fieldname": "custom_export_bill_number",
+        "fieldtype": "Data",
+        "label": "Export Bill Number",
+        "no_copy": 1,
+        "depends_on": "eval: doc.custom_export_customer == 1",
+        "mandatory_depends_on": "eval: doc.custom_export_customer == 1",
+        "insert_after": "custom_export_type"
+    },
+    {
+        "fieldname": "custom_export_bill_date",
+        "fieldtype": "Date",
+           "label": "Export Bill Date",
+           "no_copy": 1,
+           "depends_on": "eval: doc.custom_export_customer == 1",
+           "mandatory_depends_on": "eval: doc.custom_export_customer == 1",
+           "insert_after": "custom_export_bill_number"
+        },
+        {
+            "fieldname": "custom_export_port_code",
+         "fieldtype": "Data",
+         "label": "Export Port Code",
+         "length": 30,
+         "no_copy": 1,
+         "depends_on": "eval: doc.custom_export_customer == 1",
+         "mandatory_depends_on": "eval: doc.custom_export_customer == 1",
+         "insert_after": "custom_export_bill_date"
+        }
     ]
 }
