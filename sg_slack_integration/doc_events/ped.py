@@ -1,7 +1,7 @@
 import frappe
 
 from sg_slack_integration.doc_events.common_function import (
-    create_slack_channel, get_channel_id, get_user_ids, invite_users,
+    create_slack_channel, get_user_ids, invite_users,
     remove_member, send_file, set_description, set_topic)
 from sg_slack_integration.doc_events.utils import compatible_slack_channel_name
 
@@ -32,7 +32,7 @@ def opportunity_process(self):
 def project_process(self):
 	if self.ped_from != "Project":
 		return
-	channel = get_channel_id(self)
+	channel = frappe.db.get_value("Project", self.project, "custom_channel_id")
 	if channel:
 		self.is_channel_created = 1
 		add_or_remove_users(self, channel)
@@ -64,7 +64,7 @@ def set_opportunity_channel_values(self, channel_details):
 
 
 def set_channel_properties(self, opportunity_details):
-    channel = get_channel_id(self)
+    channel = frappe.db.get_value("Opportunity", self.opportunity, "custom_channel_id")
     if channel:
         topic = f"{opportunity_details.title}-{opportunity_details.name}"
         description = (
@@ -76,7 +76,7 @@ def set_channel_properties(self, opportunity_details):
 
 
 def manage_channel_members(self):
-    channel = get_channel_id(self)
+    channel = frappe.db.get_value("Opportunity", self.opportunity, "custom_channel_id")
     if channel:
         add_or_remove_users(self, channel)
 
@@ -90,7 +90,7 @@ def add_or_remove_users(self, channel):
             for user in self.distribution_detail:
                 for employee, slack_id in add_user_ids.items():
                     if user.employee == employee:
-                        user.is_user_added = 1
+                        user.custom_is_user_added = 1
 
     remove_user_ids = get_users(self, add_or_remove_user="remove")
     if remove_user_ids:
