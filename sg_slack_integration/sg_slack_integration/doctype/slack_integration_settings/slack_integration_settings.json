@@ -10,7 +10,8 @@
   "slack_token",
   "days_to_archive_channel",
   "slack_error_notification_email",
-  "slack_error_notification_template"
+  "slack_error_notification_template",
+  "special_character_replacement"
  ],
  "fields": [
   {
@@ -21,7 +22,7 @@
    "reqd": 1
   },
   {
-   "description": "(Set days after which Opportunity Slack Channel will get archived once workflow state changes to Client Approval Pending)",
+   "description": "(Set days after which Opportunity Slack Channel will get archived once wrokflow state changes to Client Approval Pending)",
    "fieldname": "days_to_archive_channel",
    "fieldtype": "Int",
    "label": "Days to Archive Channel"
@@ -37,12 +38,18 @@
    "fieldtype": "Link",
    "label": "Slack Error Notification Template",
    "options": "Email Template"
+  },
+  {
+   "fieldname": "special_character_replacement",
+   "fieldtype": "Table",
+   "label": "Special Character Replacement",
+   "options": "Special Character Replacement"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-05-13 14:47:24.286281",
+ "modified": "2024-05-16 07:46:12.664891",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",
