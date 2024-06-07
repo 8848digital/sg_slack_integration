@@ -131,7 +131,7 @@ def archive_channel(opp_id, channel):
 				frappe.msgprint(_("Channel Archived Successfully"))
 				return res["ok"]
 			elif not res["ok"] and res["error"] != "already_archived":
-				error = "Channel archiving failed for {0}".format(opp_id)
+				error = _("Channel archiving failed for {0}").format(opp_id)
 				email_context = {"record_name": opp_id, "error": error, "response": res}
 				log_error_context = {"record_name": opp_id, "error": error}
 				send_mail(email_context)
@@ -162,7 +162,7 @@ def unarchive_channel(self, channel):
 				frappe.msgprint(_("Channel Unarchived Successfully"))
 				return res["ok"]
 			else:
-				error = "Channel unarchiveing failed for {0}".format(self.name)
+				error = _("Channel unarchiveing failed for {0}").format(self.name)
 				email_context = {"record_name": self.name, "error": error, "response": res}
 				log_error_context = {"record_name": self.name, "error": error}
 				send_mail(email_context)

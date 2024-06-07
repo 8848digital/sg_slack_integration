@@ -3,5 +3,7 @@
 *.egg-info
 *.swp
 tags
+frappe-semgrep-rules
+sg_slack_integration/public/dist
 sg_slack_integration/docs/current
 node_modules/

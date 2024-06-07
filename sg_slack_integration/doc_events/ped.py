@@ -139,7 +139,7 @@ def get_users(self, add_or_remove_user, method=None):
 				old_doc = frappe.get_cached_doc("Project Employee Distribution", self.name)
 				for old_user in old_doc.distribution_detail:
 					old_user_list.append(old_user.employee)
-				remove_user_list = list(filter(lambda x: x not in user_list, old_user_list))
+				remove_user_list = [x for x in old_user_list if x not in user_list]
 
 				if remove_user_list:
 					for user in remove_user_list:

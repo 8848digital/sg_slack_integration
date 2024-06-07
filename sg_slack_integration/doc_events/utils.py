@@ -7,14 +7,14 @@ def compatible_slack_channel_name(channel_name):
         return
     settings_doc = frappe.get_doc("Slack Integration Settings").as_dict()
     special_character = settings_doc.get("special_character_replacement")
-    
+
     channel_name = channel_name.lower().replace(" ", "_")
     channel_name = re.sub(r"[^\w\d\u0620-\u06FF-]", "", channel_name)
-    
+
     for character in special_character:
         if character["not_compatible"] in channel_name:
             channel_name = channel_name.replace(character["not_compatible"], character["compatible"])
-            
+
     channel_name = channel_name[:75]
     return channel_name
 
