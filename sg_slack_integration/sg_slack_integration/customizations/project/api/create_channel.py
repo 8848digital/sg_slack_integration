@@ -1,10 +1,6 @@
-from sg_slack_integration.doc_events.common_function import (
+from sg_slack_integration.sg_slack_integration.doctype.slack_integration_settings.api.common_function import (
     create_slack_channel, set_description, set_topic)
-from sg_slack_integration.doc_events.utils import compatible_slack_channel_name
-
-
-def on_update(self, method=None):
-    create_project_channel(self)
+from sg_slack_integration.sg_slack_integration.doctype.slack_integration_settings.api.utils import compatible_slack_channel_name
 
 
 def create_project_channel(self):
