@@ -7,6 +7,10 @@ app_description = "Slack Integration for SG"
 app_email = "rohitkumar8848@digital.com"
 app_license = "MIT"
 
+after_migrate = [
+    "sg_slack_integration.migrate.after_migrate"
+    ]
+
 # Includes in <head>
 # ------------------
 
@@ -120,13 +124,13 @@ app_license = "MIT"
 
 doc_events = {
 	"Project": {
-		"on_update": "sg_slack_integration.doc_events.project.on_update",
+		"on_update": "sg_slack_integration.sg_slack_integration.customizations.project.project.on_update",
 	},
 	"Project Employee Distribution": {
-		"validate": "sg_slack_integration.doc_events.ped.validate",
+		"validate": "sg_slack_integration.sg_slack_integration.customizations.project_employee_distribution.ped.validate",
 	},
 	"Opportunity": {
-		"validate": "sg_slack_integration.doc_events.opportunity.validate",
+		"validate": "sg_slack_integration.sg_slack_integration.customizations.opportunity.opportunity.validate",
 	},
 }
 

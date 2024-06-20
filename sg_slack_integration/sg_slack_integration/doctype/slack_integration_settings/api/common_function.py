@@ -1,6 +1,6 @@
 import json
 
-from sg_slack_integration.doc_events.utils import create_slack_log
+from sg_slack_integration.sg_slack_integration.doctype.slack_integration_settings.api.utils import create_slack_log
 import frappe
 import requests
 from frappe import _

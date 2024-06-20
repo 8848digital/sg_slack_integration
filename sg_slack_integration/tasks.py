@@ -1,5 +1,5 @@
 from datetime import date
-from sg_slack_integration.doc_events.common_function import archive_channel
+from sg_slack_integration.sg_slack_integration.doctype.slack_integration_settings.api.common_function import archive_channel
 import frappe
 
 

@@ -2,11 +2,8 @@ from datetime import date, timedelta
 import frappe
 from frappe import _
 
-from sg_slack_integration.doc_events.common_function import unarchive_channel
+from sg_slack_integration.sg_slack_integration.doctype.slack_integration_settings.api.common_function import unarchive_channel
 
-
-def validate(self, method=None):
-	handle_workflow_state(self)
 
 
 def handle_workflow_state(self):
