@@ -110,7 +110,7 @@ def get_users(self, add_or_remove_user, method=None):
 						if slack_user_id:
 							slack_user_ids[user.employee] = slack_user_id
 
-	if self.ped_from == "Opportunity" and self.is_channel_created != 1:
+	if self.ped_from == "Opportunity":
 		doc = frappe.get_doc("Opportunity", self.opportunity)
 		tech_name = doc.custom_tech_name if doc.custom_tech_name else None
 		proposal_manager_name = (
