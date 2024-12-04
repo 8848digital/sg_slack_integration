@@ -7,8 +7,9 @@ from sg_slack_integration.doc_events.utils import compatible_slack_channel_name
 
 
 def validate(self, method=None):
-	opportunity_process(self)
-	project_process(self)
+	if self.ped_from != "Lead":
+		opportunity_process(self)
+		project_process(self)
 
 
 def opportunity_process(self):
