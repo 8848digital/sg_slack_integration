@@ -7,9 +7,9 @@ from sg_slack_integration.doc_events.utils import compatible_slack_channel_name
 
 
 def validate(self, method=None):
-	if self.ped_from != "Lead":
-		opportunity_process(self)
-		project_process(self)
+	lead_process(self)
+	opportunity_process(self)
+	project_process(self)
 
 
 def opportunity_process(self):
@@ -30,6 +30,22 @@ def opportunity_process(self):
     manage_channel_members(self)
 
 
+def lead_process(self):
+	if self.ped_from != "Lead":
+		return
+	lead_details = get_lead_details(self)
+	if self.is_channel_created == 0:
+		channel_details = create_or_get_slack_channel(self, lead_details)
+		if not channel_details:
+			return
+		if channel_details["is_channel_created"] == True:
+			self.is_channel_created = 1
+			set_lead_channel_values(self, channel_details)
+			set_channel_properties_lead(self, lead_details)
+
+	manage_channel_members_lead(self)
+
+
 def project_process(self):
 	if self.ped_from != "Project":
 		return
@@ -43,6 +59,16 @@ def get_opportunity_details(self):
     return frappe.get_value(
         "Opportunity", self.opportunity, ["proposal_name", "title", "name", "expected_closing"], as_dict=1
     )
+
+
+def get_lead_details(self):
+	lead_detail = frappe.get_value(
+		"Lead", self.lead, ["custom_client_name", "title", "name","custom_expected_contract_date"], as_dict=1
+	)
+	lead_detail.update({
+		"proposal_name": lead_detail.custom_client_name
+	})
+	return lead_detail
 
 
 def create_or_get_slack_channel(self, opportunity_details):
@@ -64,6 +90,12 @@ def set_opportunity_channel_values(self, channel_details):
                          "custom_channel_id": channel_details["channel_id"]})
 
 
+def set_lead_channel_values(self, channel_details):
+    frappe.db.set_value("Lead", self.lead,
+                        {"custom_channel_name": channel_details["channel_name"],
+                         "custom_channel_id": channel_details["channel_id"]})
+
+
 def set_channel_properties(self, opportunity_details):
     channel = frappe.db.get_value("Opportunity", self.opportunity, "custom_channel_id")
     if channel:
@@ -76,8 +108,26 @@ def set_channel_properties(self, opportunity_details):
         send_file(self, channel)
 
 
+def set_channel_properties_lead(self, lead_details):
+    channel = frappe.db.get_value("Lead", self.lead, "custom_channel_id")
+    if channel:
+        topic = f"{lead_details.title}-{lead_details.name}"
+        description = (
+            f"Expected Contract Date: {str(lead_details.custom_expected_contract_date)}"
+        )
+        set_topic(self, channel, topic)
+        set_description(self, channel, description)
+        send_file(self, channel)
+
+
 def manage_channel_members(self):
     channel = frappe.db.get_value("Opportunity", self.opportunity, "custom_channel_id")
+    if channel:
+        add_or_remove_users(self, channel)
+
+
+def manage_channel_members_lead(self):
+    channel = frappe.db.get_value("Lead", self.lead, "custom_channel_id")
     if channel:
         add_or_remove_users(self, channel)
 
@@ -113,6 +163,24 @@ def get_users(self, add_or_remove_user, method=None):
 
 	if self.ped_from == "Opportunity":
 		doc = frappe.get_doc("Opportunity", self.opportunity)
+		tech_name = doc.custom_tech_name if doc.custom_tech_name else None
+		proposal_manager_name = (
+			doc.custom_proposal_manager_name if doc.custom_proposal_manager_name else None
+		)
+		partner_name = doc.custom_partner_name if doc.custom_partner_name else None
+		users = frappe.db.get_list(
+			"Employee",
+			filters={"name": ["in", [tech_name, proposal_manager_name, partner_name]]},
+			fields="company_email",
+		)
+		if users:
+			for user in users:
+				slack_user_id = get_user_ids(self, user.company_email)
+				if slack_user_id:
+					slack_user_ids[user.company_email] = slack_user_id
+
+	if self.ped_from == "Lead":
+		doc = frappe.get_doc("Lead", self.lead)
 		tech_name = doc.custom_tech_name if doc.custom_tech_name else None
 		proposal_manager_name = (
 			doc.custom_proposal_manager_name if doc.custom_proposal_manager_name else None
