@@ -19,7 +19,7 @@ def create_slack_channel(self, channel_name, method=None):
 		if res["ok"]:
 			success_msg = "Channel created successfully"
 			frappe.msgprint(_(success_msg))
-			create_slack_log(self, success_msg, error=None)
+			create_slack_log(self, success_msg, details=res["channel"], error=None)
 			return {"is_channel_created" : res["ok"],
 					"channel_name":channel_name,
 					"channel_id":res["channel"]["id"]
@@ -47,6 +47,58 @@ def create_slack_channel(self, channel_name, method=None):
 			frappe.throw(_("Please set Slack Token First"))
 	except Exception as e:
 		frappe.throw(_("An error occurred while creating channel: " + str(e)))
+
+
+def get_channel_details(channel_id):
+	token = frappe.db.get_single_value(
+		"Slack Integration Settings", "slack_token")
+	if token:
+		url = "https://slack.com/api/conversations.info"
+		headers = {
+			"Content-Type": "application/x-www-form-urlencoded",
+			"Authorization": f"Bearer {token}"
+		}
+		params = {
+			"channel": channel_id  # Replace with the actual channel ID
+		}
+		try:
+			response = requests.get(url, params=params, headers=headers)
+
+			if response.status_code == 200:
+				channel_info = response.json()
+				if channel_info.get("ok"):
+					details = channel_info["channel"]
+					if not frappe.db.exists("Slack Channel Details", {"channel_id": details.get("id")}):
+						new_doc = frappe.new_doc("Slack Channel Details")
+						new_doc.channel_id = details.get("id")
+						new_doc.name1 = details.get("name")
+						new_doc.is_channel = details.get("name")
+						new_doc.is_im = details.get("is_im")
+						new_doc.is_private = details.get("is_private")
+						new_doc.is_archived = details.get("is_archived")
+						new_doc.is_general = details.get("is_general")
+						new_doc.is_shared = details.get("is_shared")
+						new_doc.is_org_shared = details.get("is_org_shared")
+						new_doc.is_ext_shared = details.get("is_ext_shared")
+						new_doc.is_member = details.get("is_member")
+						new_doc.name_normalized = details.get("name_normalized")
+						new_doc.context_team_id = details.get("context_team_id")
+						new_doc.parent_conversation = details.get("parent_conversation")
+						new_doc.creator = details.get("creator")
+						new_doc.shared_team_ids = str(details.get("shared_team_ids"))
+						new_doc.save(ignore_permissions=True)
+
+					print("Channel Details:", channel_info["channel"])
+				else:
+					print("Error:", channel_info.get("error"))
+			else:
+				print("HTTP Error:", response.status_code)
+
+		except Exception as e:
+			frappe.log_error(
+				"An error occurred while fetching channel details:", str(e))
+	else:
+		frappe.msgprint(_("Please set Slack Token First"))
 
 
 def set_topic(self, channel, topic):
@@ -312,3 +364,13 @@ def send_mail(context):
 		)
 	except Exception as e:
 		frappe.log_error("Slack Email Error", e)
+
+
+def populate_slack_channel_details():
+	logs = frappe.get_all("Slack Log", {"custom_channel_id": ["!=", ""]}, [
+	                      "name", "custom_channel_id"])
+	frappe.log_error(str(logs))
+	# for each in logs:
+	# 	get_channel_details(each.get("custom_channel_id"))
+	# 	frappe.db.set_value("Slack Log", each.get_name,
+	# 	                    "link_to_channel", each.get("custom_channel_id"))
