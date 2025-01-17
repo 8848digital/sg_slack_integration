@@ -375,5 +375,5 @@ def populate_slack_channel_details():
 	                      "name", "custom_channel_id"])
 	for each in logs:
 		get_channel_details(each.get("custom_channel_id"))
-		frappe.db.set_value("Slack Log", each.get_name,
+		frappe.db.set_value("Slack Log", each.get("name"),
 		                    "link_to_channel", each.get("custom_channel_id"))
