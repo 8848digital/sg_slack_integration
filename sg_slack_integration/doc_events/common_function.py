@@ -370,7 +370,6 @@ def send_mail(context):
 	except Exception as e:
 		frappe.log_error("Slack Email Error", e)
 
-
 def populate_slack_channel_details():
 	logs = frappe.get_all("Slack Log", {"custom_channel_id": ["!=", ""]}, [
 	                      "name", "custom_channel_id"])
