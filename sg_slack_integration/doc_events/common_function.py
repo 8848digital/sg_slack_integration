@@ -62,18 +62,20 @@ def get_channel_details(channel_id):
 			"channel": channel_id  # Replace with the actual channel ID
 		}
 		try:
-			response = requests.get(url, params=params, headers=headers)
+			if not frappe.db.exists("Slack Channel Details", {"channel_id": channel_id}):
+				response = requests.get(url, params=params, headers=headers)
 
-			if response.status_code == 200:
-				channel_info = response.json()
-				if channel_info.get("ok"):
-					details = channel_info["channel"]
-					create_slack_channel_detail(details)
-					print("Channel Details:", channel_info["channel"])
+				if response.status_code == 200:
+					channel_info = response.json()
+					if channel_info.get("ok"):
+						details = channel_info["channel"]
+						create_slack_channel_detail(details)
+					else:
+						frappe.log_error(
+							f"Slack | get_channel_details -> {channel_id}", str(channel_info.get("error")))
 				else:
-					print("Error:", channel_info.get("error"))
-			else:
-				print("HTTP Error:", response.status_code)
+					frappe.log_error("Slack | get_channel_details | HTTP",
+					                 response.status_code)
 
 		except Exception as e:
 			frappe.log_error(
@@ -375,5 +377,5 @@ def populate_slack_channel_details():
 	                      "name", "custom_channel_id"])
 	for each in logs:
 		get_channel_details(each.get("custom_channel_id"))
-		frappe.db.set_value("Slack Log", each.get_name,
-		                    "link_to_channel", each.get("custom_channel_id"))
+		frappe.db.set_value("Slack Log", each.get("name"),
+		                    "custom_link_to_channel", each.get("custom_channel_id"))
