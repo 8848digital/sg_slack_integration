@@ -28,11 +28,12 @@ def create_slack_log(self, status, details=None, error=None):
 	new_doc.doc_name = self.name
 	new_doc.status = status
 	if not error:
-		new_doc.custom_channel_id = details.get("id", "")
-		new_doc.custom_channel_name = details.get("name", "")
-		if new_doc.custom_channel_id:
-			get_channel_details(new_doc.custom_channel_id)
-			new_doc.custom_link_to_channel = new_doc.custom_channel_id
+		if details is not None:
+			new_doc.custom_channel_id = details.get("id", "")
+			new_doc.custom_channel_name = details.get("name", "")
+			if new_doc.custom_channel_id:
+				get_channel_details(new_doc.custom_channel_id)
+				new_doc.custom_link_to_channel = new_doc.custom_channel_id
 	if error:
 		new_doc.error_response = error
 	new_doc.insert(ignore_permissions=True)
