@@ -138,7 +138,8 @@ scheduler_events = {
 	# 	"sg_slack_integration.tasks.all"
 	# ],
 	"daily": [
-		"sg_slack_integration.tasks.archive_opportunity_channel"
+		"sg_slack_integration.tasks.archive_opportunity_channel",
+		"sg_slack_integration.doc_events.common_function.populate_slack_channel_details"
 	],
 	# "hourly": [
 	# 	"sg_slack_integration.tasks.hourly"
