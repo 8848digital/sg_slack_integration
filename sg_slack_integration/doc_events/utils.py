@@ -21,7 +21,7 @@ def compatible_slack_channel_name(channel_name):
 
 
 def create_slack_log(self, status, details=None, error=None):
-	from sg_slack_integration.doc_events.common_function import get_channel_details
+	from sg_slack_integration.doc_events.common_function import create_slack_channel_detail
 
 	new_doc = frappe.new_doc("Slack Log")
 	new_doc.against_doctype = self.doctype
@@ -32,7 +32,7 @@ def create_slack_log(self, status, details=None, error=None):
 			new_doc.custom_channel_id = details.get("id", "")
 			new_doc.custom_channel_name = details.get("name", "")
 			if new_doc.custom_channel_id:
-				get_channel_details(new_doc.custom_channel_id)
+				create_slack_channel_detail(details=details)
 				new_doc.custom_link_to_channel = new_doc.custom_channel_id
 	if error:
 		new_doc.error_response = error
