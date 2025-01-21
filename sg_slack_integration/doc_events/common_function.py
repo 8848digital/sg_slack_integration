@@ -379,3 +379,41 @@ def populate_slack_channel_details():
 		get_channel_details(each.get("custom_channel_id"))
 		frappe.db.set_value("Slack Log", each.get("name"),
 		                    "custom_link_to_channel", each.get("custom_channel_id"))
+
+
+def set_sharepoint_links():
+	token = frappe.db.get_single_value(
+		"Slack Integration Settings", "slack_token")
+	logs = frappe.get_all("Slack Log", {"name": "sn9df03uo3", "custom_channel_id": ["!=", ""]}, [
+	                      "name", "custom_channel_id", "against_doctype", "doc_name"])
+	url = "https://slack.com/api/conversations.setPurpose"
+	headers = {
+		"Content-Type": "application/json; charset=utf-8",
+		"Authorization": f"Bearer {token}",
+	}
+	errors = []
+	for each in logs:
+		try:
+			doctype = each.get("against_doctype")
+			docname = each.get("doc_name")
+			if doctype == "Project Employee Distribution":
+				doctype = frappe.db.get_value(
+					"Project Employee Distribution", docname, "ped_from")
+				docname = frappe.db.get_value(
+					"Project Employee Distribution", docname, doctype.lower())
+
+			link = frappe.db.get_value(doctype, docname, "custom_sharepoint_link")
+			payload = {
+				"channel": each.get("custom_channel_id"),
+				"purpose": f"SharePoint Link --> {link}",
+			}
+
+			response = requests.post(url, headers=headers, json=payload)
+			res = response.json()
+			if res["ok"]:
+				frappe.msgprint(_("Description set successfully on Slack"))
+			else:
+				errors.append(f"Could not set for {each.get('name')}")
+		except Exception as e:
+			errors.append(e)
+	frappe.log_error("Slack | Error for description", str(errors))
