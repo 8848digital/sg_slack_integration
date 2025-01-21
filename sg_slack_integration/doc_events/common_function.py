@@ -384,7 +384,7 @@ def populate_slack_channel_details():
 def set_sharepoint_links():
 	token = frappe.db.get_single_value(
 		"Slack Integration Settings", "slack_token")
-	logs = frappe.get_all("Slack Log", {"name": "sn9df03uo3", "custom_channel_id": ["!=", ""]}, [
+	logs = frappe.get_all("Slack Log", {"custom_channel_id": ["!=", ""]}, [
 	                      "name", "custom_channel_id", "against_doctype", "doc_name"])
 	url = "https://slack.com/api/conversations.setPurpose"
 	headers = {
