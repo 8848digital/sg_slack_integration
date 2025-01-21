@@ -37,5 +37,9 @@ def set_topic_and_description(self):
     channel = self.custom_channel_id
     if self.project_name:
         set_topic(self, channel, self.project_name)
+    if self.custom_sharepoint_link:
+        description = f"SharePoint Link --> {self.get('custom_sharepoint_link')}"
+        set_description(self, channel, description)
+        return
     if self.customer:
         set_description(self, channel, self.customer + "-" + self.customer_name)

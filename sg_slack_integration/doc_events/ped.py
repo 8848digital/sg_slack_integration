@@ -57,13 +57,13 @@ def project_process(self):
 
 def get_opportunity_details(self):
     return frappe.get_value(
-        "Opportunity", self.opportunity, ["proposal_name", "title", "name", "expected_closing"], as_dict=1
+        "Opportunity", self.opportunity, ["proposal_name", "title", "name", "expected_closing", "custom_sharepoint_link"], as_dict=1
     )
 
 
 def get_lead_details(self):
 	lead_detail = frappe.get_value(
-		"Lead", self.lead, ["custom_client_name", "title", "name","custom_expected_contract_date"], as_dict=1
+		"Lead", self.lead, ["custom_client_name", "title", "name", "custom_expected_contract_date", "custom_sharepoint_link"], as_dict=1
 	)
 	lead_detail.update({
 		"proposal_name": lead_detail.custom_client_name
@@ -97,27 +97,32 @@ def set_lead_channel_values(self, channel_details):
 
 
 def set_channel_properties(self, opportunity_details):
-    channel = frappe.db.get_value("Opportunity", self.opportunity, "custom_channel_id")
-    if channel:
-        topic = f"{opportunity_details.title}-{opportunity_details.name}"
-        description = (
-            f"Expected closing Date: {str(opportunity_details.expected_closing)}"
-        )
-        set_topic(self, channel, topic)
-        set_description(self, channel, description)
-        send_file(self, channel)
+	channel = frappe.db.get_value(
+		"Opportunity", self.opportunity, "custom_channel_id")
+	if channel:
+		topic = f"{opportunity_details.title}-{opportunity_details.name}"
+		description = (
+			f"Expected closing Date: {str(opportunity_details.expected_closing)}"
+		)
+		if opportunity_details.get("custom_sharepoint_link") != "" or opportunity_details.get("custom_sharepoint_link") is not None:
+			description = f"SharePoint Link --> {opportunity_details.get('custom_sharepoint_link')}"
+		set_topic(self, channel, topic)
+		set_description(self, channel, description)
+		send_file(self, channel)
 
 
 def set_channel_properties_lead(self, lead_details):
-    channel = frappe.db.get_value("Lead", self.lead, "custom_channel_id")
-    if channel:
-        topic = f"{lead_details.title}-{lead_details.name}"
-        description = (
-            f"Expected Contract Date: {str(lead_details.custom_expected_contract_date)}"
-        )
-        set_topic(self, channel, topic)
-        set_description(self, channel, description)
-        send_file(self, channel)
+	channel = frappe.db.get_value("Lead", self.lead, "custom_channel_id")
+	if channel:
+		topic = f"{lead_details.title}-{lead_details.name}"
+		description = (
+			f"Expected Contract Date: {str(lead_details.custom_expected_contract_date)}"
+		)
+		if lead_details.get("custom_sharepoint_link") != "" or lead_details.get("custom_sharepoint_link") is not None:
+			description = f"SharePoint Link --> {lead_details.get('custom_sharepoint_link')}"
+		set_topic(self, channel, topic)
+		set_description(self, channel, description)
+		send_file(self, channel)
 
 
 def manage_channel_members(self):
