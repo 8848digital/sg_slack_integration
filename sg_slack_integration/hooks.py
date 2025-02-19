@@ -128,6 +128,9 @@ doc_events = {
 	"Opportunity": {
 		"validate": "sg_slack_integration.doc_events.opportunity.validate",
 	},
+    "Travel Request": {
+        "on_update":"sg_slack_integration.doc_events.travel_request.on_update",
+	},
 }
 
 # Scheduled Tasks
