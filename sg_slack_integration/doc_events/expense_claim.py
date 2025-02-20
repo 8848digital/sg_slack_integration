@@ -99,7 +99,7 @@ def handle_poll_response():
 
         if poll_id and selected_option:
             doc=frappe.get_doc('Expense Claim',poll_id)
-            approver=doc.expense_claim
+            approver=doc.expense_approver
             if approver:
                 frappe.set_user(approver)
                 apply_workflow(doc,selected_option)
