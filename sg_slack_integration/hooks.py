@@ -131,6 +131,9 @@ doc_events = {
     "Travel Request": {
         "on_update":"sg_slack_integration.doc_events.travel_request.on_update",
 	},
+    "Expense Claim": {
+        "after_insert":"sg_slack_integration.doc_events.expense_claim.after_insert",
+	},
 }
 
 # Scheduled Tasks
