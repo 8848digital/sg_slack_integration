@@ -13,6 +13,7 @@
   "slack_error_notification_template",
   "special_character_replacement",
   "tab_break_o8t2n",
+  "enable_poll",
   "travel_request_poll_token",
   "leave_application_token",
   "expense_claim_token"
@@ -68,12 +69,18 @@
    "fieldname": "expense_claim_token",
    "fieldtype": "Data",
    "label": "Expense Claim Token"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_poll",
+   "fieldtype": "Check",
+   "label": "Enable Poll"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-02-19 15:45:58.033820",
+ "modified": "2025-02-20 15:27:32.671074",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",
