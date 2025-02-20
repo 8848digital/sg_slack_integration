@@ -22,7 +22,7 @@ def on_update(self, method):
 			elif self.custom_coo_approval==1:
 				approver=self.custom_line_manager
 				actions=['Approve','Reject']
-				post_poll_travel_request(approver,actions,self.name)
+				# post_poll_travel_request(approver,actions,self.name)
     # post_poll_travel_request('approver','actions',self.name)
 				
 
@@ -109,9 +109,6 @@ def handle_poll_response():
             return {"error": "Invalid payload format."}
 
         slack_data = json.loads(payload)
-
-        frappe.log_error("Slack Poll Response", str(slack_data))
-
         user_id = slack_data.get("user", {}).get("username")
         channel_id = slack_data.get("channel", {}).get("id")
         action = slack_data.get("actions", [])[0]
@@ -121,9 +118,7 @@ def handle_poll_response():
         # get_mail = get_slack_user_details( slack_data.get("user", {}).get("id"), slack_token)
         ts = slack_data.get("message",{}).get("ts", "")
 
-        question_id = get_question_from_payload(slack_data, block_id)
         my_data=[{'slack_data':slack_data,'selectec_options':selected_option}]
-        frappe.log_error('slack_response_travel',my_data)
         if poll_id and selected_option:
             doc=frappe.get_doc('Travel Request',poll_id)
             approver=''
@@ -146,4 +141,6 @@ def handle_poll_response():
 
         return {"text": f"Response Recorded for '{selected_option}' recorded."}
     except Exception as e:
+        create_slack_log_for_poll(self=doc, status="Error",
+		                          poll_type="Receive Response", error=str(frappe.get_traceback(e)))
         frappe.log_error("Error in slack", frappe.get_traceback(e))
