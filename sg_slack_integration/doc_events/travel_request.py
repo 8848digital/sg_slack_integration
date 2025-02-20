@@ -22,8 +22,7 @@ def on_update(self, method):
 			elif self.custom_coo_approval==1:
 				approver=self.custom_line_manager
 				actions=['Approve','Reject']
-				# post_poll_travel_request(approver,actions,self.name)
-    # post_poll_travel_request('approver','actions',self.name)
+				post_poll_travel_request(approver,actions,self.name)
 				
 
 def post_poll_travel_request(approver,options,doc_name):
