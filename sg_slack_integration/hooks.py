@@ -134,6 +134,9 @@ doc_events = {
     "Expense Claim": {
         "after_insert":"sg_slack_integration.doc_events.expense_claim.after_insert",
 	},
+	"Leave Application": {
+		"on_update":"sg_slack_integration.doc_events.leave_application.on_update",
+	},
 }
 
 # Scheduled Tasks

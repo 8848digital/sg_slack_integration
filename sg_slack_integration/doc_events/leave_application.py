@@ -5,50 +5,48 @@ import requests
 from sg_slack_integration.doc_events.poll_api import *
 from frappe.model.workflow import apply_workflow
 
+def on_update(self,method):
+    old_doc = self.get_doc_before_save()
+    if old_doc:
+        actions=['Approve','Reject']
+        approver=''
+        project = frappe.db.get_value("Employee", self.employee, "current_project")
+        if old_doc.workflow_state == "Draft" and self.workflow_state == "Awaiting Line Manager Approval":
+            approver=self.custom_line_manager
+        elif old_doc.workflow_state == "Draft" and self.workflow_state == "Awaiting Partner Approval":
+            if project:
+                project_partner = frappe.db.get_value("Project", project, "project_lead")
+                approver=frappe.db.get_value("Employee", project_partner, "user_id")
+        elif old_doc.workflow_state == "Draft" and self.workflow_state == "Awaiting Project Manager Approval":
+            approver=self.project_manager
+        
+        if approver and len(approver)>0:
+            post_poll_travel_request(approver,actions,self.name)
 
-def on_update(self, method):
-	old_doc = self.get_doc_before_save()
-	if old_doc:
-		if old_doc.workflow_state == "Draft" and self.workflow_state == "Waiting For Partner Approval":
-			approver=self.custom_project_lead_user
-			actions=['Approve','Reject']
-			post_poll_travel_request(approver,actions,self.name)
-			
-		elif old_doc.workflow_state == "Draft" and self.workflow_state == "Waiting For Manager Approval":
-			if self.custom_coo_approval==0:
-				approver=self.custom_line_manager
-				actions=['Approve','Reject']
-				post_poll_travel_request(approver,actions,self.name)
-			elif self.custom_coo_approval==1:
-				approver=self.custom_line_manager
-				actions=['Approve','Reject']
-				post_poll_travel_request(approver,actions,self.name)
-				
+
+        
+                
 
 def post_poll_travel_request(approver,options,doc_name):
-    # approver="kanchan@8848digital.com"
-    # options=['Approve','Reject']
-    doc=frappe.get_doc('Travel Request',doc_name)
+    doc=frappe.get_doc('Leave Application',doc_name)
     poll_enabled = frappe.db.get_single_value(
 			"Slack Integration Settings", 'enable_poll')
     if poll_enabled:
         slack_token = frappe.db.get_single_value(
-                "Slack Integration Settings", 'travel_request_poll_token')
+                "Slack Integration Settings", 'leave_application_token')
         if slack_token and len(slack_token)>0:
             header_block = {
                 "type": "header",
-                "text": {"type": "plain_text", "text": 'Travel Request By- ' + doc.employee_name}
+                "text": {"type": "plain_text", "text": 'Leave Application Request By- ' + doc.employee_name}
             }
             questions_and_answers = []
             questions_and_answers.append(header_block)
             sections = [
                 {"title": "Employee Name", "content": doc.employee_name},
-                {"title": "Travel Request Form ID", "content": doc.name},
-                {"title":"Purpose Of Travel","content":doc.custom_purpose_of_travel},
-                {"title":"Destination","content":doc.custom_destination},
-                {"title":"Departure Date","content":doc.custom_departure_date},
-                {"title":"Return Date","content":doc.custom_return_date},
-                {"title":"Total","content":doc.custom_total},
+                {"title": "From Date", "content": doc.from_date},
+                {"title":"To Date","content":doc.to_date},
+                {"title":"Leave Type","content":doc.leave_type},
+                {"title":"Total Leave Days","content":doc.total_leave_days},
             ]
 
             for section in sections:
@@ -94,14 +92,16 @@ def post_poll_travel_request(approver,options,doc_name):
                     payload = payload.copy()
                     payload["channel"] = user_id
                     post_poll_to_slacks(slack_token, payload,doc,approver)
-				
+			
+        
+
 
 
 @frappe.whitelist(allow_guest=True)
 def handle_poll_response():
     try:
         slack_token = frappe.db.get_single_value(
-			"Slack Integration Settings", 'travel_request_poll_token')
+			"Slack Integration Settings", 'leave_application_token')
         payload = frappe.request.form.get("payload")
         if not payload:
             frappe.log_error("error in format")
@@ -118,15 +118,17 @@ def handle_poll_response():
         ts = slack_data.get("message",{}).get("ts", "")
 
         if poll_id and selected_option:
-            doc=frappe.get_doc('Travel Request',poll_id)
+            doc=frappe.get_doc('Leave Application',poll_id)
             approver=''
-            if doc.workflow_state == "Waiting For Partner Approval":
-                approver=doc.custom_project_lead_user 
-            elif doc.workflow_state == "Waiting For Manager Approval":
-                if doc.custom_coo_approval==0:
-                    approver=doc.custom_line_manager
-                elif doc.custom_coo_approval==1:
-                    approver=doc.custom_line_manager
+            project = frappe.db.get_value("Employee", doc.employee, "current_project")
+            if doc.workflow_state == "Awaiting Line Manager Approval":
+                approver=doc.custom_line_manager
+            elif doc.workflow_state == "Awaiting Partner Approval":
+                if project:
+                    project_partner = frappe.db.get_value("Project", project, "project_lead")
+                    approver=frappe.db.get_value("Employee", project_partner, "user_id")
+            elif doc.workflow_state == "Awaiting Project Manager Approval":
+                approver=doc.project_manager
             if approver:
                 frappe.set_user(approver)
                 apply_workflow(doc,selected_option)
