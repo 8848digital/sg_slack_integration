@@ -9,10 +9,10 @@ def after_insert(self,method):
     print(self.expense_approver)
     actions=['Approve','Reject']
     approver=self.expense_approver
-    post_poll_travel_request(approver,actions,self.name)
+    post_poll_expense_claim(approver,actions,self.name)
 
 
-def post_poll_travel_request(approver,options,doc_name):
+def post_poll_expense_claim(approver,options,doc_name):
     doc=frappe.get_doc('Expense Claim',doc_name)
     poll_enabled = frappe.db.get_single_value(
 			"Slack Integration Settings", 'enable_poll')

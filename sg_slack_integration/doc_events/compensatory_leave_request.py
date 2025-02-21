@@ -4,11 +4,12 @@ import json
 import requests
 from sg_slack_integration.doc_events.poll_api import *
 from frappe.model.workflow import apply_workflow
+import time
 
 def on_update(self,method):
     doc_val=frappe.get_doc(self.doctype,self.name)
     old_doc = self.get_doc_before_save()
-    frappe.db.set_value(doc_val.doctype,doc_val.name,'custom_initial_call',1,update_modified=False)
+    frappe.db.set_value(doc_val.doctype,doc_val.name,'custom_initial_call',1)
     if old_doc and doc_val.custom_initial_call==0:
         actions=['Approve','Reject']
         approver=''
@@ -20,36 +21,34 @@ def on_update(self,method):
                 project_partner = frappe.db.get_value("Project", project, "project_lead")
                 approver=frappe.db.get_value("Employee", project_partner, "user_id")
         elif old_doc.workflow_state == "Draft" and self.workflow_state == "Awaiting Project Manager Approval":
-            approver=self.project_manager
-        
+            approver=self.custom_project_manager
+
         if approver and len(approver)>0:
-            post_poll_leave_application(approver,actions,self.name)
+            post_poll_compensatory_leave(approver,actions,self.name)
 
 
         
                 
 
-def post_poll_leave_application(approver,options,doc_name):
-    approver='kanchan@8848digital.com'
-    doc=frappe.get_doc('Leave Application',doc_name)
+def post_poll_compensatory_leave(approver,options,doc_name):
+    doc=frappe.get_doc('Compensatory Leave Request',doc_name)
     poll_enabled = frappe.db.get_single_value(
 			"Slack Integration Settings", 'enable_poll')
     if poll_enabled:
         slack_token = frappe.db.get_single_value(
-                "Slack Integration Settings", 'leave_application_token')
+                "Slack Integration Settings", 'compensatory_leave_request_token')
         if slack_token and len(slack_token)>0:
             header_block = {
                 "type": "header",
-                "text": {"type": "plain_text", "text": 'Leave Application Request By- ' + doc.employee_name}
+                "text": {"type": "plain_text", "text": 'Compensatory Leave Request Request By- ' + doc.employee_name}
             }
             questions_and_answers = []
             questions_and_answers.append(header_block)
             sections = [
                 {"title": "Employee Name", "content": doc.employee_name},
-                {"title": "From Date", "content": doc.from_date},
-                {"title":"To Date","content":doc.to_date},
-                {"title":"Leave Type","content":doc.leave_type},
-                {"title":"Total Leave Days","content":doc.total_leave_days},
+                {"title": "From Date", "content": doc.work_from_date},
+                {"title":"To Date","content":doc.work_end_date},
+                {"title":"Reason","content":doc.reason}
             ]
 
             for section in sections:
@@ -94,7 +93,6 @@ def post_poll_leave_application(approver,options,doc_name):
                 if user_id:
                     payload = payload.copy()
                     payload["channel"] = user_id
-                    print(approver)
                     post_poll_to_slacks(slack_token, payload,doc,approver)
 			
         
@@ -105,7 +103,7 @@ def post_poll_leave_application(approver,options,doc_name):
 def handle_poll_response():
     try:
         slack_token = frappe.db.get_single_value(
-			"Slack Integration Settings", 'leave_application_token')
+			"Slack Integration Settings", 'compensatory_leave_request_token')
         payload = frappe.request.form.get("payload")
         if not payload:
             frappe.log_error("error in format")
@@ -122,7 +120,7 @@ def handle_poll_response():
         ts = slack_data.get("message",{}).get("ts", "")
 
         if poll_id and selected_option:
-            doc=frappe.get_doc('Leave Application',poll_id)
+            doc=frappe.get_doc('Compensatory Leave Request',poll_id)
             approver=''
             project = frappe.db.get_value("Employee", doc.employee, "current_project")
             if doc.workflow_state == "Awaiting Line Manager Approval":
@@ -132,7 +130,7 @@ def handle_poll_response():
                     project_partner = frappe.db.get_value("Project", project, "project_lead")
                     approver=frappe.db.get_value("Employee", project_partner, "user_id")
             elif doc.workflow_state == "Awaiting Project Manager Approval":
-                approver=doc.project_manager
+                approver=doc.custom_project_manager
             if approver:
                 frappe.set_user(approver)
                 apply_workflow(doc,selected_option)
