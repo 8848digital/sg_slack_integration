@@ -136,6 +136,11 @@ doc_events = {
 	},
 	"Leave Application": {
 		"on_update":"sg_slack_integration.doc_events.leave_application.on_update",
+        "before_insert":"sg_slack_integration.doc_events.leave_application.before_insert"
+	},
+    "Compensatory Leave Request": {
+		"on_update":"sg_slack_integration.doc_events.compensatory_leave_request.on_update",
+        "before_insert":"sg_slack_integration.doc_events.compensatory_leave_request.before_insert"
 	},
 }
 
