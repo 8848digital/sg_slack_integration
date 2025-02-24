@@ -30,6 +30,7 @@ def post_poll_expense_claim(approver,options,doc_name):
                 {"title": "Employee Name", "content": doc.employee_name},
                 {"title": "Expense Claim Form ID", "content": doc.name},
                 {"title":"Grand Total","content":doc.grand_total},
+                {"title":'Form Reference','content':frappe.utils.get_url_to_form(doc.doctype, doc.name)},
             ]
 
             for section in sections:
@@ -37,7 +38,7 @@ def post_poll_expense_claim(approver,options,doc_name):
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"*{section['title']}*: *{section['content']}*"
+                        "text": f"*{section['title']}*: *{section['content']}*"  if section.get('title')!='Form Reference' else f"*{section['title']}*: {section['content']}"
                     },
                 }
                 questions_and_answers.append(description_block)

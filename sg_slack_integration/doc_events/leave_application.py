@@ -50,6 +50,7 @@ def post_poll_leave_application(approver,options,doc_name):
                 {"title":"To Date","content":doc.to_date},
                 {"title":"Leave Type","content":doc.leave_type},
                 {"title":"Total Leave Days","content":doc.total_leave_days},
+                {"title":'Form Reference','content':frappe.utils.get_url_to_form(doc.doctype, doc.name)},
             ]
 
             for section in sections:
@@ -57,7 +58,7 @@ def post_poll_leave_application(approver,options,doc_name):
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"*{section['title']}*: *{section['content']}*"
+                        "text": f"*{section['title']}*: *{section['content']}*"  if section.get('title')!='Form Reference' else f"*{section['title']}*: {section['content']}"
                     },
                 }
                 questions_and_answers.append(description_block)
