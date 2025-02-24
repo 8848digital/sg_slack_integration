@@ -48,7 +48,8 @@ def post_poll_compensatory_leave(approver,options,doc_name):
                 {"title": "Employee Name", "content": doc.employee_name},
                 {"title": "From Date", "content": doc.work_from_date},
                 {"title":"To Date","content":doc.work_end_date},
-                {"title":"Reason","content":doc.reason}
+                {"title":"Reason","content":doc.reason},
+                {"title":'Form Reference','content':frappe.utils.get_url_to_form(doc.doctype, doc.name)},
             ]
 
             for section in sections:
@@ -56,7 +57,7 @@ def post_poll_compensatory_leave(approver,options,doc_name):
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"*{section['title']}*: *{section['content']}*"
+                        "text": f"*{section['title']}*: *{section['content']}*"  if section.get('title')!='Form Reference' else f"*{section['title']}*: {section['content']}"
                     },
                 }
                 questions_and_answers.append(description_block)

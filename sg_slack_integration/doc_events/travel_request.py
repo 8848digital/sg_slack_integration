@@ -49,6 +49,7 @@ def post_poll_travel_request(approver,options,doc_name):
                 {"title":"Departure Date","content":doc.custom_departure_date},
                 {"title":"Return Date","content":doc.custom_return_date},
                 {"title":"Total","content":doc.custom_total},
+                {"title":'Form Reference','content':frappe.utils.get_url_to_form(doc.doctype, doc.name)},
             ]
 
             for section in sections:
@@ -56,7 +57,7 @@ def post_poll_travel_request(approver,options,doc_name):
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"*{section['title']}*: *{section['content']}*"
+                        "text": f"*{section['title']}*: *{section['content']}*"  if section.get('title')!='Form Reference' else f"*{section['title']}*: {section['content']}"
                     },
                 }
                 questions_and_answers.append(description_block)
