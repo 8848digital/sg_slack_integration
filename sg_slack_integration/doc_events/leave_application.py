@@ -30,7 +30,7 @@ def on_update(self,method):
                 
 
 def post_poll_leave_application(approver,options,doc_name):
-    approver='kanchan@8848digital.com'
+    # approver='kanchan@8848digital.com'
     doc=frappe.get_doc('Leave Application',doc_name)
     poll_enabled = frappe.db.get_single_value(
 			"Slack Integration Settings", 'enable_poll')
