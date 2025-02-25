@@ -104,7 +104,7 @@ def handle_poll_response():
         selected_option = action.get("value")
         # get_mail = get_slack_user_details( slack_data.get("user", {}).get("id"), slack_token)
         ts = slack_data.get("message",{}).get("ts", "")
-
+        frappe.log_error('Response',slack_data)
         if poll_id and selected_option and 'answers_' in block_id:
             doc=frappe.get_doc('Project Health Assessment Survey',poll_id)
             approver=frappe.db.get_value('Employee', doc.employee_id, 'user_id')
