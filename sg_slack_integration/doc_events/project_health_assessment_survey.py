@@ -114,6 +114,7 @@ def handle_poll_response():
                 answer_field=block_id.split('answer_')[1].strip()
                 # doc[answer_field]=selected_option
                 doc.update({answer_field:selected_option})
+                doc.flags.ignore_mandatory = True
                 doc.save()
                 send_ephemeral_message(
                     slack_token, channel_id, user_id, ts, selected_option, slack_data.get("message", {}).get("blocks", ""), block_id, poll_id
