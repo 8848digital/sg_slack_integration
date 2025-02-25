@@ -142,6 +142,9 @@ doc_events = {
 		"on_update":"sg_slack_integration.doc_events.compensatory_leave_request.on_update",
         "before_insert":"sg_slack_integration.doc_events.compensatory_leave_request.before_insert"
 	},
+    "Project Health Assessment Survey": {
+        "after_insert":"sg_slack_integration.doc_events.project_health_assessment_survey.after_insert",
+	},
 }
 
 # Scheduled Tasks
@@ -162,9 +165,9 @@ scheduler_events = {
 	# "weekly": [
 	# 	"sg_slack_integration.tasks.weekly"
 	# ],
-	# "monthly": [
-	# 	"sg_slack_integration.tasks.monthly"
-	# ],
+	"monthly": [
+		"sg_slack_integration.doc_events.project_health_assessment_survey.create_assessment_forms"
+	],
 }
 
 # Testing
