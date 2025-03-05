@@ -104,7 +104,16 @@ def handle_poll_response():
             approver=doc.expense_approver
             if approver:
                 frappe.set_user(approver)
-                apply_workflow(doc,selected_option)
+                # apply_workflow(doc,selected_option)
+                if selected_option=='Approve':
+                    doc.workflow_state="Waiting for Finance Team Approval"
+                    doc.save(ignore_permissions=True)
+
+                elif selected_option=='Reject':
+                    doc.workflow_state="Rejected by Line Manager"
+                    doc.save(ignore_permissions=True)
+            
+
                 send_ephemeral_message(
                     slack_token, channel_id, user_id, ts, selected_option, slack_data.get("message", {}).get("blocks", ""), block_id, poll_id
                 )
