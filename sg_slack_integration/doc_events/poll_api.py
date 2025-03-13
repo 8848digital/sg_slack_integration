@@ -101,7 +101,7 @@ def send_ephemeral_message(slack_token, channel_id, user_id, ts, selected_option
 	response = requests.post(url, headers=headers, json=payload)
 	
 	if not response.json().get("ok"):
-		frappe.log_error(f"Error updating message: {response.json()}")
+		frappe.log_error(f"Error updating message: ",response.json())
 		return None
 
 	return response.json()
@@ -118,3 +118,33 @@ def create_slack_log_for_poll(self, status, poll_type=None, poll_result=None, er
 		new_doc.error_response = error
 	new_doc.insert(ignore_permissions=True)
 
+
+
+def send_confirmation_message(slack_token,doctype=None, email=None):
+	response_data=[{
+		"type": "context",
+		"text": {"type": "plain_text", "text": ":white_check_mark: *Your response has been submitted successfully!*"}
+	}]
+	payload ={
+		"type": doctype.name,
+		"blocks": response_data
+	}
+	url = "https://slack.com/api/chat.postMessage"
+	headers = {
+		"Authorization": f"Bearer {slack_token}",
+		"Content-Type": "application/json",
+	}
+
+	response = requests.post(url, headers=headers, json=payload)
+	frappe.log_error(f"Slack Confirmation message {doctype.doctype}", response.json())
+	if not response.json().get("ok"):
+		create_slack_log_for_poll(self=doctype, status="Error",
+		                          poll_type="Confirmation Message", error=str(response.json()))
+		print("Failed to post poll:", response.json())
+	else:
+		if doctype and email:
+			result = response.json()
+			message = f"{result.get('message').get('text')} triggered to {email}\n{str(result.get('message').get('blocks'))}"
+			create_slack_log_for_poll(
+					self=doctype, status="Success", poll_type="Confirmation Message", poll_result=message)
+		print("Poll posted successfully:", response.json())
