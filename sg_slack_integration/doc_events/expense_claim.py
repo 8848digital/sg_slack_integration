@@ -117,6 +117,7 @@ def handle_poll_response():
                 send_ephemeral_message(
                     slack_token, channel_id, user_id, ts, selected_option, slack_data.get("message", {}).get("blocks", ""), block_id, poll_id
                 )
+                send_confirmation_message(slack_token,doc,approver)
                 poll_message = f"Response Received for Employee - {user_id} in {poll_id}\n - {selected_option}"
                 create_slack_log_for_poll(self=doc, status="Success",
 							                          poll_type="Receive Response", poll_result=poll_message)
