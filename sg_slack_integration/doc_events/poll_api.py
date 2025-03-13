@@ -10,7 +10,6 @@ def post_poll_to_slacks(slack_token, payload,doctype=None, email=None):
 		"Authorization": f"Bearer {slack_token}",
 		"Content-Type": "application/json",
 	}
-
 	response = requests.post(url, headers=headers, json=payload)
 	frappe.log_error("Error in Poll Post", response.json())
 	if not response.json().get("ok"):
@@ -122,13 +121,15 @@ def create_slack_log_for_poll(self, status, poll_type=None, poll_result=None, er
 
 def send_confirmation_message(slack_token,doctype=None, email=None):
 	response_data=[{
-		"type": "context",
-		"text": {"type": "plain_text", "text": ":white_check_mark: *Your response has been submitted successfully!*"}
+		"type": "section",
+		"text": {"type": "mrkdwn", "text": "* Your response has been submitted successfully! :white_check_mark: *"}
 	}]
+	user_id = get_user_id_by_email(email, slack_token)
 	payload ={
 		"type": doctype.name,
 		"blocks": response_data
 	}
+	payload["channel"] = user_id
 	url = "https://slack.com/api/chat.postMessage"
 	headers = {
 		"Authorization": f"Bearer {slack_token}",
