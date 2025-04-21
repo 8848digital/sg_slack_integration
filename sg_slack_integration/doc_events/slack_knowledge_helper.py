@@ -3,7 +3,7 @@ import json
 from frappe.utils import getdate, nowdate
 
 
-from sg_slack_integration.doc_events.slack_knowledge_helper import slack_event
+# from sg_slack_integration.doc_events.slack_knowledge_helper import slack_event
 @frappe.whitelist(allow_guest=True)
 def slack_event():
 	data = json.loads(frappe.request.data)
