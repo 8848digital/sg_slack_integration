@@ -7,12 +7,13 @@ from frappe.utils import getdate, nowdate
 @frappe.whitelist(allow_guest=True)
 def slack_event():
 	data = json.loads(frappe.request.data)
-
+	frappe.log_error("data", data)
 	# Handle Slack URL verification
 	if data.get('type') == 'url_verification':
 		return data.get('challenge')
 
 	event = data.get('event', {})
+	frappe.log_error("event", event)
 
 	if not event:
 		return "No event"
