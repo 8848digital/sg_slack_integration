@@ -7,30 +7,17 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "slack_user_id",
-  "slack_username",
-  "message_id",
   "channel_id",
+  "thread_ts",
+  "message_ts",
+  "helper_user_id",
+  "helper_email",
+  "author_user_id",
+  "author_email",
   "reaction",
-  "date",
-  "reacted_by"
+  "date"
  ],
  "fields": [
-  {
-   "fieldname": "slack_user_id",
-   "fieldtype": "Data",
-   "label": "Slack User ID"
-  },
-  {
-   "fieldname": "slack_username",
-   "fieldtype": "Data",
-   "label": "Slack Username"
-  },
-  {
-   "fieldname": "message_id",
-   "fieldtype": "Data",
-   "label": "Message ID"
-  },
   {
    "fieldname": "channel_id",
    "fieldtype": "Data",
@@ -47,14 +34,39 @@
    "label": "Date"
   },
   {
-   "fieldname": "reacted_by",
+   "fieldname": "thread_ts",
    "fieldtype": "Data",
-   "label": "Created By User"
+   "label": "Thread TS"
+  },
+  {
+   "fieldname": "message_ts",
+   "fieldtype": "Data",
+   "label": "Message TS"
+  },
+  {
+   "fieldname": "helper_user_id",
+   "fieldtype": "Data",
+   "label": "Helper User ID"
+  },
+  {
+   "fieldname": "helper_email",
+   "fieldtype": "Data",
+   "label": "Helper Email"
+  },
+  {
+   "fieldname": "author_user_id",
+   "fieldtype": "Data",
+   "label": "Author User ID"
+  },
+  {
+   "fieldname": "author_email",
+   "fieldtype": "Data",
+   "label": "Author Email"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-04-21 15:28:51.710841",
+ "modified": "2025-04-22 09:00:17.600791",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Knowledge Helper Score",
