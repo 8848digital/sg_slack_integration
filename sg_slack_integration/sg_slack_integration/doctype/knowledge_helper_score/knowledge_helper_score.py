@@ -21,6 +21,10 @@ def slack_event():
 		frappe.log_error("Knowledge Helper Scoring",
 		                 "Scoring not Enabled in Slack Integration Settings")
 		return
+	if not (settings.channel_id_to_calculate_the_score_from and settings.score_based_on_emoji_reaction):
+		frappe.log_error(
+			"Channel ID or emoji to confirm resolved not set in settings page")
+		return
 	data = json.loads(frappe.request.data)
 	frappe.log_error("data", data)
 
