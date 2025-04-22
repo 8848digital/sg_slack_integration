@@ -24,7 +24,11 @@
   "birthday_notification_tab",
   "send_birthday_reminders_on_slack",
   "bday_bot_token",
-  "channel_id"
+  "channel_id",
+  "knowledge_helper_score_tab",
+  "enable_scoring",
+  "score_based_on_emoji_reaction",
+  "channel_id_to_calculate_the_score_from"
  ],
  "fields": [
   {
@@ -123,12 +127,34 @@
    "fieldname": "token_details_tab",
    "fieldtype": "Tab Break",
    "label": "Token Details"
+  },
+  {
+   "fieldname": "knowledge_helper_score_tab",
+   "fieldtype": "Tab Break",
+   "label": "Knowledge Helper Score"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_scoring",
+   "fieldtype": "Check",
+   "label": "Enable Scoring"
+  },
+  {
+   "description": "Name of emoji, eg: white_check_mark (for \u2705)",
+   "fieldname": "score_based_on_emoji_reaction",
+   "fieldtype": "Data",
+   "label": "Score Based on Emoji Reaction"
+  },
+  {
+   "fieldname": "channel_id_to_calculate_the_score_from",
+   "fieldtype": "Data",
+   "label": "Channel ID to Calculate the score from"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-04-21 16:08:10.294417",
+ "modified": "2025-04-22 12:02:38.524490",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",

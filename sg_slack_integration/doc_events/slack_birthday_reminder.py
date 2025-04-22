@@ -2,7 +2,9 @@ import frappe
 
 import requests
 
-from hrms.controllers.employee_reminders import get_employees_who_are_born_today
+# from hrms.controllers.employee_reminders import get_employees_who_are_born_today
+
+from frappe.utils import today
 
 
 # ------------------
@@ -16,7 +18,7 @@ def send_slack_birthday_greetings():
 	if not to_send:
 		return
 
-	employees_born_today = get_employees_who_are_born_today()
+	employees_born_today = get_employees_having_an_event_today("birthday")
 
 	for company, birthday_persons in employees_born_today.items():
 		birthday_person_emails = [
@@ -102,3 +104,57 @@ def add_reaction_to_message(channel, ts, emoji_name, bot_token):
 
     if not reaction_response.ok or not reaction_json.get('ok'):
         frappe.log_error(f"Slack Reaction Error: {reaction_response.text}")
+
+
+def get_employees_having_an_event_today(event_type):
+	"""Get all employee who have `event_type` today
+	& group them based on their company. `event_type`
+	can be `birthday` or `work_anniversary`"""
+
+	from collections import defaultdict
+
+	# Set column based on event type
+	if event_type == "birthday":
+		condition_column = "date_of_birth"
+	elif event_type == "work_anniversary":
+		condition_column = "date_of_joining"
+	else:
+		return
+
+	employees_born_today = frappe.db.multisql(
+		{
+			"mariadb": f"""
+			SELECT `personal_email`, `company`, `company_email`, `user_id`, `employee_name` AS 'name', `image`, `date_of_joining`
+			FROM `tabEmployee`
+			WHERE
+				DAY({condition_column}) = DAY(%(today)s)
+			AND
+				MONTH({condition_column}) = MONTH(%(today)s)
+			AND
+				YEAR({condition_column}) < YEAR(%(today)s)
+			AND
+				`status` in ('Active','Leaving')
+		""",
+			"postgres": f"""
+			SELECT "personal_email", "company", "company_email", "user_id", "employee_name" AS 'name', "image"
+			FROM "tabEmployee"
+			WHERE
+				DATE_PART('day', {condition_column}) = date_part('day', %(today)s)
+			AND
+				DATE_PART('month', {condition_column}) = date_part('month', %(today)s)
+			AND
+				DATE_PART('year', {condition_column}) < date_part('year', %(today)s)
+			AND
+				"status" in ('Active','Leaving')
+		""",
+		},
+		dict(today=today(), condition_column=condition_column),
+		as_dict=1,
+	)
+
+	grouped_employees = defaultdict(lambda: [])
+
+	for employee_doc in employees_born_today:
+		grouped_employees[employee_doc.get("company")].append(employee_doc)
+
+	return grouped_employees
