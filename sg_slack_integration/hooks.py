@@ -172,7 +172,7 @@ scheduler_events = {
 		"sg_slack_integration.doc_events.project_health_assessment_survey.create_assessment_forms"
 	],
 	"cron": {
-		# Daily but offset by 45 minutes
+		# At 9am KSA daily
 		"0 9 * * *": [
 			"sg_slack_integration.doc_events.slack_birthday_reminder.send_slack_birthday_greeting",
 		],
