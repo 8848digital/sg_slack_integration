@@ -2,7 +2,6 @@ import frappe
 
 import requests
 
-# from hrms.controllers.employee_reminders import get_employees_who_are_born_today
 
 from frappe.utils import today
 
