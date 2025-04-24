@@ -129,17 +129,17 @@ def fetch_user_info(user_id):
         }
 
 
-client = OpenAI(
-    api_key="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"
-)
+# client = OpenAI(
+#     api_key="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"
+# )
 
-completion = client.chat.completions.create(
-    model="gpt-4o-mini",
-    store=True,
-    messages=[
-        {"role": "user", "content": "write a haiku about ai"}
-    ]
-)
+# completion = client.chat.completions.create(
+#     model="gpt-4o-mini",
+#     store=True,
+#     messages=[
+#         {"role": "user", "content": "write a haiku about ai"}
+#     ]
+# )
 
-print("=============")
-print(completion.choices[0].message)
+# print("=============")
+# print(completion.choices[0].message)

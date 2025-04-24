@@ -7,6 +7,7 @@ app_description = "Slack Integration for SG"
 app_email = "rohitkumar8848@digital.com"
 app_license = "MIT"
 
+
 # Includes in <head>
 # ------------------
 
