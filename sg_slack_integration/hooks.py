@@ -175,7 +175,7 @@ scheduler_events = {
 	"cron": {
 		# At 9am KSA daily
 		"0 9 * * *": [
-			"sg_slack_integration.doc_events.slack_birthday_reminder.send_slack_birthday_greeting",
+			"sg_slack_integration.doc_events.slack_birthday_reminder.send_slack_birthday_greetings",
 		],
 	}
 }
