@@ -70,6 +70,7 @@ def send_ephemeral_message(slack_token, channel_id, user_id, ts, selected_option
 			updated_elements = []
 			for element in block.get("elements", []):
 				if element.get("type") == "button":
+					element["disabled"] = True
 					# Check if this option is selected
 					if element.get("value") == selected_option:
 						# Highlight the selected option
