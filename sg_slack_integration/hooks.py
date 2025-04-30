@@ -148,6 +148,7 @@ doc_events = {
     },
     "Contract": {
         "after_insert": "sg_slack_integration.doc_events.sme_contract.after_insert",
+        "on_update": "sg_slack_integration.doc_events.sme_contract.on_update"
     }
     # "Supplier Rating": {
     #     "after_insert":"sg_slack_integration.doc_events.supplier_rating.after_insert",
