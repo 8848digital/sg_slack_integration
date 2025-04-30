@@ -21,6 +21,7 @@
   "compensatory_leave_request_token",
   "project_health_assessment_survey_token",
   "supplier_rating_token",
+  "sme_contract_token",
   "birthday_notification_tab",
   "send_birthday_reminders_on_slack",
   "bday_bot_token",
@@ -149,12 +150,17 @@
    "fieldname": "channel_id_to_calculate_the_score_from",
    "fieldtype": "Data",
    "label": "Channel ID to Calculate the score from"
+  },
+  {
+   "fieldname": "sme_contract_token",
+   "fieldtype": "Data",
+   "label": "SME Contract Token"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-04-22 12:02:38.524490",
+ "modified": "2025-04-30 12:36:00.160413",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",
