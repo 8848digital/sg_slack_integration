@@ -145,6 +145,9 @@ doc_events = {
 	},
     "Project Health Assessment Survey": {
         "after_insert":"sg_slack_integration.doc_events.project_health_assessment_survey.after_insert",
+    },
+    "Contract": {
+        "after_insert": "sg_slack_integration.doc_events.sme_contract.after_insert",
     }
     # "Supplier Rating": {
     #     "after_insert":"sg_slack_integration.doc_events.supplier_rating.after_insert",
