@@ -173,7 +173,7 @@ def handle_poll_response():
 					frappe.set_user(approver)
 					parent_doc = frappe.get_doc("Contract", child_doc.parent)
 					for each in parent_doc.custom_contract_item:
-						if each.name == poll_id:
+						if each.name == child_doc.name:
 							each.sme_item = 1
 							break
 					# frappe.db.set_value("Contract Item", poll_id, "sme_item", 1)
@@ -248,7 +248,7 @@ def post_item_approval_on_slack(approver, options, doc_name):
 			questions_and_answers.append(header_block)
 			sections = [
 				{"title": "Contract No", "content": doc.name},
-				{"title": "Supplier Name", "content": doc.name},
+				{"title": "Supplier Name", "content": doc.custom_full_name},
 				{"title": "Start Date", "content": doc.start_date},
 				{"title": "End Date", "content": doc.end_date},
 				{"title": "Project", "content": doc.custom_project_name},
@@ -258,6 +258,7 @@ def post_item_approval_on_slack(approver, options, doc_name):
 				{"title": "Qty", "content": child_doc.qty},
 				{"title": "Rate", "content": child_doc.rate},
 				{"title": "Total", "content": child_doc.total},
+				{"title": "Total Value", "content": doc.custom_total_amount},
 				{"title": 'Form Reference', 'content': frappe.utils.get_url_to_form(
 					"Contract", doc.name)},
 			]
