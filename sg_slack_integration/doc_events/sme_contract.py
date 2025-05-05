@@ -116,7 +116,7 @@ def post_sme_contract_partner_approval(approver, options, doc_name):
 					payload["channel"] = user_id
 					post_poll_to_slacks(slack_token, payload, doc, approver)
 
-
+# from sg_slack_integration.doc_events.sme_contract
 # sg_slack_integration.sg_slack_integration.doc_events.sme_contract.handle_poll_response
 @frappe.whitelist(allow_guest=True)
 def handle_poll_response():
@@ -142,26 +142,56 @@ def handle_poll_response():
 		ts = slack_data.get("message", {}).get("ts", "")
 
 		if poll_id and selected_option:
-			doc = frappe.get_doc('Contract', poll_id)
-			frappe.log_error("got contract")
-			approver = ''
-			project_name = doc.custom_project_name
-			approver = frappe.db.get_value(
-				"Project", project_name, "custom_project_lead_email")
+			if "item_" in poll_id:
+				child_doc = ""
+				poll_id = poll_id.split("_")
+				child_doc = frappe.get_doc('Contract Item', poll_id[1])
+				frappe.log_error("got contract child")
+				# parent_contract = frappe.db.get_value("Contract Item", poll_id, "parent")
+				project_name = frappe.db.get_value(
+					"Contract", child_doc.parent, "project_name")
+				approver = frappe.db.get_value(
+					"Project", project_name, "custom_project_lead_email")
+				if approver:
+					frappe.set_user(approver)
+					frappe.db.set_value("Contract Item", poll_id, "sme_item", 1)
 
-			if approver:
-				frappe.set_user(approver)
-				apply_workflow(doc, selected_option)
-				send_ephemeral_message(
-					slack_token, channel_id, user_id, ts, selected_option, slack_data.get(
-						"message", {}).get("blocks", ""), block_id, poll_id
-				)
-				send_confirmation_message(slack_token, doc, approver)
-				poll_message = f"Response Received for Contract - {poll_id}\n - {selected_option}"
-				create_slack_log_for_poll(self=doc, status="Success",
-                                    poll_type="Receive Response", poll_result=poll_message)
+					send_ephemeral_message(
+						slack_token, channel_id, user_id, ts, selected_option, slack_data.get(
+							"message", {}).get("blocks", ""), block_id, poll_id
+					)
+					send_confirmation_message(slack_token, child_doc, approver)
+					poll_message = f"Response Received for Contract Item - {poll_id}\n - {selected_option}"
+					create_slack_log_for_poll(self=child_doc, status="Success",
+                                            poll_type="Receive Response", poll_result=poll_message)
 
-		return {"text": f"Response Recorded for '{selected_option}' recorded."}
+					return {"text": f"Response Recorded for '{selected_option}' recorded."}
+				else:
+					return {"text": f"Approver not set."}
+			else:
+
+				doc = frappe.get_doc('Contract', poll_id)
+				frappe.log_error("got contract")
+				approver = ''
+				project_name = doc.custom_project_name
+				approver = frappe.db.get_value(
+					"Project", project_name, "custom_project_lead_email")
+
+				if approver:
+					frappe.set_user(approver)
+					apply_workflow(doc, selected_option)
+					send_ephemeral_message(
+						slack_token, channel_id, user_id, ts, selected_option, slack_data.get(
+							"message", {}).get("blocks", ""), block_id, poll_id
+					)
+					send_confirmation_message(slack_token, doc, approver)
+					poll_message = f"Response Received for Contract - {poll_id}\n - {selected_option}"
+					create_slack_log_for_poll(self=doc, status="Success",
+                                            poll_type="Receive Response", poll_result=poll_message)
+
+					return {"text": f"Response Recorded for '{selected_option}' recorded."}
+				else:
+					return {"text": f"Approver not set."}
 	except Exception as e:
 		create_slack_log_for_poll(
 			self=doc, status="Error", poll_type="Receive Response", error=str(frappe.get_traceback(e)))
