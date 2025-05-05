@@ -66,6 +66,7 @@ def post_sme_contract_partner_approval(approver, options, doc_name):
 				{"title": "Start Date", "content": doc.start_date},
 				{"title": "End Date", "content": doc.end_date},
 				{"title": "Project", "content": doc.custom_project_name},
+				{"title": "Amount", "content": doc.custom_total_amount},
 				{"title": 'Form Reference', 'content': frappe.utils.get_url_to_form(
 					doc.doctype, doc.name)},
 			]
@@ -116,6 +117,7 @@ def post_sme_contract_partner_approval(approver, options, doc_name):
 					post_poll_to_slacks(slack_token, payload, doc, approver)
 
 
+# sg_slack_integration.sg_slack_integration.doc_events.sme_contract.handle_poll_response
 @frappe.whitelist(allow_guest=True)
 def handle_poll_response():
 	try:
@@ -129,6 +131,7 @@ def handle_poll_response():
 			return {"error": "Invalid payload format."}
 
 		slack_data = json.loads(payload)
+		frappe.log_error("Response for contract", str(slack_data))
 		user_id = slack_data.get("user", {}).get("username")
 		channel_id = slack_data.get("channel", {}).get("id")
 		action = slack_data.get("actions", [])[0]
@@ -140,9 +143,9 @@ def handle_poll_response():
 
 		if poll_id and selected_option:
 			doc = frappe.get_doc('Contract', poll_id)
+			frappe.log_error("got contract")
 			approver = ''
-			project_name = frappe.db.get_value(
-				"Contract", poll_id, "custom_project_name")
+			project_name = doc.custom_project_name
 			approver = frappe.db.get_value(
 				"Project", project_name, "custom_project_lead_email")
 
