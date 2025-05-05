@@ -46,6 +46,23 @@ def on_update(self, method=None):
 									docname=i[2], project=self.custom_project_name)
 
 
+def on_update_after_submit(self, method=None):
+	doc_to_compare = self._doc_before_save
+	if doc_to_compare:
+		current_doc_changes = get_diff(doc_to_compare, self)
+		frappe.log_error("hnages", str(current_doc_changes))
+		if current_doc_changes and current_doc_changes.get("changed"):
+			for i in current_doc_changes.get("row_changed"):
+				if i and i[0] == "custom_contract_item":
+					row_no = i[1]
+					change_row = i[3]
+					for x in change_row:
+						if x[0] == "custom_send_for_approval" and x[1] == 0 and x[2] == 1:
+							if self.custom_contract_item[row_no].sme_item == 0:
+								send_poll_on_slack_for_approve(
+									docname=i[2], project=self.custom_project_name)
+
+
 def post_sme_contract_partner_approval(approver, options, doc_name):
 	doc = frappe.get_doc('Contract', doc_name)
 	poll_enabled = frappe.db.get_single_value(
