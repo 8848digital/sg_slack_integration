@@ -149,7 +149,7 @@ def handle_poll_response():
 				frappe.log_error("got contract child")
 				# parent_contract = frappe.db.get_value("Contract Item", poll_id, "parent")
 				project_name = frappe.db.get_value(
-					"Contract", child_doc.parent, "project_name")
+					"Contract", child_doc.parent, "custom_project_name")
 				approver = frappe.db.get_value(
 					"Project", project_name, "custom_project_lead_email")
 				if approver:
