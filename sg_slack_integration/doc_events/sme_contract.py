@@ -165,7 +165,9 @@ def handle_poll_response():
 					create_slack_log_for_poll(self=child_doc, status="Success",
                                             poll_type="Receive Response", poll_result=poll_message)
 
-				return {"text": f"Response Recorded for '{selected_option}' recorded."}
+					return {"text": f"Response Recorded for '{selected_option}' recorded."}
+				else:
+					return {"text": f"Approver not set."}
 			else:
 
 				doc = frappe.get_doc('Contract', poll_id)
@@ -187,7 +189,9 @@ def handle_poll_response():
 					create_slack_log_for_poll(self=doc, status="Success",
                                             poll_type="Receive Response", poll_result=poll_message)
 
-				return {"text": f"Response Recorded for '{selected_option}' recorded."}
+					return {"text": f"Response Recorded for '{selected_option}' recorded."}
+				else:
+					return {"text": f"Approver not set."}
 	except Exception as e:
 		create_slack_log_for_poll(
 			self=doc, status="Error", poll_type="Receive Response", error=str(frappe.get_traceback(e)))
