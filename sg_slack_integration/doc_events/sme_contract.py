@@ -154,8 +154,13 @@ def handle_poll_response():
 					"Project", project_name, "custom_project_lead_email")
 				if approver:
 					frappe.set_user(approver)
-					frappe.db.set_value("Contract Item", poll_id, "sme_item", 1)
-
+					parent_doc = frappe.get_doc("Contract", child_doc.parent)
+					for each in parent_doc.custom_contract_item:
+						if each.name == poll_id:
+							each.sme_item = 1
+							break
+					# frappe.db.set_value("Contract Item", poll_id, "sme_item", 1)
+					parent_doc.save(ignore_permissions=True)
 					send_ephemeral_message(
 						slack_token, channel_id, user_id, ts, selected_option, slack_data.get(
 							"message", {}).get("blocks", ""), block_id, poll_id
