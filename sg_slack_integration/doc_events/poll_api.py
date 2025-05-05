@@ -67,21 +67,36 @@ def send_ephemeral_message(slack_token, channel_id, user_id, ts, selected_option
 	for block in blocks:
 		if block.get("type") == "actions" and block.get("block_id") == block_id:
 			# Update the style of the selected button
-			updated_elements = []
+			# updated_elements = []
+			options_text = ""
 			for element in block.get("elements", []):
-				if element.get("type") == "button":
-					element["disabled"] = True
-					# Check if this option is selected
-					if element.get("value") == selected_option:
-						# Highlight the selected option
-						element["style"] = "primary"  # Set to primary to indicate selection
-						element["text"]["text"] = f"✔ {element['text']['text']}"  # Add a checkmark or any indicator
-					else:
-						# Reset other options
-						element.pop("style", None)  # Remove any style from unselected options
-					updated_elements.append(element)
-			block["elements"] = updated_elements
-		updated_blocks.append(block)
+				label = element["text"]["text"]
+				if element.get("value") == selected_option:
+					options_text += f"• ✔ *{label}*\n"
+				else:
+					options_text += f"• {label}\n"
+
+			updated_blocks.append({
+				"type": "section",
+				"text": {
+					"type": "mrkdwn",
+					"text": f"*You selected:*\n{options_text}"
+				}
+			})
+		# 	for element in block.get("elements", []):
+		# 		if element.get("type") == "button":
+		# 			# element["disabled"] = True
+		# 			# Check if this option is selected
+		# 			if element.get("value") == selected_option:
+		# 				# Highlight the selected option
+		# 				element["style"] = "primary"  # Set to primary to indicate selection
+		# 				element["text"]["text"] = f"✔ {element['text']['text']}"  # Add a checkmark or any indicator
+		# 			else:
+		# 				# Reset other options
+		# 				element.pop("style", None)  # Remove any style from unselected options
+		# 			updated_elements.append(element)
+		# 	block["elements"] = updated_elements
+		# updated_blocks.append(block)
 
 	# Make the API call to update the message
 	url = "https://slack.com/api/chat.update"
