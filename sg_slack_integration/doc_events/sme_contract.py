@@ -46,6 +46,23 @@ def on_update(self, method=None):
 									docname=i[2], project=self.custom_project_name)
 
 
+def on_update_after_submit(self, method=None):
+	doc_to_compare = self._doc_before_save
+	if doc_to_compare:
+		current_doc_changes = get_diff(doc_to_compare, self)
+		frappe.log_error("hnages", str(current_doc_changes))
+		if current_doc_changes and current_doc_changes.get("changed"):
+			for i in current_doc_changes.get("row_changed"):
+				if i and i[0] == "custom_contract_item":
+					row_no = i[1]
+					change_row = i[3]
+					for x in change_row:
+						if x[0] == "custom_send_for_approval" and x[1] == 0 and x[2] == 1:
+							if self.custom_contract_item[row_no].sme_item == 0:
+								send_poll_on_slack_for_approve(
+									docname=i[2], project=self.custom_project_name)
+
+
 def post_sme_contract_partner_approval(approver, options, doc_name):
 	doc = frappe.get_doc('Contract', doc_name)
 	poll_enabled = frappe.db.get_single_value(
@@ -154,8 +171,13 @@ def handle_poll_response():
 					"Project", project_name, "custom_project_lead_email")
 				if approver:
 					frappe.set_user(approver)
-					frappe.db.set_value("Contract Item", poll_id, "sme_item", 1)
-
+					parent_doc = frappe.get_doc("Contract", child_doc.parent)
+					for each in parent_doc.custom_contract_item:
+						if each.name == poll_id:
+							each.sme_item = 1
+							break
+					# frappe.db.set_value("Contract Item", poll_id, "sme_item", 1)
+					parent_doc.save(ignore_permissions=True)
 					send_ephemeral_message(
 						slack_token, channel_id, user_id, ts, selected_option, slack_data.get(
 							"message", {}).get("blocks", ""), block_id, poll_id
