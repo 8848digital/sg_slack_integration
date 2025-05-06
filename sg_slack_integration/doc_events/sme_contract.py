@@ -326,7 +326,7 @@ def post_item_approval_on_slack(approver, options, doc_name):
 
 def send_reject_response_to_manager(project_manager, slack_token, child_doc, slack_data):
 	user_id = get_user_id_by_email(project_manager, slack_token)
-	message = f"Partner - {slack_data.get('user').get('name')} has Rejected the Contract Item {child_doc.item_name} of value - {child_doc.total} in Contract - {child_doc.parent}\nForm Reference-{frappe.utils.get_url_to_form("Contract", child_doc.parent)}"
+	message = f"Partner - {slack_data.get('user').get('name')} has Rejected the Contract Item {child_doc.item_name} of value - {child_doc.total} in Contract - {child_doc.parent}\nForm Reference-{frappe.utils.get_url_to_form('Contract', child_doc.parent)}"
 	payload = {
 		"channel": user_id,
 		"text": message
