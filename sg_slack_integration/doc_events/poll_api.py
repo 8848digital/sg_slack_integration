@@ -65,24 +65,48 @@ def send_ephemeral_message(slack_token, channel_id, user_id, ts, selected_option
 	updated_blocks = []
 	frappe.log_error("Error in slack", blocks)
 	for block in blocks:
+		# if block.get("type") == "actions" and block.get("block_id") == block_id:
+		# 	# Update the style of the selected button
+		# 	updated_elements = []
+		# 	options_text = ""
+		# 	for element in block.get("elements", []):
+		# 		label = element["text"]["text"]
+		# 		if element.get("value") == selected_option:
+		# 			options_text += f"• ✔ *{label}*\n"
+		# 		else:
+		# 			options_text += f"• {label}\n"
+
+		# 	updated_blocks.append({
+		# 		"type": "section",
+		# 		"text": {
+		# 			"type": "mrkdwn",
+		# 			"text": f"*You selected:*\n{options_text}"
+		# 		}
+		# 	})
 		if block.get("type") == "actions" and block.get("block_id") == block_id:
 			# Update the style of the selected button
 			# updated_elements = []
 			options_text = ""
 			for element in block.get("elements", []):
 				label = element["text"]["text"]
-				if element.get("value") == selected_option:
-					options_text += f"• ✔ *{label}*\n"
-				else:
-					options_text += f"• {label}\n"
-
-			updated_blocks.append({
+				if element.get("type") == "button":
+					# Check if this option is selected
+					if element.get("value") == selected_option:
+						# Highlight the selected option
+						options_text += f"• ✔ *{label}*\n"
+					else:
+						# Reset other options
+						options_text += f"• {label}\n"
+					# updated_elements.append(element)
+			block = {
 				"type": "section",
 				"text": {
 					"type": "mrkdwn",
 					"text": f"*You selected:*\n{options_text}"
 				}
-			})
+			}
+			# block["elements"] = updated_elements
+		updated_blocks.append(block)
 		# 	for element in block.get("elements", []):
 		# 		if element.get("type") == "button":
 		# 			# element["disabled"] = True
