@@ -168,6 +168,7 @@ def handle_poll_response():
 				child_doc = ""
 				poll_id = poll_id.split("_")
 				child_doc = frappe.get_doc('Contract Item', poll_id[1])
+				poll_id = poll_id[1]
 				project_name = frappe.db.get_value(
 					"Contract", child_doc.parent, "custom_project_name")
 				if selected_option.lower() == "approve":
@@ -184,14 +185,6 @@ def handle_poll_response():
 								break
 						# frappe.db.set_value("Contract Item", poll_id, "sme_item", 1)
 						parent_doc.save(ignore_permissions=True)
-						send_ephemeral_message(
-							slack_token, channel_id, user_id, ts, selected_option, slack_data.get(
-								"message", {}).get("blocks", ""), block_id, poll_id
-						)
-						send_confirmation_message(slack_token, child_doc, approver)
-						poll_message = f"Response Received for Contract Item - {poll_id}\n - {selected_option}"
-						create_slack_log_for_poll(self=child_doc, status="Success",
-                                                    poll_type="Receive Response", poll_result=poll_message)
 
 						return {"text": f"Response Recorded for '{selected_option}' recorded."}
 					else:
@@ -202,6 +195,15 @@ def handle_poll_response():
 						"Project", project_name, "custom_project_manager_email")
 					send_reject_response_to_manager(
 						project_manager=manager, slack_token=slack_token, child_doc=child_doc, slack_data=slack_data)
+
+				send_ephemeral_message(
+                                    slack_token, channel_id, user_id, ts, selected_option, slack_data.get(
+                                        "message", {}).get("blocks", ""), block_id, poll_id
+                                )
+				send_confirmation_message(slack_token, child_doc, approver)
+				poll_message = f"Response Received for Contract Item - {poll_id}\n - {selected_option}"
+				create_slack_log_for_poll(self=child_doc, status="Success",
+				                          poll_type="Receive Response", poll_result=poll_message)
 
 			else:
 
