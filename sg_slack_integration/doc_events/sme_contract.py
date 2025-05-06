@@ -30,6 +30,7 @@ def after_insert(self, method=None):
 
 
 def on_update(self, method=None):
+	pass
 	doc_to_compare = self._doc_before_save
 	if doc_to_compare:
 		current_doc_changes = get_diff(doc_to_compare, self)
