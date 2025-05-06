@@ -34,7 +34,7 @@ def on_update(self, method=None):
 	if doc_to_compare:
 		current_doc_changes = get_diff(doc_to_compare, self)
 		frappe.log_error("hnages", str(current_doc_changes))
-		if current_doc_changes and current_doc_changes.get("changed"):
+		if current_doc_changes and current_doc_changes.get("row_changed"):
 			for i in current_doc_changes.get("row_changed"):
 				if i and i[0] == "custom_contract_item":
 					row_no = i[1]
@@ -42,23 +42,27 @@ def on_update(self, method=None):
 					for x in change_row:
 						if x[0] == "custom_send_for_approval" and x[1] == 0 and x[2] == 1:
 							if self.custom_contract_item[row_no].sme_item == 0:
+
 								send_poll_on_slack_for_approve(
 									docname=i[2], project=self.custom_project_name)
 
 
 def on_update_after_submit(self, method=None):
+	frappe.log_error("on update after submit")
 	doc_to_compare = self._doc_before_save
 	if doc_to_compare:
 		current_doc_changes = get_diff(doc_to_compare, self)
 		frappe.log_error("hnages", str(current_doc_changes))
-		if current_doc_changes and current_doc_changes.get("changed"):
+		if current_doc_changes and current_doc_changes.get("row_changed"):
 			for i in current_doc_changes.get("row_changed"):
 				if i and i[0] == "custom_contract_item":
+					frappe.log_error("40")
 					row_no = i[1]
 					change_row = i[3]
 					for x in change_row:
 						if x[0] == "custom_send_for_approval" and x[1] == 0 and x[2] == 1:
 							if self.custom_contract_item[row_no].sme_item == 0:
+								frappe.log_error("trigger_function")
 								send_poll_on_slack_for_approve(
 									docname=i[2], project=self.custom_project_name)
 
@@ -226,6 +230,7 @@ def send_poll_on_slack_for_approve(docname, project):
 	approver = frappe.db.get_value(
 		"Project", project, "custom_project_lead_email")
 	options = ["Approve", "Reject"]
+	frappe.log_error("approver", approver)
 	post_item_approval_on_slack(approver, options, docname)
 
 
@@ -258,7 +263,7 @@ def post_item_approval_on_slack(approver, options, doc_name):
 				{"title": "Qty", "content": child_doc.qty},
 				{"title": "Rate", "content": child_doc.rate},
 				{"title": "Total", "content": child_doc.total},
-				{"title": "Total Value", "content": doc.custom_total_amount},
+				{"title": "Total Contract Amount", "content": doc.custom_total_amount},
 				{"title": 'Form Reference', 'content': frappe.utils.get_url_to_form(
 					"Contract", doc.name)},
 			]
