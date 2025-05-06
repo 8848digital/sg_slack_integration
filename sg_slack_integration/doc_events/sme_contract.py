@@ -328,10 +328,42 @@ def post_item_approval_on_slack(approver, options, doc_name):
 
 def send_reject_response_to_manager(project_manager, slack_token, child_doc, slack_data):
 	user_id = get_user_id_by_email(project_manager, slack_token)
-	message = f"Partner - {slack_data.get('user').get('name')} has Rejected the Contract Item {child_doc.item_name} of value - {child_doc.total} in Contract - {child_doc.parent}\nForm Reference-{frappe.utils.get_url_to_form('Contract', child_doc.parent)}"
+	header_block = {
+            "type": "header",
+        				"text": {"type": "plain_text", "text": 'SME Contract Item Rejected: ' + child_doc.parent}
+	}
+	parent_doc = frappe.get_doc("Contract", child_doc.parent)
+	questions_and_answers = []
+	questions_and_answers.append(header_block)
+	sections = [
+		{"title": "Contract No", "content": parent_doc.name},
+		{"title": "Supplier Name", "content": parent_doc.custom_full_name},
+		{"title": "Start Date", "content": parent_doc.start_date},
+		{"title": "End Date", "content": parent_doc.end_date},
+		{"title": "Project", "content": parent_doc.custom_project_name},
+		{"title": "Amount", "content": parent_doc.custom_total_amount},
+		{"title": "Item", "content": child_doc.item_name},
+		{"title": 'Form Reference', 'content': frappe.utils.get_url_to_form(
+			parent_doc.doctype, parent_doc.name)},
+		{"title": 'Rejected By - ', 'content': slack_data.get('user').get('name')},
+	]
+
+	for section in sections:
+		description_block = {
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": f"*{section['title']}*:  *{section['content']}*" if section.get('title') != 'Form Reference' else f"*{section['title']}*: {section['content']}"
+			},
+		}
+	questions_and_answers.append(description_block)
+
+	# message = f"Partner - {slack_data.get('user').get('name')} has Rejected the Contract Item {child_doc.item_name} of value - {child_doc.total} in Contract - {child_doc.parent}\nForm Reference-{frappe.utils.get_url_to_form('Contract', child_doc.parent)}"
+
 	payload = {
-		"channel": user_id,
-		"text": message
+		"text": parent_doc.name,
+		"blocks": questions_and_answers,
+		"channel": user_id
 	}
 	url = "https://slack.com/api/chat.postMessage"
 	headers = {
