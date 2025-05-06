@@ -356,7 +356,7 @@ def send_reject_response_to_manager(project_manager, slack_token, child_doc, sla
 				"text": f"*{section['title']}*:  *{section['content']}*" if section.get('title') != 'Form Reference' else f"*{section['title']}*: {section['content']}"
 			},
 		}
-	questions_and_answers.append(description_block)
+		questions_and_answers.append(description_block)
 
 	# message = f"Partner - {slack_data.get('user').get('name')} has Rejected the Contract Item {child_doc.item_name} of value - {child_doc.total} in Contract - {child_doc.parent}\nForm Reference-{frappe.utils.get_url_to_form('Contract', child_doc.parent)}"
 
