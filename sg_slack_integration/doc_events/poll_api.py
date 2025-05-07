@@ -105,6 +105,8 @@ def send_ephemeral_message(slack_token, channel_id, user_id, ts, selected_option
 					"text": f"*You selected:*\n{options_text}"
 				}
 			}
+		elif block.get("type") == "section" and ("Your Action" in block.get("text").get("text")):
+			block['text']['text'] = "*Response Submitted*"
 			# block["elements"] = updated_elements
 		updated_blocks.append(block)
 		# 	for element in block.get("elements", []):
