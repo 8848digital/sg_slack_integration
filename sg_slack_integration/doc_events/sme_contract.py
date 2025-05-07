@@ -186,9 +186,11 @@ def handle_poll_response():
 						# frappe.db.set_value("Contract Item", poll_id, "sme_item", 1)
 						parent_doc.save(ignore_permissions=True)
 
-						return {"text": f"Response Recorded for '{selected_option}' recorded."}
+						# return {"text": f"Response Recorded for '{selected_option}' recorded."}
 					else:
-						return {"text": f"Approver not set."}
+						frappe.log_error("Slack Poll | Handle Response",
+						                 "Contract Item Approver not set")
+						# return {"text": f"Approver not set."}
 				else:
 					# send slack message to project manager.
 					manager = frappe.db.get_value(
