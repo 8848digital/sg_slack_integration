@@ -1,8 +1,9 @@
+from sg_slack_integration.doc_events.poll_api import send_ephemeral_message
 import frappe
 import requests
 import json
 
-# from strategic_gears.employee_customization.customizations.slack_poll.slack_poll import start_poll, handle_poll_response
+
 
 
 def send_poll_for_employee_profile(status=None):
@@ -220,53 +221,6 @@ def get_slack_user_details(user_id, slack_token):
 			return {"error": response_data.get("error")}
 	except requests.exceptions.RequestException as e:
 		return {"error": f"Request error: {str(e)}"}
-
-
-def send_ephemeral_message(slack_token, channel_id, user_id, ts, selected_option, blocks, block_id, poll_id):
-	"""Update the Slack message to indicate the selected option."""
-
-	updated_blocks = []
-	frappe.log_error("Error in slack", blocks)
-	for block in blocks:
-		if block.get("type") == "actions" and block.get("block_id") == block_id:
-			# Update the style of the selected button
-			updated_elements = []
-			for element in block.get("elements", []):
-				if element.get("type") == "button":
-					# Check if this option is selected
-					if element.get("value") == selected_option:
-						# Highlight the selected option
-						element["style"] = "primary"  # Set to primary to indicate selection
-						# Add a checkmark or any indicator
-						element["text"]["text"] = f"✔ {element['text']['text']}"
-					else:
-						# Reset other options
-						element.pop("style", None)  # Remove any style from unselected options
-					updated_elements.append(element)
-			block["elements"] = updated_elements
-		updated_blocks.append(block)
-
-	# Make the API call to update the message
-	url = "https://slack.com/api/chat.update"
-	headers = {
-		"Authorization": f"Bearer {slack_token}",
-		"Content-Type": "application/json",
-	}
-
-	payload = {
-		"channel": channel_id,
-		"ts": ts,
-		"text": poll_id,
-		"blocks": updated_blocks,
-	}
-
-	response = requests.post(url, headers=headers, json=payload)
-
-	if not response.json().get("ok"):
-		frappe.log_error(f"Error updating message: {response.json()}")
-		return None
-
-	return response.json()
 
 
 def create_slack_log_for_poll(self, status, poll_type=None, poll_result=None, error=None):
