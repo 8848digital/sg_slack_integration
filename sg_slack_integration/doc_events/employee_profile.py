@@ -14,10 +14,17 @@ def send_poll_for_employee_profile(status=None):
 		emp_list = frappe.get_all("Employee Profile", ["name", "employee_id"])
 	else:
 		emp_list = frappe.get_all(
-			"Employee Profile", {"workflow_state": ["in", status]})
+			"Employee Profile", {"workflow_state": ["in", status]}, ["name", "employee_id"])
 
+	error = []
 	for each in emp_list:
-		start_poll(each.get('name'), each.get('employee_id'), slack_token)
+		try:
+			start_poll(each.get('name'), slack_token)
+		except Exception as e:
+			message = f"\nError in {each.get('name')} --> {e}"
+			error.append(message)
+	frappe.log_error("EMployee profile Poll", str(error))
+
 
 
 @frappe.whitelist()
@@ -39,14 +46,9 @@ def start_poll(doc_name, slack_token):
 
 	questions_and_answers.append(header_block)
 
-	# description_block = {
-	#             "type": "section",
-	#         				"text": {"type": "mrkdwn", "text": doc.context}
-	# }
-	# questions_and_answers.append(description_block)
 
 	question_text = f'How many years of total work experience do you have?'
-	options = ["1+", "3+", "5+", "10+", "12+", "15+"]
+	options = ["Less than 1", "1+", "3+", "5+", "10+", "12+", "15+"]
 
 	# Add question block
 	question_block = {
@@ -74,6 +76,11 @@ def start_poll(doc_name, slack_token):
 	}
 
 	questions_and_answers.append(answer_block)
+	question_block = {
+		"type": "section",
+		"text": {"type": "mrkdwn", "text": f"*Note: This Data will be used in your Employee Profile"}
+	}
+	questions_and_answers.append(question_block)
 
 	# Generate the Body
 	payload = {
@@ -81,8 +88,8 @@ def start_poll(doc_name, slack_token):
 		"blocks": questions_and_answers
 	}
 
-	# user_emails = [poll_receiver_user_id]
-	user_emails = ["saffaat@8848digital.com"]
+	user_emails = [poll_receiver_user_id]
+
 
 	for email in user_emails:
 		user_id = get_user_id_by_email(email, slack_token)
