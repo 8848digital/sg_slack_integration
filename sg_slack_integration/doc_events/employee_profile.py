@@ -45,7 +45,7 @@ def start_poll(doc_name, slack_token):
 	# }
 	# questions_and_answers.append(description_block)
 
-	question_text = f'How many years to total work experience do you have?'
+	question_text = f'How many years of total work experience do you have?'
 	options = ["1+", "3+", "5+", "10+", "12+", "15+"]
 
 	# Add question block
@@ -115,7 +115,7 @@ def handle_poll_response():
 
 		# Identify the doctype
 		doctype = "Employee Profile"
-		token = "bday_bot_token"
+		token = "employee_profile_token"
 
 		slack_token = frappe.db.get_single_value("Slack Integration Settings", token)
 
