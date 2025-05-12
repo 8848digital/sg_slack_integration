@@ -11,7 +11,7 @@ def send_poll_for_employee_profile(status=None):
 		"Slack Integration Settings", "employee_profile_token")
 	emp_list = []
 	if status is None:
-		emp_list = frappe.get_all("Employee Profile", ["name", "e(mployee_id"])
+		emp_list = frappe.get_all("Employee Profile", ["name", "employee_id"])
 	else:
 		emp_list = frappe.get_all(
 			"Employee Profile", {"workflow_state": ["in", status]})
