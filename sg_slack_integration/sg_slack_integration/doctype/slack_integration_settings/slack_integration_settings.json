@@ -22,6 +22,7 @@
   "project_health_assessment_survey_token",
   "supplier_rating_token",
   "sme_contract_token",
+  "employee_profile_token",
   "birthday_notification_tab",
   "send_birthday_reminders_on_slack",
   "bday_bot_token",
@@ -155,12 +156,17 @@
    "fieldname": "sme_contract_token",
    "fieldtype": "Data",
    "label": "SME Contract Token"
+  },
+  {
+   "fieldname": "employee_profile_token",
+   "fieldtype": "Data",
+   "label": "Employee Profile Token"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-04-30 12:36:00.160413",
+ "modified": "2025-05-12 14:17:15.766630",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",
