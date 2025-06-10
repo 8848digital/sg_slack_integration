@@ -65,10 +65,10 @@ def get_info():
 
 
 def slack_response(message: str):
-    frappe.response["type"] = "ephemeral"  # or "in_channel"
-    frappe.response["response_type"] = "ephemeral"
-    frappe.response["content_type"] = "application/json"
-    frappe.response["message"] = message
+    # frappe.response["type"] = "ephemeral"  # or "in_channel"
+    # frappe.response["response_type"] = "ephemeral"
+    # frappe.response["content_type"] = "application/json"
+    # frappe.response["message"] = message
     return {
         "response_type": "ephemeral",
         "text": message
