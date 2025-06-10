@@ -16,60 +16,103 @@ def get_info():
 	user_id = req.form.get("user_id")  # Slack user ID
 
 	if not text:
-		return slack_response("❌ Please provide valid parameters: `/get-info [project-id] [members|project_details]`")
+		msg_block = [
+			{"type": "mrkdwn",
+				"text": f"❌ Please provide valid parameters: `/get-info [project-id] [members|project_details]`"}
+		]
+		return slack_response(msg_block)
 
 	parts = text.split()
 	if len(parts) != 2:
-		return slack_response("❌ Usage: `/get-info [project-id] [members|project_details]`")
+		msg_block = [
+			{"type": "mrkdwn",
+				"text": "❌ Usage: `/get-info [project-id] [members|project_details]`"}
+		]
+		return slack_response(msg_block)
 
 	project_id, info_type = parts
 
 	# Lookup Slack user_id -> ERPNext email
 	slack_user_email = get_email_id_from_slack_user_id(user_id)
 	if not slack_user_email:
-		return slack_response("⚠️ Could not identify you in ERP system.")
+		msg_block = [
+			{"type": "mrkdwn", "text": f"⚠️ Could not identify you in ERP system."}]
+		return slack_response(msg_block)
 
 	# Check if user has 'Partner' role
 	user_roles = frappe.get_roles(slack_user_email)
 	if "Partner" not in user_roles:
-		return slack_response("🚫 You do not have permission to access project details.")
+		msg_block = [
+			{"type": "mrkdwn", "text": f"🚫 You do not have permission to access project details."}
+		]
+		return slack_response(msg_block)
 
 	# Fetch the project
 	project_doc = ""
 	if frappe.db.exists("Project", project_id):
 		project_doc = frappe.get_doc("Project", project_id)
 	else:
-		return slack_response(f"🚫 No project found with ID `{project_id}`.")
+		msg_block = [
+			{"type": "mrkdwn", "text": f"🚫 No project found with ID `{project_id}`."}]
+		return slack_response(msg_block)
 
 	if info_type == "members":
 		members = frappe.get_all("Project Employee Distribution Detail", filters={
 		                         "parent": project_id}, fields=["employee_name", "designation", "from_date", "to_date"])
 		if not members:
-			return slack_response(f"ℹ️ No members found for project `{project_id}`.")
-		member_list = "\n".join(
-			[f"• {m.get('employee_name')} ({m.get('designation')}) - {m.get('from_date')}-{m.get('to_date')}" for m in members])
-		return slack_response(f"*Project Members for {project_id}:*\n{member_list}")
+			msg_block = [
+				{"type": "mrkdwn", "text": f"ℹ️ No members found for project `{project_id}`."}
+			]
+			return slack_response(msg_block)
+		msg_block = [
+			{"type": "mrkdwn", "text": f"These are the members found for project `{project_id}`."}
+		]
+		# member_list = "\n".join(
+		# 	[f"• {m.get('employee_name')} ({m.get('designation')}) - {m.get('from_date')}-{m.get('to_date')}" for m in members])
+		for m in members:
+			msg_block.append(
+				{"type": "mrkdwn", "text": f"{m.get('employee_name')} ({m.get('designation')}) - {m.get('from_date')}-{m.get('to_date')}"})
+		return slack_response(msg_block)
 
 	elif info_type == "project_details":
-		details = f"""*Project ID:* {project_doc.name}
-			*Project Name:* {project_doc.project_name}
-			*Status:* {project_doc.status}
-			*Expected Start:* {project_doc.expected_start_date}
-			*Expected End:* {project_doc.expected_end_date}
-			*Customer:* {project_doc.customer}
-	"""
-		return slack_response(details)
+		# details = f"""*Project ID:* {project_doc.name}
+		# 	*Project Name:* {project_doc.project_name}
+		# 	*Status:* {project_doc.status}
+		# 	*Expected Start:* {project_doc.expected_start_date}
+		# 	*Expected End:* {project_doc.expected_end_date}
+		# 	*Customer:* {project_doc.customer}
+		# """
+		msg_block = [
+			{"type": "mrkdwn", "text": f"*Project ID:*\n{project_doc.name}"},
+			{"type": "mrkdwn", "text": f"*Project Name:*\n{project_doc.project_name}"},
+			{"type": "mrkdwn", "text": f"*Status:*\n{project_doc.status}"},
+			{"type": "mrkdwn", "text": f"*Expected Start:*\n{project_doc.expected_start_date}"},
+			{"type": "mrkdwn", "text": f"*Expected End:*\n{project_doc.expected_end_date}"},
+			{"type": "mrkdwn", "text": f"*Customer:*\n{project_doc.customer}"}
+		]
+		return slack_response(msg_block)
 
 	else:
-		return slack_response("❌ Invalid info type. Use `members` or `project_details`.")
+		msg_block = [
+			{"type": "mrkdwn", "text": "❌ Invalid info type. Use `members` or `project_details`."}
+		]
+		return slack_response(msg_block)
 
 
-def slack_response(message: str):
+def slack_response(message_block):
     # frappe.response["type"] = "ephemeral"  # or "in_channel"
     # frappe.response["response_type"] = "ephemeral"
     # frappe.response["content_type"] = "application/json"
     # frappe.response["message"] = message
-    return {
-        "response_type": "ephemeral",
-        "text": message
-    }
+	response = {
+		"response_type": "ephemeral",
+		"blocks": [
+                    {
+                        "type": "section",
+                        "fields": message_block
+                    }
+                ]
+	}
+	frappe.response["type"] = "json"
+	frappe.response["content_type"] = "application/json"
+	frappe.response["data"] = response
