@@ -417,3 +417,34 @@ def set_sharepoint_links():
 		except Exception as e:
 			errors.append(e)
 	frappe.log_error("Slack | Error for description", str(errors))
+
+
+def get_email_id_from_slack_user_id(slack_user_id):
+	"""
+	Uses Slack API to retrieve user email based on Slack user ID,
+	then checks if that email exists in ERPNext users.
+	"""
+	if not slack_user_id:
+		return None
+	token = frappe.db.get_single_value(
+		"Slack Integration Settings", "project_details_token")
+	headers = {
+		"Authorization": f"Bearer {token}"
+	}
+
+	url = f"https://slack.com/api/users.info?user={slack_user_id}"
+	response = requests.get(url, headers=headers)
+	data = response.json()
+
+	if not data.get("ok"):
+		frappe.log_error("Slack API Error | get_email_id_from_slack_user_id", data)
+		return None
+
+	slack_email = data.get("user", {}).get("profile", {}).get("email")
+
+	if not slack_email:
+		return None
+
+	# Validate against ERPNext users
+	user_exists = frappe.db.exists("User", {"email": slack_email})
+	return slack_email if user_exists else None
