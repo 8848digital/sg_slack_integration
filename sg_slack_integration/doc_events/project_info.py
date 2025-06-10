@@ -100,6 +100,7 @@ def get_info():
 
 
 def slack_response(message_block):
+	import json
     # frappe.response["type"] = "ephemeral"  # or "in_channel"
     # frappe.response["response_type"] = "ephemeral"
     # frappe.response["content_type"] = "application/json"
@@ -115,4 +116,4 @@ def slack_response(message_block):
 	}
 	frappe.response["type"] = "json"
 	frappe.response["content_type"] = "application/json"
-	frappe.response["data"] = response
+	frappe.response["data"] = json.dumps(response)
