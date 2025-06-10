@@ -426,9 +426,10 @@ def get_email_id_from_slack_user_id(slack_user_id):
 	"""
 	if not slack_user_id:
 		return None
-
+	token = frappe.db.get_single_value(
+		"Slack Integration Settings", "project_details_token")
 	headers = {
-		"Authorization": f"Bearer xoxb-5620465230965-9018326752211-0SEwhWK1pjRde9K8Ie3iahpm"
+		"Authorization": f"Bearer {token}"
 	}
 
 	url = f"https://slack.com/api/users.info?user={slack_user_id}"
