@@ -108,6 +108,5 @@ def slack_response(response_url, message_block):
 	frappe.log_error("result", result.text)
 	# Return a 200 OK response with an empty body
 	frappe.local.response["http_status_code"] = 200
-	frappe.local.response["content_type"] = "application/json"
-	frappe.local.response["data"] = ""
+
 	return
