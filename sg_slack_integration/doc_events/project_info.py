@@ -1,11 +1,9 @@
 
 import frappe
 from frappe import _
-from frappe.utils.response import build_response
-from frappe.utils.data import strip_html_tags
+
 
 from sg_slack_integration.doc_events.common_function import get_email_id_from_slack_user_id
-import json
 
 
 @frappe.whitelist(allow_guest=True)
