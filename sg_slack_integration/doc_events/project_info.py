@@ -104,5 +104,6 @@ def slack_response(response_url, message_block):
 			}
 		]
 	}
-	result = requests.post(response_url, json=response)
+	result = requests.post(response_url, json=response).json()
 	frappe.log_error("result", result)
+	return "Thank You"
