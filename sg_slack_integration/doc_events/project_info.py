@@ -98,19 +98,21 @@ def get_info():
 				]
 				return slack_response(response_url, msg_block)
 			msg_block = [
-				{"type": "mrkdwn", "text": f"These are the members found for project `{project_id}`."}
+				{"type": "mrkdwn", "text": f"\nThese are the members found for project `{project_id}`."},
+				{"type": "mrkdwn",
+					"text": f"\nPartner: {ped_doc.get('project_lead_name')}"},
+				{"type": "mrkdwn",
+					"text": f"\nEngagement Manager: {ped_doc.get('project_manager_name')}"}
 			]
-			msg_block.append(
-				{"type": "mrkdwn", "text": f"Partner: {ped_doc.get('project_lead_name')}"})
-			msg_block.append(
-				{"type": "mrkdwn", "text": f"Engagement Manager: {ped_doc.get('project_manager_name')}"})
+
 			for m in members:
 				msg_block.append(
 					{"type": "mrkdwn", "text": f"• {m.get('employee_name')} ({m.get('designation')}) - {m.get('from_date')}-{m.get('to_date')}"})
+			frappe.log_error("msg_block", str(msg_block))
 			return slack_response(response_url, msg_block)
 
 		elif info_type == "proj_details":
-			frappe.log_error("110")
+			frappe.log_error("114")
 			msg_block = [
 				{"type": "mrkdwn", "text": f"*Project ID:*\n{project_doc.get('name')}"},
 				{"type": "mrkdwn",
@@ -138,6 +140,7 @@ def get_info():
 				{"type": "mrkdwn",
 					"text": f"*Engagement Manager:*\n{project_doc.get('project_manager_name')}"}
 			]
+			frappe.log_error("142 msg block", str(msg_block))
 			return slack_response(response_url, msg_block)
 
 		else:
