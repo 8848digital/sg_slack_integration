@@ -101,9 +101,9 @@ def get_info():
 				{"type": "mrkdwn", "text": f"These are the members found for project `{project_id}`."}
 			]
 			msg_block.append(
-				{"type": "mrkdwn", "text": f"Partner: {ped_doc.project_lead_name}"})
+				{"type": "mrkdwn", "text": f"Partner: {ped_doc.get('project_lead_name')}"})
 			msg_block.append(
-				{"type": "mrkdwn", "text": f"Engagement Manager: {ped_doc.project_manager_name}"})
+				{"type": "mrkdwn", "text": f"Engagement Manager: {ped_doc.get('project_manager_name')}"})
 			for m in members:
 				msg_block.append(
 					{"type": "mrkdwn", "text": f"• {m.get('employee_name')} ({m.get('designation')}) - {m.get('from_date')}-{m.get('to_date')}"})
@@ -112,20 +112,31 @@ def get_info():
 		elif info_type == "proj_details":
 			frappe.log_error("110")
 			msg_block = [
-				{"type": "mrkdwn", "text": f"*Project ID:*\n{project_doc.name}"},
-				{"type": "mrkdwn", "text": f"*Project Name:*\n{project_doc.project_name}"},
-				{"type": "mrkdwn", "text": f"*Workflow State:*\n{project_doc.workflow_state}"},
-				{"type": "mrkdwn", "text": f"*Status:*\n{project_doc.status}"},
-				{"type": "mrkdwn", "text": f"*Project Type:*\n{project_doc.project_type}"},
-				{"type": "mrkdwn", "text": f"*Service Line:*\n{project_doc.service_line}"},
-				{"type": "mrkdwn", "text": f"*Expected Start:*\n{project_doc.expected_start_date}"},
-				{"type": "mrkdwn", "text": f"*Expected End:*\n{project_doc.expected_end_date}"},
-				{"type": "mrkdwn", "text": f"*Sharepoint Link:*\n{project_doc.custom_sharepoint_link}"},
-				{"type": "mrkdwn", "text": f"*Sharepoint Folder Name:*\n{project_doc.custom_folder_name}"},
-				{"type": "mrkdwn", "text": f"*Customer:*\n{project_doc.customer}"},
-				{"type": "mrkdwn", "text": f"*Customer Name:*\n{project_doc.custom_folder_name}"},
-				{"type": "mrkdwn", "text": f"*Partner:*\n{project_doc.project_lead_name}"},
-				{"type": "mrkdwn", "text": f"*Engagement Manager:*\n{project_doc.project_manager_name}"}
+				{"type": "mrkdwn", "text": f"*Project ID:*\n{project_doc.get('name')}"},
+				{"type": "mrkdwn",
+					"text": f"*Project Name:*\n{project_doc.get('project_name')}"},
+				{"type": "mrkdwn",
+					"text": f"*Workflow State:*\n{project_doc.get('workflow_state')}"},
+				{"type": "mrkdwn", "text": f"*Status:*\n{project_doc.get('status')}"},
+				{"type": "mrkdwn",
+					"text": f"*Project Type:*\n{project_doc.get('project_type')}"},
+				{"type": "mrkdwn",
+					"text": f"*Service Line:*\n{project_doc.get('service_line')}"},
+				{"type": "mrkdwn",
+					"text": f"*Expected Start:*\n{project_doc.get('expected_start_date')}"},
+				{"type": "mrkdwn",
+					"text": f"*Expected End:*\n{project_doc.get('expected_end_date')}"},
+				{"type": "mrkdwn",
+					"text": f"*Sharepoint Link:*\n{project_doc.get('custom_sharepoint_link')}"},
+				{"type": "mrkdwn",
+					"text": f"*Sharepoint Folder Name:*\n{project_doc.get('custom_folder_name')}"},
+				{"type": "mrkdwn", "text": f"*Customer:*\n{project_doc.get('customer')}"},
+				{"type": "mrkdwn",
+					"text": f"*Customer Name:*\n{project_doc.get('custom_folder_name')}"},
+				{"type": "mrkdwn",
+					"text": f"*Partner:*\n{project_doc.get('project_lead_name')}"},
+				{"type": "mrkdwn",
+					"text": f"*Engagement Manager:*\n{project_doc.get('project_manager_name')}"}
 			]
 			return slack_response(response_url, msg_block)
 
