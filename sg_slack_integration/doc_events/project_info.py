@@ -98,11 +98,12 @@ def get_info():
 				]
 				return slack_response(response_url, msg_block)
 			msg_block = [
-				{"type": "mrkdwn", "text": f"These are the members found for project `{project_id}`."}
+				{"type": "mrkdwn", "text": f"\nThese are the members found for project `{project_id}`."},
+				{"type": "mrkdwn",
+					"text": f"\nPartner: {ped_doc.get('project_lead_name')}"},
+				{"type": "mrkdwn",
+					"text": f"\nEngagement Manager: {ped_doc.get('project_manager_name')}"}
 			]
-			msg_block.append(
-				{"type": "mrkdwn", "text": f"Partner: {ped_doc.get('project_lead_name')}"},
-				{"type": "mrkdwn", "text": f"Engagement Manager: {ped_doc.get('project_manager_name')}"})
 
 			for m in members:
 				msg_block.append(
