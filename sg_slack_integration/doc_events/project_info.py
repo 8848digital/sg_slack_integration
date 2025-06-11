@@ -114,7 +114,7 @@ def get_info():
 			msg_block = [
 				{"type": "mrkdwn", "text": f"*Project ID:*\n{project_doc.name}"},
 				{"type": "mrkdwn", "text": f"*Project Name:*\n{project_doc.project_name}"},
-				{"type": "mrkdwn", "text": f"*Workflow State:*\n{project_doc.worklfow_state}"},
+				{"type": "mrkdwn", "text": f"*Workflow State:*\n{project_doc.workflow_state}"},
 				{"type": "mrkdwn", "text": f"*Status:*\n{project_doc.status}"},
 				{"type": "mrkdwn", "text": f"*Project Type:*\n{project_doc.project_type}"},
 				{"type": "mrkdwn", "text": f"*Service Line:*\n{project_doc.service_line}"},
