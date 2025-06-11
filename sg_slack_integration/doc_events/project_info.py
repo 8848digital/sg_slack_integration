@@ -11,125 +11,131 @@ from sg_slack_integration.doc_events.common_function import get_email_id_from_sl
 
 @frappe.whitelist(allow_guest=True)
 def get_info():
+	try:
+		req = frappe.request
+		frappe.log_error("UAT payload", req)
+		frappe.log_error("UAT Payload 2", req.form)
+		text = req.form.get("text")  # slash command input
+		user_id = req.form.get("user_id")  # Slack user ID
+		response_url = req.form.get("response_url")
 
-	req = frappe.request
-	frappe.log_error("UAT payload", req)
-	frappe.log_error("UAT Payload 2", req.form)
-	text = req.form.get("text")  # slash command input
-	user_id = req.form.get("user_id")  # Slack user ID
-	response_url = req.form.get("response_url")
-
-	if not text:
-		msg_block = [
-			{"type": "mrkdwn",
-				"text": f"❌ Please provide valid parameters: `/get-info [project-id] [members|project_details]`"}
-		]
-		return slack_response(response_url, msg_block)
-
-	parts = text.split()
-	if len(parts) != 2:
-		msg_block = [
-			{"type": "mrkdwn",
-				"text": "❌ Usage: `/get-info [project-id] [members|proj_details]`"}
-		]
-		return slack_response(response_url, msg_block)
-
-	project_id, info_type = parts
-
-	# Lookup Slack user_id -> ERPNext email
-	slack_user_email = get_email_id_from_slack_user_id(user_id)
-	if not slack_user_email:
-		msg_block = [
-			{"type": "mrkdwn", "text": f"⚠️ Could not identify you in ERP system."}]
-		return slack_response(response_url, msg_block)
-
-	# Check if user has 'Partner' role
-	user_roles = frappe.get_roles(slack_user_email)
-	if "Partner" not in user_roles:
-		msg_block = [
-			{"type": "mrkdwn", "text": f"🚫 You do not have permission to access project details. Partner Manager role required."}
-		]
-		return slack_response(response_url, msg_block)
-
-	# Validate project_id
-	project_id = str(project_id).strip()
-	match = re.match(r'^(?:([A-Za-z]+)-)?(\d{4,})$', project_id)
-	if not match:
-		msg_block = [
-			{"type": "mrkdwn",
-				"text": "🚫 Invalid Project ID. Use formats like `PROJ-1234` (letters, hyphen, 4+ digits) or `1234` (4+ digits)."}
-		]
-		return slack_response(response_url, msg_block)
-
-	prefix, digits = match.groups()
-	if prefix and prefix.lower() != "proj":
-		msg_block = [
-			{"type": "mrkdwn",
-				"text": "🚫 Invalid prefix. Project ID must start with `PROJ` (e.g., `PROJ-1234`)."}
-		]
-		return slack_response(response_url, msg_block)
-
-	# Normalize project_id
-	project_id = f"PROJ-{digits}"
-
-	# Fetch the project
-	project_doc = ""
-	if frappe.db.exists("Project", project_id):
-		project_doc = frappe.get_doc("Project", project_id)
-	else:
-		msg_block = [
-			{"type": "mrkdwn", "text": f"🚫 No project found with ID `{project_id}`."}]
-		return slack_response(response_url, msg_block)
-
-	if info_type == "members":
-		members = []
-		msg_block = []
-		ped_doc = ""
-		if ped_exists := frappe.db.exists("Project Employee Distribution", {"project": project_id}):
-			ped_doc = frappe.get_doc("Project Employee Distribution", ped_exists)
-			members = frappe.get_all("Project Employee Distribution Detail", filters={
-			                         "parent": ped_exists, "parenttype": "Project Employee Distribution"}, fields=["employee_name", "designation", "from_date", "to_date"])
-		else:
+		if not text:
 			msg_block = [
-				{"type": "mrkdwn", "text": f"ℹ️ No members found for project `{project_id}`."}
+				{"type": "mrkdwn",
+					"text": f"❌ Please provide valid parameters: `/get-info [project-id] [members|project_details]`"}
 			]
 			return slack_response(response_url, msg_block)
-		msg_block = [
-			{"type": "mrkdwn", "text": f"These are the members found for project `{project_id}`."}
-		]
-		msg_block.append(
-			{"type": "mrkdwn", "text": f"Partner: {ped_doc.project_lead_name}"})
-		msg_block.append(
-			{"type": "mrkdwn", "text": f"Engagement Manager: {ped_doc.project_manager_name}"})
-		for m in members:
+
+		parts = text.split()
+		if len(parts) != 2:
+			msg_block = [
+				{"type": "mrkdwn",
+					"text": "❌ Usage: `/get-info [project-id] [members|proj_details]`"}
+			]
+			return slack_response(response_url, msg_block)
+
+		project_id, info_type = parts
+
+		# Lookup Slack user_id -> ERPNext email
+		slack_user_email = get_email_id_from_slack_user_id(user_id)
+		if not slack_user_email:
+			msg_block = [
+				{"type": "mrkdwn", "text": f"⚠️ Could not identify you in ERP system."}]
+			return slack_response(response_url, msg_block)
+
+		# Check if user has 'Partner' role
+		user_roles = frappe.get_roles(slack_user_email)
+		if "Partner" not in user_roles:
+			msg_block = [
+				{"type": "mrkdwn", "text": f"🚫 You do not have permission to access project details. Partner role required."}
+			]
+			return slack_response(response_url, msg_block)
+
+		# Validate project_id
+		project_id = str(project_id).strip()
+		match = re.match(r'^(?:([A-Za-z]+)-)?(\d{4,})$', project_id)
+		if not match:
+			msg_block = [
+				{"type": "mrkdwn",
+					"text": "🚫 Invalid Project ID. Use formats like `PROJ-1234` (letters, hyphen, 4+ digits) or `1234` (4+ digits)."}
+			]
+			return slack_response(response_url, msg_block)
+
+		prefix, digits = match.groups()
+		if prefix and prefix.lower() != "proj":
+			msg_block = [
+				{"type": "mrkdwn",
+					"text": "🚫 Invalid prefix. Project ID must start with `PROJ` (e.g., `PROJ-1234`)."}
+			]
+			return slack_response(response_url, msg_block)
+
+		# Normalize project_id
+		project_id = f"PROJ-{digits}"
+		frappe.log_error("74", project_id)
+		# Fetch the project
+		project_doc = ""
+		if frappe.db.exists("Project", project_id):
+			frappe.log_error("78, project exists")
+			project_doc = frappe.get_doc("Project", project_id)
+		else:
+			msg_block = [
+				{"type": "mrkdwn", "text": f"🚫 No project found with ID `{project_id}`."}]
+			return slack_response(response_url, msg_block)
+
+		if info_type == "members":
+			frappe.log_error("86")
+			members = []
+			msg_block = []
+			ped_doc = ""
+			if ped_exists := frappe.db.exists("Project Employee Distribution", {"project": project_id}):
+				ped_doc = frappe.get_doc("Project Employee Distribution", ped_exists)
+				members = frappe.get_all("Project Employee Distribution Detail", filters={
+                                    "parent": ped_exists, "parenttype": "Project Employee Distribution"}, fields=["employee_name", "designation", "from_date", "to_date"])
+				frappe.log_error("94", str(members))
+			else:
+				msg_block = [
+					{"type": "mrkdwn", "text": f"ℹ️ No members found for project `{project_id}`."}
+				]
+				return slack_response(response_url, msg_block)
+			msg_block = [
+				{"type": "mrkdwn", "text": f"These are the members found for project `{project_id}`."}
+			]
 			msg_block.append(
-				{"type": "mrkdwn", "text": f"• {m.get('employee_name')} ({m.get('designation')}) - {m.get('from_date')}-{m.get('to_date')}"})
-		return slack_response(response_url, msg_block)
+				{"type": "mrkdwn", "text": f"Partner: {ped_doc.project_lead_name}"})
+			msg_block.append(
+				{"type": "mrkdwn", "text": f"Engagement Manager: {ped_doc.project_manager_name}"})
+			for m in members:
+				msg_block.append(
+					{"type": "mrkdwn", "text": f"• {m.get('employee_name')} ({m.get('designation')}) - {m.get('from_date')}-{m.get('to_date')}"})
+			return slack_response(response_url, msg_block)
 
-	elif info_type == "proj_details":
-		msg_block = [
-			{"type": "mrkdwn", "text": f"*Project ID:*\n{project_doc.name}"},
-			{"type": "mrkdwn", "text": f"*Project Name:*\n{project_doc.project_name}"},
-			{"type": "mrkdwn", "text": f"*Workflow State:*\n{project_doc.worklfow_state}"},
-			{"type": "mrkdwn", "text": f"*Status:*\n{project_doc.status}"},
-			{"type": "mrkdwn", "text": f"*Project Type:*\n{project_doc.project_type}"},
-			{"type": "mrkdwn", "text": f"*Service Line:*\n{project_doc.service_line}"},
-			{"type": "mrkdwn", "text": f"*Expected Start:*\n{project_doc.expected_start_date}"},
-			{"type": "mrkdwn", "text": f"*Expected End:*\n{project_doc.expected_end_date}"},
-			{"type": "mrkdwn", "text": f"*Sharepoint Link:*\n{project_doc.custom_sharepoint_link}"},
-			{"type": "mrkdwn", "text": f"*Sharepoint Folder Name:*\n{project_doc.custom_folder_name}"},
-			{"type": "mrkdwn", "text": f"*Customer:*\n{project_doc.customer}"},
-			{"type": "mrkdwn", "text": f"*Customer Name:*\n{project_doc.custom_folder_name}"},
-			{"type": "mrkdwn", "text": f"*Partner:*\n{project_doc.project_lead_name}"},
-			{"type": "mrkdwn", "text": f"*Engagement Manager:*\n{project_doc.project_manager_name}"}
-		]
-		return slack_response(response_url, msg_block)
+		elif info_type == "proj_details":
+			frappe.log_error("110")
+			msg_block = [
+				{"type": "mrkdwn", "text": f"*Project ID:*\n{project_doc.name}"},
+				{"type": "mrkdwn", "text": f"*Project Name:*\n{project_doc.project_name}"},
+				{"type": "mrkdwn", "text": f"*Workflow State:*\n{project_doc.worklfow_state}"},
+				{"type": "mrkdwn", "text": f"*Status:*\n{project_doc.status}"},
+				{"type": "mrkdwn", "text": f"*Project Type:*\n{project_doc.project_type}"},
+				{"type": "mrkdwn", "text": f"*Service Line:*\n{project_doc.service_line}"},
+				{"type": "mrkdwn", "text": f"*Expected Start:*\n{project_doc.expected_start_date}"},
+				{"type": "mrkdwn", "text": f"*Expected End:*\n{project_doc.expected_end_date}"},
+				{"type": "mrkdwn", "text": f"*Sharepoint Link:*\n{project_doc.custom_sharepoint_link}"},
+				{"type": "mrkdwn", "text": f"*Sharepoint Folder Name:*\n{project_doc.custom_folder_name}"},
+				{"type": "mrkdwn", "text": f"*Customer:*\n{project_doc.customer}"},
+				{"type": "mrkdwn", "text": f"*Customer Name:*\n{project_doc.custom_folder_name}"},
+				{"type": "mrkdwn", "text": f"*Partner:*\n{project_doc.project_lead_name}"},
+				{"type": "mrkdwn", "text": f"*Engagement Manager:*\n{project_doc.project_manager_name}"}
+			]
+			return slack_response(response_url, msg_block)
 
-	else:
-		msg_block = [
-			{"type": "mrkdwn", "text": "❌ Invalid info type. Use `members` or `project_details`."}
-		]
-		return slack_response(response_url, msg_block)
+		else:
+			msg_block = [
+				{"type": "mrkdwn", "text": "❌ Invalid info type. Use `members` or `project_details`."}
+			]
+			return slack_response(response_url, msg_block)
+	except Exception as e:
+		frappe.log_error("error", e)
 
 
 @frappe.whitelist(allow_guest=True)
