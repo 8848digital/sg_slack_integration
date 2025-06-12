@@ -486,50 +486,57 @@ def manage_group():
 			frappe.log_error("param3", param3)
 			param3 = str(param3).strip()
 			param3 = param3.split(",")
-			for each in param3:
-				frappe.log_error("add each", each)
-				frappe.log_error("re result", re.match(
-				    r'^[a-zA-Z0-9._%+-]+@strategicgears\.com$', each))
-				if not re.match(r'^[a-zA-Z0-9._%+-]+@strategicgears\.com$', each):
-					msg_block = [
-						{
-							"type": "section",
-							"text": {"type": "mrkdwn", "text": "🚫 Invalid Employee Email ID. Kindly use your SG Email ID"}
-						}
-					]
-					return slack_response(response_url, msg_block)
-
-				if not frappe.db.exists("User", {"email": each, "enabled": 1}):
-					msg_block = [
-						{
-							"type": "section",
-							"text": {"type": "mrkdwn", "text": f"🚫 No employee found with ID `{each}` or is Disabled."}
-						}
-					]
-					return slack_response(response_url, msg_block)
+			# for each in param3:
+			# 	frappe.log_error("add each", each)
+			# frappe.log_error("re result", re.match(
+			#     r'^[a-zA-Z0-9._%+-]+@strategicgears\.com$', each))
+			# if not re.match(r'^[a-zA-Z0-9._%+-]+@strategicgears\.com$', each):
+			# 	msg_block = [
+			# 		{
+			# 			"type": "section",
+			# 			"text": {"type": "mrkdwn", "text": "🚫 Invalid Employee Email ID. Kindly use your SG Email ID"}
+			# 		}
+			# 	]
+			# 	return slack_response(response_url, msg_block)
+			# if "@" in each:
+			# 	each = each.split("@")[0]
+			# if not frappe.db.exists("User", {"email": f"{each}@strategicgears.com", "enabled": 1}):
+			# 	msg_block = [
+			# 		{
+			# 			"type": "section",
+			# 			"text": {"type": "mrkdwn", "text": f"🚫 No employee found with ID `{each}` or is Disabled."}
+			# 		}
+			# 	]
+			# 	return slack_response(response_url, msg_block)
 
 		if action == "add":
 			# Check if employee exists
 			error = []
 			for each in param3:
-				if not frappe.db.exists("User", each):
-					msg_block = [
-						{
-							"type": "section",
-							"text": {"type": "mrkdwn", "text": f"🚫 No employee found with ID `{each}`."}
-						}
-					]
-					return slack_response(response_url, msg_block)
+				if "@" in each:
+					each = each.split("@")[0]
+				if not frappe.db.exists("User", f"{each}@strategicgears.com"):
+					error.append(f"{each} not found or is Disabled")
+					continue
+					# msg_block = [
+					# 	{
+					# 		"type": "section",
+					# 		"text": {"type": "mrkdwn", "text": f"🚫 No employee found with ID `{each}`."}
+					# 	}
+					# ]
+					# return slack_response(response_url, msg_block)
 
 				# Check if employee is already assigned
-				if frappe.db.exists("Email Group Member", {"email_group": eg_created, "email": each}):
-					msg_block = [
-						{
-							"type": "section",
-							"text": {"type": "mrkdwn", "text": f"⚠️ User `{each}` is already added to the group for `{project_id}`."}
-						}
-					]
-					return slack_response(response_url, msg_block)
+				if frappe.db.exists("Email Group Member", {"email_group": eg_created, "email": f"{each}@strategicgears.com"}):
+					error.append(F"{each} already adde din the email group")
+					continue
+					# msg_block = [
+					# 	{
+					# 		"type": "section",
+					# 		"text": {"type": "mrkdwn", "text": f"⚠️ User `{each}` is already added to the group for `{project_id}`."}
+					# 	}
+					# ]
+					# return slack_response(response_url, msg_block)
 
 				try:
 					# Add user to group\
@@ -543,6 +550,13 @@ def manage_group():
 					error.append(frappe.get_traceback(e))
 			if len(error) > 0:
 				frappe.log_error("Slack Group Manager Error | ADD", str(error))
+				msg_block = [
+                                    {
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": f"There were some errors. PLease contact developer and check logs"}
+                                    }
+				]
+				return slack_response(response_url, msg_block)
 
 			msg_block = [
 				{
