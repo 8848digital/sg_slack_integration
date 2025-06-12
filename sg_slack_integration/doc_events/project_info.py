@@ -263,37 +263,59 @@ def manage_group():
 		user_id = req.form.get("user_id")  # Slack user ID
 		response_url = req.form.get("response_url")  # Slack response URL
 
+		# Lookup Slack user_id -> ERPNext email
+		slack_user_email = get_email_id_from_slack_user_id(user_id)
+		if not slack_user_email:
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": "⚠️ Could not identify you in ERP system."}
+				}
+			]
+			return slack_response(response_url, msg_block)
+
+		# Check if user has 'Project Manager' role
+		user_roles = frappe.get_roles(slack_user_email)
+		if "Projects Manager" not in user_roles:
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": "🚫 You do not have permission to manage project groups. Project Manager role required."}
+				}
+			]
+			return slack_response(response_url, msg_block)
+
+
 		if not text:
 			msg_block = [
 				{
 					"type": "section",
-					"text": {"type": "mrkdwn", "text": "❌ Please provide valid parameters: `/group-manage [project-id] [view|add|remove] [emp-id] [from-date] [to-date]`"}
+					"text": {"type": "mrkdwn", "text": "❌ Please provide valid parameters: `/group-manage [project-id] [view|create|add|remove] [email-group-name]/[user-id]`"}
 				}
 			]
 			return slack_response(response_url, msg_block)
 
 		parts = text.split()
-		if len(parts) < 2 or len(parts) > 5:
+		if len(parts) < 2 or len(parts) > 3:
 			msg_block = [
 				{
 					"type": "section",
-					"text": {"type": "mrkdwn", "text": "❌ Usage: `/group-manage [project-id] [view|add|remove] [emp-id] [from-date] [to-date]`"}
+					"text": {"type": "mrkdwn", "text": "❌ Usage: `/group-manage [project-id] [view|create|add|remove] [email-group-name]/[user-id]`"}
 				}
 			]
 			return slack_response(response_url, msg_block)
 
 		project_id = parts[0]
 		action = parts[1].lower()
-		emp_id = parts[2] if len(parts) >= 3 else None
-		from_date = parts[3] if len(parts) > 3 else None
-		to_date = parts[4] if len(parts) > 3 else None
+		param3 = parts[2] if len(parts) == 3 else None
+
 
 		# Validate action
-		if action not in ["view", "add", "remove"]:
+		if action not in ["view", "create", "add", "remove"]:
 			msg_block = [
 				{
 					"type": "section",
-					"text": {"type": "mrkdwn", "text": "❌ Invalid action. Use `view`, `add`, or `remove`."}
+					"text": {"type": "mrkdwn", "text": "❌ Invalid action. Use `view`, `create`, `add`, or `remove`."}
 				}
 			]
 			return slack_response(response_url, msg_block)
@@ -323,57 +345,6 @@ def manage_group():
 		project_id = f"PROJ-{digits}"
 		frappe.log_error("Normalized Project ID", project_id)
 
-		# Validate emp_id for add/remove actions
-		if action in ["add", "remove"] and not emp_id:
-			msg_block = [
-				{
-					"type": "section",
-					"text": {"type": "mrkdwn", "text": "❌ Employee ID required for `add` or `remove` actions."}
-				}
-			]
-			return slack_response(response_url, msg_block)
-
-		if emp_id:
-			emp_id = str(emp_id).strip()
-			if not re.match(r'^SG(?:-[EQL])?-\d{3,}$', emp_id):
-				msg_block = [
-					{
-						"type": "section",
-						"text": {"type": "mrkdwn", "text": "🚫 Invalid Employee ID. Use formats like `SG-123`, `SG-E-123`, `SG-Q-123`, or `SG-L-123` (SG, optional E/Q/L, hyphen, 3+ digits)."}
-					}
-				]
-				return slack_response(response_url, msg_block)
-
-		if action == "add" and not (from_date and to_date):
-			msg_block = [
-                            {
-                                "type": "section",
-                          						"text": {"type": "mrkdwn", "text": "❌ Usage: `/group-manage [project-id] [view|add|remove] [emp-id] [from-date] [to-date] for add operation"}
-                            }
-			]
-			return slack_response(response_url, msg_block)
-		# Lookup Slack user_id -> ERPNext email
-		slack_user_email = get_email_id_from_slack_user_id(user_id)
-		if not slack_user_email:
-			msg_block = [
-				{
-					"type": "section",
-					"text": {"type": "mrkdwn", "text": "⚠️ Could not identify you in ERP system."}
-				}
-			]
-			return slack_response(response_url, msg_block)
-
-		# Check if user has 'Project Manager' role
-		user_roles = frappe.get_roles(slack_user_email)
-		if "Projects Manager" not in user_roles:
-			msg_block = [
-				{
-					"type": "section",
-					"text": {"type": "mrkdwn", "text": "🚫 You do not have permission to manage project groups. Project Manager role required."}
-				}
-			]
-			return slack_response(response_url, msg_block)
-
 		# Fetch the project
 		if not frappe.db.exists("Project", project_id):
 			msg_block = [
@@ -385,39 +356,46 @@ def manage_group():
 			return slack_response(response_url, msg_block)
 
 		project_doc = frappe.get_doc("Project", project_id)
+		owners = [project_doc.custom_project_lead_email,
+                    project_doc.custom_project_manager_email, project_doc.custom_project_leader_email]
+		owners = list(set(owners))
+		eg_created = project_doc.custom_email_group if project_doc.custom_email_group else False
 		frappe.log_error("Project Fetched", f"Project ID: {project_id}")
 
-		# Fetch Project Employee Distribution
-		ped_docs = frappe.get_all("Project Employee Distribution", filters={
-                    "project": project_id}, fields=["name"], limit=1)
-		if not ped_docs:
-			msg_block = [
-				{
-					"type": "section",
-					"text": {"type": "mrkdwn", "text": f"ℹ No members found for project `{project_id}`."}
-				}
-			]
-			return slack_response(response_url, msg_block)
-
-		ped_doc = frappe.get_doc(
-			"Project Employee Distribution", ped_docs[0].name)
-
+		# action for viewing the members
+		frappe.set_user("Administrator")
 		if action == "view":
-			members = frappe.get_all("Project Employee Distribution Detail", filters={
-				"parent": ped_doc.name,
-				"parenttype": "Project Employee Distribution"
-			}, fields=["employee", "employee_name", "designation", "from_date", "to_date"])
+
+			members = []
+			if not eg_created:
+				msg_block = [
+                                    {
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": f"ℹ No Email Group found for project `{project_id}`."}
+                                    }
+				]
+				return slack_response(response_url, msg_block)
+			email_group = frappe.get_all("Email Group", filters={
+			                             "custom_project": project_id})
+			if email_group:
+				email_group = email_group[0]
+				email_group = email_group.get('name')
+				members = frappe.get_all("Email Group Member", {
+				                         "email_group": email_group}, ["name", "email"])
+
 			frappe.log_error("Members Fetched", f"Members: {members}")
 
-			msg_block = [
-				{
-					"type": "section",
-					"text": {"type": "mrkdwn", "text": f"*Members of project `{project_id}`*"}
-				}
-			]
 			if members:
+				msg_block = [
+					{
+						"type": "section",
+						"text": {"type": "mrkdwn", "text": f"*Members of Group - {eg_created} for Project `{project_id}`*"}
+					}
+				]
+				# for m in members:
+
 				member_lines = "\n".join(
-					f"• *{m.get('employee_name') or 'N/A'}* ({m.get('designation') or 'N/A'}) - {m.get('from_date') or 'N/A'}-{m.get('to_date') or 'N/A'} (ID: {m.get('employee') or 'N/A'})"
+					f"• *{m.get('email')}*"
 					for m in members
 				)
 				msg_block.append({
@@ -427,42 +405,131 @@ def manage_group():
 			else:
 				msg_block.append({
 					"type": "section",
-					"text": {"type": "mrkdwn", "text": "No team members assigned."}
+					"text": {"type": "mrkdwn", "text": "No team members added."}
 				})
 			frappe.log_error("Message Block (view)",
                             json.dumps(msg_block, indent=2))
 			return slack_response(response_url, msg_block)
 
-		elif action == "add":
-			# Check if employee exists
-			if not frappe.db.exists("Employee", emp_id):
+		# validate group_name for create action
+		if action == "create":
+
+			if eg_created:
 				msg_block = [
 					{
 						"type": "section",
-						"text": {"type": "mrkdwn", "text": f"🚫 No employee found with ID `{emp_id}`."}
+						"text": {"type": "mrkdwn", "text": f"❌ This Project is already linked to Email Group - {eg_created}"}
+					}
+				]
+				return slack_response(response_url, msg_block)
+			if not param3:
+				msg_block = [
+					{
+						"type": "section",
+						"text": {"type": "mrkdwn", "text": "❌ Email Group Name Required for `create` action."}
+					}
+				]
+				return slack_response(response_url, msg_block)
+
+			param3 = str(param3).strip()
+			if frappe.db.exists("Email Group", param3):
+				msg_block = [
+					{
+						"type": "section",
+						"text": {"type": "mrkdwn", "text": "❌ This Name is taken, please try again with different Name"}
+					}
+				]
+				return slack_response(response_url, msg_block)
+			frappe.set_user(slack_user_email)
+			eg_creation_successful = create_email_group(param3, project_id)
+
+			if not eg_creation_successful:
+				msg_block = [
+					{
+						"type": "section",
+						"text": {"type": "mrkdwn", "text": "❌ There was an error creating Email Group"}
+					}
+				]
+				return slack_response(response_url, msg_block)
+			else:
+				msg_block = [
+					{
+						"type": "section",
+						"text": {"type": "mrkdwn", "text": f"✅ Email Group  - {param3} created successfully and linked with Project"}
+					}
+				]
+				frappe.enqueue(
+                                    add_owners_to_email_group,
+                                    queue="long",
+                                    timeout="3600",
+                                    is_async=True,
+                                    job_name="add_owners_to_email_group_project",
+                                    owners=owners,
+                                    email_group=param3
+                                )
+				return slack_response(response_url, msg_block)
+
+		###################
+		# Validate user_id for add/remove actions
+
+		if action in ["add", "remove"] and not param3:
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": "❌ Usage: `/group-manage [project-id] [add|remove] [user-id]`"}
+				}
+			]
+			return slack_response(response_url, msg_block)
+
+		if param3:
+			param3 = str(param3).strip()
+			if not re.match(r'^[a-zA-Z0-9._%+-]+@strategicgears\.com$', param3):
+				msg_block = [
+					{
+						"type": "section",
+						"text": {"type": "mrkdwn", "text": "🚫 Invalid Employee Email ID. Kindly use your SG Email ID"}
+					}
+				]
+				return slack_response(response_url, msg_block)
+
+			if not frappe.db.exists("User", {"email": param3, "enabled": 1}):
+				msg_block = [
+					{
+						"type": "section",
+						"text": {"type": "mrkdwn", "text": f"🚫 No employee found with ID `{param3}` or is Disabled."}
+					}
+				]
+				return slack_response(response_url, msg_block)
+
+		if action == "add":
+			# Check if employee exists
+			if not frappe.db.exists("User", param3):
+				msg_block = [
+					{
+						"type": "section",
+						"text": {"type": "mrkdwn", "text": f"🚫 No employee found with ID `{param3}`."}
 					}
 				]
 				return slack_response(response_url, msg_block)
 
 			# Check if employee is already assigned
-			if frappe.db.exists("Project Employee Distribution Detail", {"parent": ped_doc.name, "employee": emp_id}):
+			if frappe.db.exists("Email Group Member", {"email_group": eg_created, "email": param3}):
 				msg_block = [
 					{
 						"type": "section",
-						"text": {"type": "mrkdwn", "text": f"⚠️ Employee `{emp_id}` is already assigned to project `{project_id}`."}
+						"text": {"type": "mrkdwn", "text": f"⚠️ User `{param3}` is already added to the group for `{project_id}`."}
 					}
 				]
 				return slack_response(response_url, msg_block)
 
 			try:
-				# Add employee to project
-				employee_doc = frappe.get_doc("Employee", emp_id)
-				ped_doc.append("distribution_detail", {
-					"employee": emp_id,
-					"from_date": frappe.utils.getdate(from_date),
-					"to_date": frappe.utils.getdate(to_date)
-				})
-				ped_doc.save()
+				# Add user to group\
+				frappe.set_user(slack_user_email)
+				egm = frappe.new_doc("Email Group Member")
+				egm.email_group = eg_created
+				egm.email = param3
+				egm.save(ignore_permissions=True)
+				frappe.set_user("Administrator")
 			except Exception as e:
 				frappe.log_error("Slack Group Manager Error | ADD",
 				                 frappe.get_traceback(e))
@@ -470,32 +537,35 @@ def manage_group():
 			msg_block = [
 				{
 					"type": "section",
-					"text": {"type": "mrkdwn", "text": f"✅ Employee `{emp_id}` ({employee_doc.employee_name}) added to project `{project_id}`."}
+					"text": {"type": "mrkdwn", "text": f"✅ User `*{param3}*` added to Group - *{eg_created}* for project `*{project_id}*`."}
 				}
 			]
 			return slack_response(response_url, msg_block)
 
 		elif action == "remove":
 			# Check if employee is assigned
-			if not frappe.db.exists("Project Employee Distribution Detail", {"parent": ped_doc.name, "employee": emp_id}):
+			if not frappe.db.exists("Email Group Member", {"email_group": eg_created, "email": param3}):
 				msg_block = [
 					{
 						"type": "section",
-						"text": {"type": "mrkdwn", "text": f"⚠️ Employee `{emp_id}` is not assigned to project `{project_id}`."}
+						"text": {"type": "mrkdwn", "text": f"⚠️ User `{param3}` is not added toGroup - {eg_created} for project `{project_id}`."}
 					}
 				]
 				return slack_response(response_url, msg_block)
 
 			# Remove employee from project
-			frappe.db.delete("Project Employee Distribution Detail", {
-				"parent": ped_doc.name,
-				"employee": emp_id
+			frappe.set_user(slack_user_email)
+			ehm = frappe.get_doc("Email Group Member", {
+				"email_group": eg_created,
+				"email": param3
 			})
+			egm.delete(ignore_permissions=True)
+			frappe.set_user("Administrator")
 
 			msg_block = [
 				{
 					"type": "section",
-					"text": {"type": "mrkdwn", "text": f"✅ Employee `{emp_id}` removed from project `{project_id}`."}
+					"text": {"type": "mrkdwn", "text": f"✅ User `{param3}` removed from project `{project_id}`."}
 				}
 			]
 			return slack_response(response_url, msg_block)
@@ -577,3 +647,29 @@ def slack_response(response_url, message_blocks):
     # frappe.local.response["content_type"] = "application/json"
     # frappe.local.response["data"] = ""
     return
+
+
+def create_email_group(eg_name, project_name):
+	try:
+		email_group = frappe.new_doc("Email Group")
+		email_group.title = eg_name
+		email_group.custom_integrate_with_erp = 1
+		email_group.custom_related_to_project = 1
+		email_group.custom_project = project_name
+		email_group.save(ignore_permissions=True)
+		frappe.db.set_value("Project", project_name,
+		                    'custom_email_group', email_group.name)
+		return True
+	except Exception as e:
+		frappe.log_error("Salck Group Manage | create_email_group",
+		                 frappe.get_traceback(e))
+		return False
+
+
+def add_owners_to_email_group(owners, email_group):
+	for each in owners:
+		if each:
+			member = frappe.new_doc("Email Group Member")
+			member.email_group = email_group
+			member.email = each
+			member.save(ignore_permissions=True)
