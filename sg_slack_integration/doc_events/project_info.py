@@ -122,13 +122,13 @@ def get_info():
             msg_block = [
                 {
                     "type": "section",
-                    "text": {"type": "mrkdwn", "text": f"**These are the members found for project `{project_id}`**"}
+                    "text": {"type": "mrkdwn", "text": f"*These are the members found for project `{project_id}`*"}
                 },
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"**Partner:** {ped_doc.get('project_lead_name') or 'N/A'}\n**Engagement Manager:** {ped_doc.get('project_manager_name') or 'N/A'}"
+                        "text": f"*Partner:* {ped_doc.get('project_lead_name') or 'N/A'}\n*Engagement Manager:* {ped_doc.get('project_manager_name') or 'N/A'}"
                     }
                 }
             ]
@@ -140,7 +140,7 @@ def get_info():
                 )
                 msg_block.append({
                     "type": "section",
-                    "text": {"type": "mrkdwn", "text": f"**Members:**\n{member_lines}"}
+                    "text": {"type": "mrkdwn", "text": f"*Members:*\n{member_lines}"}
                 })
             else:
                 msg_block.append({
@@ -157,44 +157,44 @@ def get_info():
             msg_block = [
                 {
                     "type": "section",
-                    "text": {"type": "mrkdwn", "text": f"**Project Details for `{project_id}`**"}
+                    "text": {"type": "mrkdwn", "text": f"*Project Details for `{project_id}`*"}
                 },
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"**Project ID:** {project_doc.get('name') or 'N/A'}\n"
-                                f"**Project Name:** {project_doc.get('project_name') or 'N/A'}\n"
-                                f"**Workflow State:** {project_doc.get('workflow_state') or 'N/A'}\n"
-                                f"**Status:** {project_doc.get('status') or 'N/A'}"
+                        "text": f"*Project ID:* {project_doc.get('name') or 'N/A'}\n"
+                                f"*Project Name:* {project_doc.get('project_name') or 'N/A'}\n"
+                                f"*Workflow State:* {project_doc.get('workflow_state') or 'N/A'}\n"
+                                f"*Status:* {project_doc.get('status') or 'N/A'}"
                     }
                 },
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"**Project Type:** {project_doc.get('project_type') or 'N/A'}\n"
-                                f"**Service Line:** {project_doc.get('service_line') or 'N/A'}\n"
-                                f"**Expected Start Date:** {project_doc.get('expected_start_date') or 'N/A'}\n"
-                                f"**Expected End Date:** {project_doc.get('expected_end_date') or 'N/A'}"
+                        "text": f"*Project Type:* {project_doc.get('project_type') or 'N/A'}\n"
+                                f"*Service Line:* {project_doc.get('service_line') or 'N/A'}\n"
+                                f"*Expected Start Date:* {project_doc.get('expected_start_date') or 'N/A'}\n"
+                                f"*Expected End Date:* {project_doc.get('expected_end_date') or 'N/A'}"
                     }
                 },
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"**Sharepoint Link:** {project_doc.get('custom_sharepoint_link') or 'N/A'}\n"
-                                f"**Sharepoint Folder Name:** {project_doc.get('custom_folder_name') or 'N/A'}"
+                        "text": f"*Sharepoint Link:* {project_doc.get('custom_sharepoint_link') or 'N/A'}\n"
+                                f"*Sharepoint Folder Name:* {project_doc.get('custom_folder_name') or 'N/A'}"
                     }
                 },
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"**Customer:** {project_doc.get('customer') or 'N/A'}\n"
-                                f"**Customer Name:** {project_doc.get('customer_name') or project_doc.get('customer') or 'N/A'}\n"
-                                f"**Partner:** {project_doc.get('project_lead_name') or 'N/A'}\n"
-                                f"**Engagement Manager:** {project_doc.get('project_manager_name') or 'N/A'}"
+                        "text": f"*Customer:* {project_doc.get('customer') or 'N/A'}\n"
+                                f"*Customer Name:* {project_doc.get('customer_name') or project_doc.get('customer') or 'N/A'}\n"
+                                f"*Partner:* {project_doc.get('project_lead_name') or 'N/A'}\n"
+                                f"*Engagement Manager:* {project_doc.get('project_manager_name') or 'N/A'}"
                     }
                 }
             ]
@@ -356,7 +356,7 @@ def manage_group():
 
         # Check if user has 'Project Manager' role
         user_roles = frappe.get_roles(slack_user_email)
-        if "Project Manager" not in user_roles:
+        if "Projects Manager" not in user_roles:
             msg_block = [
                 {
                     "type": "section",
@@ -403,17 +403,17 @@ def manage_group():
             msg_block = [
                 {
                     "type": "section",
-                    "text": {"type": "mrkdwn", "text": f"**Members of project `{project_id}`**"}
+                    "text": {"type": "mrkdwn", "text": f"*Members of project `{project_id}`*"}
                 }
             ]
             if members:
                 member_lines = "\n".join(
-                    f"• {m.get('employee_name') or 'N/A'} ({m.get('designation') or 'N/A'}) - {m.get('from_date') or 'N/A'}-{m.get('to_date') or 'N/A'} (ID: {m.get('employee') or 'N/A'})"
+                    f"• *{m.get('employee_name') or 'N/A'}* ({m.get('designation') or 'N/A'}) - {m.get('from_date') or 'N/A'}-{m.get('to_date') or 'N/A'} (ID: {m.get('employee') or 'N/A'})"
                     for m in members
                 )
                 msg_block.append({
                     "type": "section",
-                    "text": {"type": "mrkdwn", "text": f"**Members:**\n{member_lines}"}
+                    "text": {"type": "mrkdwn", "text": f"*Members:*\n{member_lines}"}
                 })
             else:
                 msg_block.append({
