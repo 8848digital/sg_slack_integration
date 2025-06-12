@@ -252,255 +252,264 @@ def get_info():
         ]
         return slack_response(response_url, msg_block)
 
-# Existing manage_group and slack_response functions remain unchanged
-# Including them here for completeness
+
 @frappe.whitelist(allow_guest=True)
 def manage_group():
-    try:
-        req = frappe.request
-        frappe.log_error("Group Manage Payload", f"Request: {req}")
-        frappe.log_error("Group Manage Payload Form", f"Form: {req.form}")
-        text = req.form.get("text")  # slash command input
-        user_id = req.form.get("user_id")  # Slack user ID
-        response_url = req.form.get("response_url")  # Slack response URL
+	try:
+		req = frappe.request
+		frappe.log_error("Group Manage Payload", f"Request: {req}")
+		frappe.log_error("Group Manage Payload Form", f"Form: {req.form}")
+		text = req.form.get("text")  # slash command input
+		user_id = req.form.get("user_id")  # Slack user ID
+		response_url = req.form.get("response_url")  # Slack response URL
 
-        if not text:
-            msg_block = [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": "❌ Please provide valid parameters: `/group-manage [project-id] [view|add|remove] [emp-id]`"}
-                }
-            ]
-            return slack_response(response_url, msg_block)
+		if not text:
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": "❌ Please provide valid parameters: `/group-manage [project-id] [view|add|remove] [emp-id] [from-date] [to-date]`"}
+				}
+			]
+			return slack_response(response_url, msg_block)
 
-        parts = text.split()
-        if len(parts) < 2 or len(parts) > 3:
-            msg_block = [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": "❌ Usage: `/group-manage [project-id] [view|add|remove] [emp-id]`"}
-                }
-            ]
-            return slack_response(response_url, msg_block)
+		parts = text.split()
+		if len(parts) < 2 or len(parts) > 5:
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": "❌ Usage: `/group-manage [project-id] [view|add|remove] [emp-id] [from-date] [to-date]`"}
+				}
+			]
+			return slack_response(response_url, msg_block)
 
-        project_id = parts[0]
-        action = parts[1].lower()
-        emp_id = parts[2] if len(parts) == 3 else None
+		project_id = parts[0]
+		action = parts[1].lower()
+		emp_id = parts[2] if len(parts) >= 3 else None
+		from_date = parts[3] if len(parts) > 3 else None
+		to_date = parts[4] if len(parts) > 3 else None
 
-        # Validate action
-        if action not in ["view", "add", "remove"]:
-            msg_block = [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": "❌ Invalid action. Use `view`, `add`, or `remove`."}
-                }
-            ]
-            return slack_response(response_url, msg_block)
+		# Validate action
+		if action not in ["view", "add", "remove"]:
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": "❌ Invalid action. Use `view`, `add`, or `remove`."}
+				}
+			]
+			return slack_response(response_url, msg_block)
 
-        # Validate project_id
-        project_id = str(project_id).strip()
-        match = re.match(r'^(?:([A-Za-z]+)-)?(\d{4,})$', project_id)
-        if not match:
-            msg_block = [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": "🚫 Invalid Project ID. Use formats like `PROJ-1234` (letters, hyphen, 4+ digits) or `1234` (4+ digits)."}
-                }
-            ]
-            return slack_response(response_url, msg_block)
+		# Validate project_id
+		project_id = str(project_id).strip()
+		match = re.match(r'^(?:([A-Za-z]+)-)?(\d{4,})$', project_id)
+		if not match:
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": "🚫 Invalid Project ID. Use formats like `PROJ-1234` (letters, hyphen, 4+ digits) or `1234` (4+ digits)."}
+				}
+			]
+			return slack_response(response_url, msg_block)
 
-        prefix, digits = match.groups()
-        if prefix and prefix.lower() != "proj":
-            msg_block = [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": "🚫 Invalid prefix. Project ID must start with `PROJ` (e.g., `PROJ-1234`)."}
-                }
-            ]
-            return slack_response(response_url, msg_block)
+		prefix, digits = match.groups()
+		if prefix and prefix.lower() != "proj":
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": "🚫 Invalid prefix. Project ID must start with `PROJ` (e.g., `PROJ-1234`)."}
+				}
+			]
+			return slack_response(response_url, msg_block)
 
-        project_id = f"PROJ-{digits}"
-        frappe.log_error("Normalized Project ID", project_id)
+		project_id = f"PROJ-{digits}"
+		frappe.log_error("Normalized Project ID", project_id)
 
-        # Validate emp_id for add/remove actions
-        if action in ["add", "remove"] and not emp_id:
-            msg_block = [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": "❌ Employee ID required for `add` or `remove` actions."}
-                }
-            ]
-            return slack_response(response_url, msg_block)
+		# Validate emp_id for add/remove actions
+		if action in ["add", "remove"] and not emp_id:
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": "❌ Employee ID required for `add` or `remove` actions."}
+				}
+			]
+			return slack_response(response_url, msg_block)
 
-        if emp_id:
-            emp_id = str(emp_id).strip()
-            if not re.match(r'^SG(?:-[EQL])?-\d{3,}$', emp_id):
-                msg_block = [
+		if emp_id:
+			emp_id = str(emp_id).strip()
+			if not re.match(r'^SG(?:-[EQL])?-\d{3,}$', emp_id):
+				msg_block = [
+					{
+						"type": "section",
+						"text": {"type": "mrkdwn", "text": "🚫 Invalid Employee ID. Use formats like `SG-123`, `SG-E-123`, `SG-Q-123`, or `SG-L-123` (SG, optional E/Q/L, hyphen, 3+ digits)."}
+					}
+				]
+				return slack_response(response_url, msg_block)
+
+		if action == "add" and not (from_date and to_date):
+			msg_block = [
+                            {
+                                "type": "section",
+                          						"text": {"type": "mrkdwn", "text": "❌ Usage: `/group-manage [project-id] [view|add|remove] [emp-id] [from-date] [to-date] for add operation"}
+                            }
+			]
+			return slack_response(response_url, msg_block)
+		# Lookup Slack user_id -> ERPNext email
+		slack_user_email = get_email_id_from_slack_user_id(user_id)
+		if not slack_user_email:
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": "⚠️ Could not identify you in ERP system."}
+				}
+			]
+			return slack_response(response_url, msg_block)
+
+		# Check if user has 'Project Manager' role
+		user_roles = frappe.get_roles(slack_user_email)
+		if "Projects Manager" not in user_roles:
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": "🚫 You do not have permission to manage project groups. Project Manager role required."}
+				}
+			]
+			return slack_response(response_url, msg_block)
+
+		# Fetch the project
+		if not frappe.db.exists("Project", project_id):
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": f"🚫 No project found with ID `{project_id}`."}
+				}
+			]
+			return slack_response(response_url, msg_block)
+
+		project_doc = frappe.get_doc("Project", project_id)
+		frappe.log_error("Project Fetched", f"Project ID: {project_id}")
+
+		# Fetch Project Employee Distribution
+		ped_docs = frappe.get_all("Project Employee Distribution", filters={
+                    "project": project_id}, fields=["name"], limit=1)
+		if not ped_docs:
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": f"ℹ No members found for project `{project_id}`."}
+				}
+			]
+			return slack_response(response_url, msg_block)
+
+		ped_doc = frappe.get_doc(
+			"Project Employee Distribution", ped_docs[0].name)
+
+		if action == "view":
+			members = frappe.get_all("Project Employee Distribution Detail", filters={
+				"parent": ped_doc.name,
+				"parenttype": "Project Employee Distribution"
+			}, fields=["employee", "employee_name", "designation", "from_date", "to_date"])
+			frappe.log_error("Members Fetched", f"Members: {members}")
+
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": f"*Members of project `{project_id}`*"}
+				}
+			]
+			if members:
+				member_lines = "\n".join(
+					f"• *{m.get('employee_name') or 'N/A'}* ({m.get('designation') or 'N/A'}) - {m.get('from_date') or 'N/A'}-{m.get('to_date') or 'N/A'} (ID: {m.get('employee') or 'N/A'})"
+					for m in members
+				)
+				msg_block.append({
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": f"*Members:*\n{member_lines}"}
+				})
+			else:
+				msg_block.append({
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": "No team members assigned."}
+				})
+			frappe.log_error("Message Block (view)",
+                            json.dumps(msg_block, indent=2))
+			return slack_response(response_url, msg_block)
+
+		elif action == "add":
+			# Check if employee exists
+			if not frappe.db.exists("Employee", emp_id):
+				msg_block = [
+					{
+						"type": "section",
+						"text": {"type": "mrkdwn", "text": f"🚫 No employee found with ID `{emp_id}`."}
+					}
+				]
+				return slack_response(response_url, msg_block)
+
+			# Check if employee is already assigned
+			if frappe.db.exists("Project Employee Distribution Detail", {"parent": ped_doc.name, "employee": emp_id}):
+				msg_block = [
+					{
+						"type": "section",
+						"text": {"type": "mrkdwn", "text": f"⚠️ Employee `{emp_id}` is already assigned to project `{project_id}`."}
+					}
+				]
+				return slack_response(response_url, msg_block)
+
+			try:
+				# Add employee to project
+				employee_doc = frappe.get_doc("Employee", emp_id)
+				ped_doc.append("distribution_detail", {
+					"employee": emp_id,
+					"from_date": frappe.utils.getdate(from_date),
+					"to_date": frappe.utils.getdate(to_date)
+				})
+				ped_doc.save()
+			except Exception as e:
+				frappe.log_error("Slack Group Manager Error | ADD",
+				                 frappe.get_traceback(e))
+
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": f"✅ Employee `{emp_id}` ({employee_doc.employee_name}) added to project `{project_id}`."}
+				}
+			]
+			return slack_response(response_url, msg_block)
+
+		elif action == "remove":
+			# Check if employee is assigned
+			if not frappe.db.exists("Project Employee Distribution Detail", {"parent": ped_doc.name, "employee": emp_id}):
+				msg_block = [
+					{
+						"type": "section",
+						"text": {"type": "mrkdwn", "text": f"⚠️ Employee `{emp_id}` is not assigned to project `{project_id}`."}
+					}
+				]
+				return slack_response(response_url, msg_block)
+
+			# Remove employee from project
+			frappe.db.delete("Project Employee Distribution Detail", {
+				"parent": ped_doc.name,
+				"employee": emp_id
+			})
+
+			msg_block = [
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": f"✅ Employee `{emp_id}` removed from project `{project_id}`."}
+				}
+			]
+			return slack_response(response_url, msg_block)
+
+	except Exception as e:
+		frappe.log_error("Manage Group Error",
+		                 f"Error: {str(e)}\nTraceback: {traceback.format_exc()}")
+		msg_block = [
                     {
                         "type": "section",
-                        "text": {"type": "mrkdwn", "text": "🚫 Invalid Employee ID. Use formats like `SG-123`, `SG-E-123`, `SG-Q-123`, or `SG-L-123` (SG, optional E/Q/L, hyphen, 3+ digits)."}
+                        "text": {"type": "mrkdwn", "text": "❌ An error occurred while processing your request. Please try again later."}
                     }
                 ]
-                return slack_response(response_url, msg_block)
-
-        # Lookup Slack user_id -> ERPNext email
-        slack_user_email = get_email_id_from_slack_user_id(user_id)
-        if not slack_user_email:
-            msg_block = [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": "⚠️ Could not identify you in ERP system."}
-                }
-            ]
-            return slack_response(response_url, msg_block)
-
-        # Check if user has 'Project Manager' role
-        user_roles = frappe.get_roles(slack_user_email)
-        if "Projects Manager" not in user_roles:
-            msg_block = [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": "🚫 You do not have permission to manage project groups. Project Manager role required."}
-                }
-            ]
-            return slack_response(response_url, msg_block)
-
-        # Fetch the project
-        if not frappe.db.exists("Project", project_id):
-            msg_block = [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": f"🚫 No project found with ID `{project_id}`."}
-                }
-            ]
-            return slack_response(response_url, msg_block)
-
-        project_doc = frappe.get_doc("Project", project_id)
-        frappe.log_error("Project Fetched", f"Project ID: {project_id}")
-
-        # Fetch Project Employee Distribution
-        ped_docs = frappe.get_all("Project Employee Distribution", filters={
-                                  "project": project_id}, fields=["name"], limit=1)
-        if not ped_docs:
-            msg_block = [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": f"ℹ No members found for project `{project_id}`."}
-                }
-            ]
-            return slack_response(response_url, msg_block)
-
-        ped_doc = frappe.get_doc(
-            "Project Employee Distribution", ped_docs[0].name)
-
-        if action == "view":
-            members = frappe.get_all("Project Employee Distribution Detail", filters={
-                "parent": ped_doc.name,
-                "parenttype": "Project Employee Distribution"
-            }, fields=["employee", "employee_name", "designation", "from_date", "to_date"])
-            frappe.log_error("Members Fetched", f"Members: {members}")
-
-            msg_block = [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": f"*Members of project `{project_id}`*"}
-                }
-            ]
-            if members:
-                member_lines = "\n".join(
-                    f"• *{m.get('employee_name') or 'N/A'}* ({m.get('designation') or 'N/A'}) - {m.get('from_date') or 'N/A'}-{m.get('to_date') or 'N/A'} (ID: {m.get('employee') or 'N/A'})"
-                    for m in members
-                )
-                msg_block.append({
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": f"*Members:*\n{member_lines}"}
-                })
-            else:
-                msg_block.append({
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": "No team members assigned."}
-                })
-            frappe.log_error("Message Block (view)",
-                             json.dumps(msg_block, indent=2))
-            return slack_response(response_url, msg_block)
-
-        elif action == "add":
-            # Check if employee exists
-            if not frappe.db.exists("Employee", emp_id):
-                msg_block = [
-                    {
-                        "type": "section",
-                        "text": {"type": "mrkdwn", "text": f"🚫 No employee found with ID `{emp_id}`."}
-                    }
-                ]
-                return slack_response(response_url, msg_block)
-
-            # Check if employee is already assigned
-            if frappe.db.exists("Project Employee Distribution Detail", {"parent": ped_doc.name, "employee": emp_id}):
-                msg_block = [
-                    {
-                        "type": "section",
-                        "text": {"type": "mrkdwn", "text": f"⚠️ Employee `{emp_id}` is already assigned to project `{project_id}`."}
-                    }
-                ]
-                return slack_response(response_url, msg_block)
-
-            # Add employee to project
-            employee_doc = frappe.get_doc("Employee", emp_id)
-            ped_doc.append("employees", {  # Assuming "employees" is the child table field in Project Employee Distribution
-                "employee": emp_id,
-                "employee_name": employee_doc.employee_name,
-                "designation": employee_doc.designation or "N/A",
-                "from_date": frappe.utils.nowdate(),
-                "to_date": project_doc.expected_end_date or frappe.utils.add_days(frappe.utils.nowdate(), 30)
-            })
-            ped_doc.save()
-            frappe.db.commit()
-
-            msg_block = [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": f"✅ Employee `{emp_id}` ({employee_doc.employee_name}) added to project `{project_id}`."}
-                }
-            ]
-            return slack_response(response_url, msg_block)
-
-        elif action == "remove":
-            # Check if employee is assigned
-            if not frappe.db.exists("Project Employee Distribution Detail", {"parent": ped_doc.name, "employee": emp_id}):
-                msg_block = [
-                    {
-                        "type": "section",
-                        "text": {"type": "mrkdwn", "text": f"⚠️ Employee `{emp_id}` is not assigned to project `{project_id}`."}
-                    }
-                ]
-                return slack_response(response_url, msg_block)
-
-            # Remove employee from project
-            frappe.db.delete("Project Employee Distribution Detail", {
-                "parent": ped_doc.name,
-                "employee": emp_id
-            })
-            frappe.db.commit()
-
-            msg_block = [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": f"✅ Employee `{emp_id}` removed from project `{project_id}`."}
-                }
-            ]
-            return slack_response(response_url, msg_block)
-
-    except Exception as e:
-        frappe.log_error("Manage Group Error",
-                         f"Error: {str(e)}\nTraceback: {traceback.format_exc()}")
-        msg_block = [
-            {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": "❌ An error occurred while processing your request. Please try again later."}
-            }
-        ]
-        return slack_response(response_url, msg_block)
+		return slack_response(response_url, msg_block)
 
 
 def slack_response(response_url, message_blocks):
@@ -565,6 +574,6 @@ def slack_response(response_url, message_blocks):
 
     # Return a 200 OK response with an empty body
     frappe.local.response["http_status_code"] = 200
-    frappe.local.response["content_type"] = "application/json"
-    frappe.local.response["data"] = ""
+    # frappe.local.response["content_type"] = "application/json"
+    # frappe.local.response["data"] = ""
     return
