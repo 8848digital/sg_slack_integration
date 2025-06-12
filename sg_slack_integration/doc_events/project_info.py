@@ -98,48 +98,65 @@ def get_info():
 				]
 				return slack_response(response_url, msg_block)
 			msg_block = [
-				{"type": "mrkdwn", "text": f"\nThese are the members found for project `{project_id}`."},
-				{"type": "mrkdwn",
-					"text": f"\nPartner: {ped_doc.get('project_lead_name')}"},
-				{"type": "mrkdwn",
-					"text": f"\nEngagement Manager: {ped_doc.get('project_manager_name')}"}
+				{
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": f"**These are the members found for project `{project_id}`**"}
+				},
+				{
+					"type": "section",
+					"text": {
+						"type": "mrkdwn",
+						"text": f"**Partner:** {ped_doc.get('project_lead_name') or 'N/A'}\n**Engagement Manager:** {ped_doc.get('project_manager_name') or 'N/A'}"
+					}
+				}
 			]
+			# msg_block = [
+			# 	{"type": "mrkdwn", "text": f"\nThese are the members found for project `{project_id}`."},
+			# 	{"type": "mrkdwn",
+			# 		"text": f"\nPartner: {ped_doc.get('project_lead_name')}"},
+			# 	{"type": "mrkdwn",
+			# 		"text": f"\nEngagement Manager: {ped_doc.get('project_manager_name')}"}
+			# ]
 
-			for m in members:
-				msg_block.append(
-					{"type": "mrkdwn", "text": f"• {m.get('employee_name')} ({m.get('designation')}) - {m.get('from_date')}-{m.get('to_date')}"})
+			if members:
+				member_lines = "\n".join(
+					f"• {m.get('employee_name') or 'N/A'} ({m.get('designation') or 'N/A'}) - {m.get('from_date') or 'N/A'}-{m.get('to_date') or 'N/A'}"
+					for m in members
+				)
+				msg_block.append({
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": f"**Members:**\n{member_lines}"}
+				})
+			else:
+				msg_block.append({
+					"type": "section",
+					"text": {"type": "mrkdwn", "text": "No team members assigned."}
+				})
 			frappe.log_error("msg_block", str(msg_block))
 			return slack_response(response_url, msg_block)
 
 		elif info_type == "proj_details":
 			frappe.log_error("114")
-			msg_block = [
-				{"type": "mrkdwn", "text": f"*Project ID:*\n{project_doc.get('name')}"},
-				{"type": "mrkdwn",
-					"text": f"*Project Name:*\n{project_doc.get('project_name')}"},
-				{"type": "mrkdwn",
-					"text": f"*Workflow State:*\n{project_doc.get('workflow_state')}"},
-				{"type": "mrkdwn", "text": f"*Status:*\n{project_doc.get('status')}"},
-				{"type": "mrkdwn",
-					"text": f"*Project Type:*\n{project_doc.get('project_type')}"},
-				{"type": "mrkdwn",
-					"text": f"*Service Line:*\n{project_doc.get('service_line')}"},
-				{"type": "mrkdwn",
-					"text": f"*Expected Start:*\n{project_doc.get('expected_start_date')}"},
-				{"type": "mrkdwn",
-					"text": f"*Expected End:*\n{project_doc.get('expected_end_date')}"},
-				{"type": "mrkdwn",
-					"text": f"*Sharepoint Link:*\n{project_doc.get('custom_sharepoint_link')}"},
-				{"type": "mrkdwn",
-					"text": f"*Sharepoint Folder Name:*\n{project_doc.get('custom_folder_name')}"},
-				{"type": "mrkdwn", "text": f"*Customer:*\n{project_doc.get('customer')}"},
-				{"type": "mrkdwn",
-					"text": f"*Customer Name:*\n{project_doc.get('custom_folder_name')}"},
-				{"type": "mrkdwn",
-					"text": f"*Partner:*\n{project_doc.get('project_lead_name')}"},
-				{"type": "mrkdwn",
-					"text": f"*Engagement Manager:*\n{project_doc.get('project_manager_name')}"}
-			]
+			message = f"""
+				**Project ID:** {project_doc.get('name')}\n
+				**Project Name:** {project_doc.get('project_name')}\n
+				**Workflow State:** {project_doc.get('workflow_state')}\n
+				**Status:** {project_doc.get('status')}\n
+				**Project Type:** {project_doc.get('project_type')}\n
+				**Service Line:** {project_doc.get('service_line')}\n
+				**Expected Start Date:** {project_doc.get('expected_start_date')}\n
+				**PExpected End Date:** {project_doc.get('expected_end_date')}\n
+				**Sharepoint Link:** {project_doc.get('custom_sharepoint_link')}\n
+				**Sharepoint Folder Name:** {project_doc.get('custom_folder_name')}\n
+				**Customer:** {project_doc.get('customer')}\n
+				**Customer Name:** {project_doc.get('custom_folder_name')}\n
+				**Partner:** {project_doc.get('project_lead_name')}\n
+				**Engagement Manager:** {project_doc.get('project_manager_name')}\n
+			"""
+			msg_block = {
+                            "type": "section",
+                       					"text": {"type": "mrkdwn", "text": f"**Details:**\n{message}"}
+                        }
 			frappe.log_error("142 msg block", str(msg_block))
 			return slack_response(response_url, msg_block)
 
@@ -263,15 +280,23 @@ def manage_group():
 		msg_block = []
 		members = frappe.get_all("Project Employee Distribution Detail", filters={"parent": ped_exists, "parenttype": "Project Employee Distribution"}, fields=[
 		                         "employee", "employee_name", "designation", "from_date", "to_date"])
-		msg_block = [
-			{"type": "mrkdwn", "text": f"Members of project `{project_id}`:"}
-		]
-		for m in members:
-			msg_block.append(
-				{"type": "mrkdwn",
-					"text": f"• {m.get('employee_name')} ({m.get('designation')}) - {m.get('from_date')}-{m.get('to_date')} (ID: {m.get('employee')})"}
-			)
-		return slack_response(response_url, msg_block)
+		if members:
+			msg_block = [
+				{"type": "mrkdwn", "text": f"Members of project `{project_id}`:"}
+			]
+			member_lines = "\n".join(
+				f"• {m.get('employee_name') or 'N/A'} ({m.get('designation') or 'N/A'}) - {m.get('from_date') or 'N/A'}-{m.get('to_date') or 'N/A'}" for m in members)
+			msg_block.append({
+				"type": "section",
+				"text": {"type": "mrkdwn", "text": f"\n**Members:**\n{member_lines}"}
+			})
+			return slack_response(response_url, msg_block)
+		else:
+			msg_block.append({
+				"type": "section",
+				"text": {"type": "mrkdwn", "text": "No team members assigned."}
+			})
+			return slack_response(response_url, msg_block)
 
 	elif action == "add":
 		pass
