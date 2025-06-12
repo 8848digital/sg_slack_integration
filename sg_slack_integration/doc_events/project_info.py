@@ -342,23 +342,23 @@ def process_manage_group(text, user_id, response_url):
             return slack_response(response_url, msg_block)
 
         # Validate email format
-        email_pattern = r'^[a-zA-Z0-9._%+-]+@strategicgears\.com$'
-        if not re.match(email_pattern, slack_user_email, re.IGNORECASE):
-            msg_block = [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": "⚠️ Invalid email format. Email must be in the format `user@strategicgears.com`."}
-                }
-            ]
-            return slack_response(response_url, msg_block)
+        # email_pattern = r'^[a-zA-Z0-9._%+-]+@strategicgears\.com$'
+        # if not re.match(email_pattern, slack_user_email, re.IGNORECASE):
+        #     msg_block = [
+        #         {
+        #             "type": "section",
+        #             "text": {"type": "mrkdwn", "text": "⚠️ Invalid email format. Email must be in the format `user@strategicgears.com`."}
+        #         }
+        #     ]
+        #     return slack_response(response_url, msg_block)
 
-        # Check if user has 'Project Manager' role
+        # Check if user has 'Projects Manager' role
         user_roles = frappe.get_roles(slack_user_email)
-        if "Project Manager" not in user_roles:  # Fixed role name to match error message
+        if "Projects Manager" not in user_roles:  # Fixed role name to match error message
             msg_block = [
                 {
                     "type": "section",
-                    "text": {"type": "mrkdwn", "text": "🚫 You do not have permission to manage project groups. Project Manager role required."}
+                    "text": {"type": "mrkdwn", "text": "🚫 You do not have permission to manage project groups. Projects Manager role required."}
                 }
             ]
             return slack_response(response_url, msg_block)
@@ -547,30 +547,31 @@ def process_manage_group(text, user_id, response_url):
             return slack_response(response_url, msg_block)
 
         # Validate and normalize email addresses
-        email_pattern = r'^[a-zA-Z0-9._%+-]+@strategicgears\.com$'
+        # email_pattern = r'^[a-zA-Z0-9._%+-]+@strategicgears\.com$'
         param3 = str(param3).strip()
         emails = [email.strip() for email in param3.split(",")]
-        invalid_emails = []
-        normalized_emails = []
-        for email in emails:
-            if not re.match(email_pattern, email, re.IGNORECASE):
-                invalid_emails.append(email)
-            else:
-                # Normalize to lowercase
-                normalized_emails.append(email.lower())
+        # invalid_emails = []
+        # normalized_emails = []
+        # for email in emails:
+        #     if not re.match(email_pattern, email, re.IGNORECASE):
+        #         invalid_emails.append(email)
+        #     else:
+        #         # Normalize to lowercase
+        #         normalized_emails.append(email.lower())
 
-        if invalid_emails:
-            msg_block = [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": f"🚫 Invalid email(s): {', '.join(invalid_emails)}. Emails must be in the format `user@strategicgears.com`."}
-                }
-            ]
-            return slack_response(response_url, msg_block)
+        # if invalid_emails:
+        #     msg_block = [
+        #         {
+        #             "type": "section",
+        #             "text": {"type": "mrkdwn", "text": f"🚫 Invalid email(s): {', '.join(invalid_emails)}. Emails must be in the format `user@strategicgears.com`."}
+        #         }
+        #     ]
+        #     return slack_response(response_url, msg_block)
 
         # Check if users exist and are enabled
         non_existent_emails = []
-        for email in normalized_emails:
+        for email in emails:
+            email = f"{email}@strategicgears.com"
             if not frappe.db.exists("User", {"email": email, "enabled": 1}):
                 non_existent_emails.append(email)
 
@@ -586,7 +587,8 @@ def process_manage_group(text, user_id, response_url):
         if action == "add":
             error = []
             added_emails = []
-            for email in normalized_emails:
+            for email in emails:
+                email = f"{email}@strategicgears.com"
                 # Check if user is already in the email group
                 if frappe.db.exists("Email Group Member", {"email_group": eg_created, "email": email}):
                     error.append(f"{email} is already in the email group")
@@ -623,7 +625,8 @@ def process_manage_group(text, user_id, response_url):
         elif action == "remove":
             error = []
             removed_emails = []
-            for email in normalized_emails:
+            for email in emails:
+                email = f"{email}@strategicgears.com"
                 # Check if user is in the email group
                 if not frappe.db.exists("Email Group Member", {"email_group": eg_created, "email": email}):
                     error.append(f"{email} is not in the email group")
