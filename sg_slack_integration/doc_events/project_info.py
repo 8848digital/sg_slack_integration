@@ -256,6 +256,7 @@ def get_info():
 @frappe.whitelist(allow_guest=True)
 def manage_group():
 	try:
+		msg_block = []
 		req = frappe.request
 		frappe.log_error("Group Manage Payload", f"Request: {req}")
 		frappe.log_error("Group Manage Payload Form", f"Form: {req.form}")
@@ -482,62 +483,71 @@ def manage_group():
 			return slack_response(response_url, msg_block)
 
 		if param3:
+			frappe.log_error("param3", param3)
 			param3 = str(param3).strip()
-			if not re.match(r'^[a-zA-Z0-9._%+-]+@strategicgears\.com$', param3):
-				msg_block = [
-					{
-						"type": "section",
-						"text": {"type": "mrkdwn", "text": "🚫 Invalid Employee Email ID. Kindly use your SG Email ID"}
-					}
-				]
-				return slack_response(response_url, msg_block)
+			param3 = param3.split(",")
+			for each in param3:
+				frappe.log_error("add each", each)
+				frappe.log_error("re result", re.match(
+				    r'^[a-zA-Z0-9._%+-]+@strategicgears\.com$', each))
+				if not re.match(r'^[a-zA-Z0-9._%+-]+@strategicgears\.com$', each):
+					msg_block = [
+						{
+							"type": "section",
+							"text": {"type": "mrkdwn", "text": "🚫 Invalid Employee Email ID. Kindly use your SG Email ID"}
+						}
+					]
+					return slack_response(response_url, msg_block)
 
-			if not frappe.db.exists("User", {"email": param3, "enabled": 1}):
-				msg_block = [
-					{
-						"type": "section",
-						"text": {"type": "mrkdwn", "text": f"🚫 No employee found with ID `{param3}` or is Disabled."}
-					}
-				]
-				return slack_response(response_url, msg_block)
+				if not frappe.db.exists("User", {"email": each, "enabled": 1}):
+					msg_block = [
+						{
+							"type": "section",
+							"text": {"type": "mrkdwn", "text": f"🚫 No employee found with ID `{each}` or is Disabled."}
+						}
+					]
+					return slack_response(response_url, msg_block)
 
 		if action == "add":
 			# Check if employee exists
-			if not frappe.db.exists("User", param3):
-				msg_block = [
-					{
-						"type": "section",
-						"text": {"type": "mrkdwn", "text": f"🚫 No employee found with ID `{param3}`."}
-					}
-				]
-				return slack_response(response_url, msg_block)
+			error = []
+			for each in param3:
+				if not frappe.db.exists("User", each):
+					msg_block = [
+						{
+							"type": "section",
+							"text": {"type": "mrkdwn", "text": f"🚫 No employee found with ID `{each}`."}
+						}
+					]
+					return slack_response(response_url, msg_block)
 
-			# Check if employee is already assigned
-			if frappe.db.exists("Email Group Member", {"email_group": eg_created, "email": param3}):
-				msg_block = [
-					{
-						"type": "section",
-						"text": {"type": "mrkdwn", "text": f"⚠️ User `{param3}` is already added to the group for `{project_id}`."}
-					}
-				]
-				return slack_response(response_url, msg_block)
+				# Check if employee is already assigned
+				if frappe.db.exists("Email Group Member", {"email_group": eg_created, "email": each}):
+					msg_block = [
+						{
+							"type": "section",
+							"text": {"type": "mrkdwn", "text": f"⚠️ User `{each}` is already added to the group for `{project_id}`."}
+						}
+					]
+					return slack_response(response_url, msg_block)
 
-			try:
-				# Add user to group\
-				frappe.set_user(slack_user_email)
-				egm = frappe.new_doc("Email Group Member")
-				egm.email_group = eg_created
-				egm.email = param3
-				egm.save(ignore_permissions=True)
-				frappe.set_user("Administrator")
-			except Exception as e:
-				frappe.log_error("Slack Group Manager Error | ADD",
-				                 frappe.get_traceback(e))
+				try:
+					# Add user to group\
+					frappe.set_user(slack_user_email)
+					egm = frappe.new_doc("Email Group Member")
+					egm.email_group = eg_created
+					egm.email = each
+					egm.save(ignore_permissions=True)
+					frappe.set_user("Administrator")
+				except Exception as e:
+					error.append(frappe.get_traceback(e))
+			if len(error) > 0:
+				frappe.log_error("Slack Group Manager Error | ADD", str(error))
 
 			msg_block = [
 				{
 					"type": "section",
-					"text": {"type": "mrkdwn", "text": f"✅ User `*{param3}*` added to Group - *{eg_created}* for project `*{project_id}*`."}
+					"text": {"type": "mrkdwn", "text": f"✅ User(s) `*{str(param3)}*` added to Group - *{eg_created}* for project `*{project_id}*`."}
 				}
 			]
 			return slack_response(response_url, msg_block)
