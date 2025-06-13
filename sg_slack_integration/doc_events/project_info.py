@@ -151,7 +151,7 @@ def get_info():
 
             frappe.log_error("Message Block (members)",
                              json.dumps(msg_block, indent=2))
-            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, resppnse=json.dumps(msg_block, indent=2))
+            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response=json.dumps(msg_block, indent=2))
 
         elif info_type == "proj_details":
             # Group fields into logical sections to avoid exceeding 3000 characters
@@ -674,7 +674,7 @@ def process_manage_group(text, user_id, response_url, command):
         return slack_response(response_url, msg_block, user_id, "Error", command, text, response="❌ An error occurred while processing your request. Please check the logs or try again later.", error=frappe.get_traceback(e))
 
 
-def slack_response(response_url, message_blocks, user_id, status, cmd, param, response=None, error=None):
+def slack_response(response_url, message_blocks, user_id=None, status=None, cmd=None, param=None, response=None, error=None):
     create_slack_log_for_commands(
         user=user_id, status=status, cmd=cmd, param=param, response=response, error=error)
 
