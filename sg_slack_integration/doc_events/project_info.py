@@ -61,7 +61,7 @@ def get_info():
                 }
             ]
             return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="🚫 You do not have permission to access project details. Partner role required.")
-
+        frappe.set_user("Administrator")
         # Validate project_id
         project_id = str(project_id).strip()
         match = re.match(r'^(?:([A-Za-z]+)-)?(\d{4,})$', project_id)
