@@ -251,7 +251,7 @@ def get_info():
                 "text": {"type": "mrkdwn", "text": "❌ An error occurred while processing your request. Please try again later."}
             }
         ]
-        return slack_response(response_url, msg_block, user_id, "Error", req.form.get('command'), text, error="❌ An error occurred while processing your request. Please try again later.")
+        return slack_response(response_url, msg_block, user_id, "Error", req.form.get('command'), text, response="❌ An error occurred while processing your request. Please try again later.", error=frappe.get_traceback(e))
 
 
 
