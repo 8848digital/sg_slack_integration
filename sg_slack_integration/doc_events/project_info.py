@@ -6,6 +6,7 @@ import traceback
 from frappe.utils.response import build_response
 
 from sg_slack_integration.doc_events.common_function import get_email_id_from_slack_user_id
+from sg_slack_integration.doc_events.utils import create_slack_log_for_commands
 
 @frappe.whitelist(allow_guest=True)
 def get_info():
@@ -24,7 +25,7 @@ def get_info():
                     "text": {"type": "mrkdwn", "text": "❌ Please provide valid parameters: `/get-info [project-id] [members|proj_details]`"}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="❌ Please provide valid parameters: `/get-info [project-id] [members|proj_details]`")
 
         parts = text.split()
         if len(parts) != 2:
@@ -34,7 +35,7 @@ def get_info():
                     "text": {"type": "mrkdwn", "text": "❌ Usage: `/get-info [project-id] [members|proj_details]`"}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="❌ Usage: `/get-info [project-id] [members|proj_details]`")
 
         project_id, info_type = parts
         info_type = info_type.lower().strip()  # Normalize info_type
@@ -48,7 +49,7 @@ def get_info():
                     "text": {"type": "mrkdwn", "text": "⚠️ Could not identify you in ERP system."}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="⚠️ Could not identify you in ERP system.")
 
         # Check if user has 'Partner' role
         user_roles = frappe.get_roles(slack_user_email)
@@ -59,7 +60,7 @@ def get_info():
                     "text": {"type": "mrkdwn", "text": "🚫 You do not have permission to access project details. Partner role required."}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="🚫 You do not have permission to access project details. Partner role required.")
 
         # Validate project_id
         project_id = str(project_id).strip()
@@ -71,7 +72,7 @@ def get_info():
                     "text": {"type": "mrkdwn", "text": "🚫 Invalid Project ID. Use formats like `PROJ-1234` (letters, hyphen, 4+ digits) or `1234` (4+ digits)."}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="🚫 Invalid Project ID. Use formats like `PROJ-1234` (letters, hyphen, 4+ digits) or `1234` (4+ digits).")
 
         prefix, digits = match.groups()
         if prefix and prefix.lower() != "proj":
@@ -81,7 +82,7 @@ def get_info():
                     "text": {"type": "mrkdwn", "text": "🚫 Invalid prefix. Project ID must start with `PROJ` (e.g., `PROJ-1234`)."}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="🚫 Invalid prefix. Project ID must start with `PROJ` (e.g., `PROJ-1234`).")
 
         # Normalize project_id
         project_id = f"PROJ-{digits}"
@@ -95,7 +96,7 @@ def get_info():
                     "text": {"type": "mrkdwn", "text": f"🚫 No project found with ID `{project_id}`."}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response=f"🚫 No project found with ID `{project_id}`.")
 
         project_doc = frappe.get_doc("Project", project_id)
         frappe.log_error("Project Fetched", f"Project ID: {project_id}")
@@ -110,7 +111,7 @@ def get_info():
                         "text": {"type": "mrkdwn", "text": f"ℹ No members found for project `{project_id}`."}
                     }
                 ]
-                return slack_response(response_url, msg_block)
+                return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response=f"ℹ No members found for project `{project_id}`.")
 
             ped_doc = ped_docs[0]
             members = frappe.get_all("Project Employee Distribution Detail", filters={
@@ -150,7 +151,7 @@ def get_info():
 
             frappe.log_error("Message Block (members)",
                              json.dumps(msg_block, indent=2))
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, resppnse=json.dumps(msg_block, indent=2))
 
         elif info_type == "proj_details":
             # Group fields into logical sections to avoid exceeding 3000 characters
@@ -230,7 +231,7 @@ def get_info():
 
             frappe.log_error("Message Block (proj_details)",
                              json.dumps(final_blocks, indent=2))
-            return slack_response(response_url, final_blocks)
+            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response=json.dumps(final_blocks, indent=2))
 
         else:
             msg_block = [
@@ -239,7 +240,7 @@ def get_info():
                     "text": {"type": "mrkdwn", "text": "❌ Invalid info type. Use `members` or `proj_details`."}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="❌ Invalid info type. Use `members` or `proj_details`.")
 
     except Exception as e:
         frappe.log_error(
@@ -250,7 +251,7 @@ def get_info():
                 "text": {"type": "mrkdwn", "text": "❌ An error occurred while processing your request. Please try again later."}
             }
         ]
-        return slack_response(response_url, msg_block)
+        return slack_response(response_url, msg_block, user_id, "Error", req.form.get('command'), text, error="❌ An error occurred while processing your request. Please try again later.")
 
 
 
@@ -272,7 +273,7 @@ def manage_group():
                     "text": {"type": "mrkdwn", "text": "❌ Please provide valid parameters: `/group-manage [project-id] [view|create|add|remove] [email-group-name]/[user-id]`"}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="❌ Please provide valid parameters: `/group-manage [project-id] [view|create|add|remove] [email-group-name]/[user-id]`")
 
         parts = text.split()
         if len(parts) < 2 or len(parts) > 3:
@@ -282,7 +283,7 @@ def manage_group():
                     "text": {"type": "mrkdwn", "text": "❌ Usage: `/group-manage [project-id] [view|create|add|remove] [email-group-name]/[user-id]`"}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="❌ Usage: `/group-manage [project-id] [view|create|add|remove] [email-group-name]/[user-id]`")
 
         # Respond to Slack immediately
         msg_block = [
@@ -303,6 +304,7 @@ def manage_group():
             job_name="manage_group_background",
             text=text,
             user_id=user_id,
+            command=req.form.get('command'),
             response_url=response_url
         )
 
@@ -321,10 +323,10 @@ def manage_group():
                 "text": {"type": "mrkdwn", "text": "❌ An error occurred while initiating your request. Please try again later."}
             }
         ]
-        return slack_response(response_url, msg_block)
+        return slack_response(response_url, msg_block, user_id, "Error", req.form.get('command'), text, response="❌ An error occurred while initiating your request. Please try again later.", error=frappe.get_traceback(e))
 
 
-def process_manage_group(text, user_id, response_url):
+def process_manage_group(text, user_id, response_url, command):
     """
     Background job to process the manage_group logic and send the final response to Slack.
     """
@@ -339,7 +341,7 @@ def process_manage_group(text, user_id, response_url):
                     "text": {"type": "mrkdwn", "text": "⚠️ Could not identify you in ERP system."}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", command, text, response="⚠️ Could not identify you in ERP system.")
 
         # Validate email format
         # email_pattern = r'^[a-zA-Z0-9._%+-]+@strategicgears\.com$'
@@ -361,7 +363,7 @@ def process_manage_group(text, user_id, response_url):
                     "text": {"type": "mrkdwn", "text": "🚫 You do not have permission to manage project groups. Projects Manager role required."}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", command, text, response="🚫 You do not have permission to manage project groups. Projects Manager role required.")
 
         parts = text.split()
         project_id = parts[0]
@@ -376,7 +378,7 @@ def process_manage_group(text, user_id, response_url):
                     "text": {"type": "mrkdwn", "text": "❌ Invalid action. Use `view`, `create`, `add`, or `remove`."}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", command, text, response="❌ Invalid action. Use `view`, `create`, `add`, or `remove`.")
 
         # Validate project_id
         project_id = str(project_id).strip()
@@ -388,7 +390,7 @@ def process_manage_group(text, user_id, response_url):
                     "text": {"type": "mrkdwn", "text": "🚫 Invalid Project ID. Use formats like `PROJ-1234` (letters, hyphen, 4+ digits) or `1234` (4+ digits)."}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", command, text, response="🚫 Invalid Project ID. Use formats like `PROJ-1234` (letters, hyphen, 4+ digits) or `1234` (4+ digits).")
 
         prefix, digits = match.groups()
         if prefix and prefix.lower() != "proj":
@@ -398,7 +400,7 @@ def process_manage_group(text, user_id, response_url):
                     "text": {"type": "mrkdwn", "text": "🚫 Invalid prefix. Project ID must start with `PROJ` (e.g., `PROJ-1234`)."}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", command, text, response="🚫 Invalid prefix. Project ID must start with `PROJ` (e.g., `PROJ-1234`).")
 
         project_id = f"PROJ-{digits}"
         frappe.log_error("Normalized Project ID", project_id)
@@ -411,7 +413,7 @@ def process_manage_group(text, user_id, response_url):
                     "text": {"type": "mrkdwn", "text": f"🚫 No project found with ID `{project_id}`."}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", command, text, response=f"🚫 No project found with ID `{project_id}`.")
 
         project_doc = frappe.get_doc("Project", project_id)
         owners = [
@@ -434,7 +436,7 @@ def process_manage_group(text, user_id, response_url):
                         "text": {"type": "mrkdwn", "text": f"ℹ No Email Group found for project `{project_id}`."}
                     }
                 ]
-                return slack_response(response_url, msg_block)
+                return slack_response(response_url, msg_block, user_id, "Success", command, text, response=f"ℹ No Email Group found for project `{project_id}`.")
 
             email_group = frappe.get_all("Email Group", filters={
                                          "custom_project": project_id}, limit=1)
@@ -467,7 +469,7 @@ def process_manage_group(text, user_id, response_url):
                 })
             frappe.log_error("Message Block (view)",
                              json.dumps(msg_block, indent=2))
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", command, text, response=json.dumps(msg_block, indent=2))
 
         if action == "create":
             if eg_created:
@@ -477,7 +479,7 @@ def process_manage_group(text, user_id, response_url):
                         "text": {"type": "mrkdwn", "text": f"❌ This Project is already linked to Email Group - {eg_created}"}
                     }
                 ]
-                return slack_response(response_url, msg_block)
+                return slack_response(response_url, msg_block, user_id, "Success", command, text, response=f"❌ This Project is already linked to Email Group - {eg_created}")
 
             if not param3:
                 msg_block = [
@@ -486,7 +488,7 @@ def process_manage_group(text, user_id, response_url):
                         "text": {"type": "mrkdwn", "text": "❌ Email Group Name Required for `create` action."}
                     }
                 ]
-                return slack_response(response_url, msg_block)
+                return slack_response(response_url, msg_block, user_id, "Success", command, text, response="❌ Email Group Name Required for `create` action.")
 
             param3 = str(param3).strip()
             if frappe.db.exists("Email Group", param3):
@@ -496,11 +498,11 @@ def process_manage_group(text, user_id, response_url):
                         "text": {"type": "mrkdwn", "text": "❌ This Name is taken, please try again with a different Name"}
                     }
                 ]
-                return slack_response(response_url, msg_block)
+                return slack_response(response_url, msg_block, user_id, "Success", command, text, response="❌ This Email group Name is taken, please try again with a different Name")
 
             frappe.set_user(slack_user_email)
             eg_creation_successful = create_email_group(param3, project_id)
-
+            frappe.set_user("Administrator")
             if not eg_creation_successful:
                 msg_block = [
                     {
@@ -508,7 +510,7 @@ def process_manage_group(text, user_id, response_url):
                         "text": {"type": "mrkdwn", "text": "❌ There was an error creating Email Group"}
                     }
                 ]
-                return slack_response(response_url, msg_block)
+                return slack_response(response_url, msg_block, user_id, "Success", command, text, response="❌ There was an error creating Email Group")
 
             msg_block = [
                 {
@@ -525,7 +527,7 @@ def process_manage_group(text, user_id, response_url):
                 owners=owners,
                 email_group=param3
             )
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", command, text, response=f"✅ Email Group - {param3} created successfully and linked with Project")
 
         # Validate emails for add/remove actions
         if action in ["add", "remove"] and not param3:
@@ -535,7 +537,7 @@ def process_manage_group(text, user_id, response_url):
                     "text": {"type": "mrkdwn", "text": "❌ Usage: `/group-manage [project-id] [add|remove] [user-id]`"}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", command, text, response="❌ Usage: `/group-manage [project-id] [add|remove] [user-id]`")
 
         if not eg_created:
             msg_block = [
@@ -544,7 +546,7 @@ def process_manage_group(text, user_id, response_url):
                     "text": {"type": "mrkdwn", "text": f"❌ No Email Group linked to project `{project_id}`. Please create one first using `create` action."}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", command, text, response=f"❌ No Email Group linked to project `{project_id}`. Please create one first using `create` action.")
 
         # Validate and normalize email addresses
         # email_pattern = r'^[a-zA-Z0-9._%+-]+@strategicgears\.com$'
@@ -582,7 +584,7 @@ def process_manage_group(text, user_id, response_url):
                     "text": {"type": "mrkdwn", "text": f"🚫 User(s) not found or disabled: {', '.join(non_existent_emails)}."}
                 }
             ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", command, text, response=f"🚫 User(s) not found or disabled: {', '.join(non_existent_emails)}.")
 
         if action == "add":
             error = []
@@ -620,7 +622,7 @@ def process_manage_group(text, user_id, response_url):
                         "text": {"type": "mrkdwn", "text": f"✅ User(s) *{', '.join(added_emails)}* added to Group - *{eg_created}* for project *{project_id}*."}
                     }
                 ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", command, text, response=json.dumps(msg_block, indent=2))
 
         elif action == "remove":
             error = []
@@ -658,7 +660,7 @@ def process_manage_group(text, user_id, response_url):
                         "text": {"type": "mrkdwn", "text": f"✅ User(s) *{', '.join(removed_emails)}* removed from Group - *{eg_created}* for project *{project_id}*."}
                     }
                 ]
-            return slack_response(response_url, msg_block)
+            return slack_response(response_url, msg_block, user_id, "Success", command, text, response=json.dumps(msg_block, indent=2))
 
     except Exception as e:
         frappe.log_error("Manage Group Background Error",
@@ -669,10 +671,13 @@ def process_manage_group(text, user_id, response_url):
                 "text": {"type": "mrkdwn", "text": "❌ An error occurred while processing your request. Please check the logs or try again later."}
             }
         ]
-        return slack_response(response_url, msg_block)
+        return slack_response(response_url, msg_block, user_id, "Error", command, text, response="❌ An error occurred while processing your request. Please check the logs or try again later.", error=frappe.get_traceback(e))
 
 
-def slack_response(response_url, message_blocks):
+def slack_response(response_url, message_blocks, user_id, status, cmd, param, response=None, error=None):
+    create_slack_log_for_commands(
+        user=user_id, status=status, cmd=cmd, param=param, response=response, error=error)
+
     # Validate that message_blocks is a list
     if not isinstance(message_blocks, list):
         frappe.log_error("Invalid Blocks Format",
