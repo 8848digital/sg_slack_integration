@@ -68,15 +68,15 @@ def get_info_emp_profile():
 
 
                 if len(matches_emp_profile):
-                    matched_data=[{a:frappe.utils.get_url_to_form('Employee Profile',a)} for a in matches_emp_profile]
+                    matched_data=[a for a in matches_emp_profile]
                 elif len(match_edu):
-                    matched_data=[{a:frappe.utils.get_url_to_form('Employee Profile',a)} for a in match_edu]
+                    matched_data=[a for a in match_edu]
                 elif len(match_exp):
-                    matched_data=[{a:frappe.utils.get_url_to_form('Employee Profile',a)} for a in match_exp]
+                    matched_data=[a for a in match_exp]
                 elif len(match_fun_skills):
-                    matched_data=[{a:frappe.utils.get_url_to_form('Employee Profile',a)} for a in match_fun_skills]
+                    matched_data=[a for a in match_fun_skills]
                 elif len(match_edu_qual_arabic):
-                    matched_data=[{a:frappe.utils.get_url_to_form('Employee Profile',a)} for a in match_edu_qual_arabic]
+                    matched_data=[a for a in match_edu_qual_arabic]
                   
                    
                     
@@ -221,14 +221,21 @@ def get_employee_profile_ai(matched_data,settings_doc=None):
                 designation =emp_profile.get('employee_designation') if emp_profile.get('employee_designation') else ''
                 department = emp.get('department') if emp.get('department') else ''
                 experience = emp_profile.get('total_exp') if emp_profile.get('total_exp') else 0
-                skills = frappe.get_all('Functional Skill',{'parent':emp_profile.get('name'),'parenttype': 'Employee Profile'},pluck='skills') if emp_profile.get('functional_skills') and len(frappe.get_all('Functional Skill',{'parent':emp_profile.get('name'),'parenttype': 'Employee Profile'},pluck='skills'))  else ''
+                skills = frappe.get_all('Functional Skill',{'parent':emp_profile.get('name'),'parenttype': 'Employee Profile'},pluck='skills') if emp_profile.get('functional_skills') and frappe.db.exists('Functional Skill',{'parent':emp_profile.get('name'),'parenttype': 'Employee Profile'})  else ''
+                all_skills=[s for s in skills if s!=None]
+                if all_skills:
+                    content = (
+                        f"Generate a professional employee profile for {name}, "
+                        f"{designation}, {department} department, "
+                        f"{experience} experience, skills in {', '.join(all_skills)}."
+                    )
+                else:
+                    content = (
+                        f"Generate a professional employee profile for {name}, "
+                        f"{designation}, {department} department, "
+                        f"{experience} experience."
+                    )
 
-                # Build the content string dynamically
-                content = (
-                    f"Generate a professional employee profile for {name}, "
-                    f"{designation}, {department} department, "
-                    f"{experience} experience, skills in {', '.join(skills)}."
-                )
 
                 response = client.chat.completions.create(
                     model="gpt-4",
