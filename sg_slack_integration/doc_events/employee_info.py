@@ -20,6 +20,7 @@ def get_info_emp_profile():
                 edu_qual=frappe.get_all('Educational Qualification',{'parenttype': 'Employee Profile'},['*'])
                 rel_exp=frappe.get_all('Relevant Experience',{'parenttype': 'Employee Profile'},['*'])
                 fun_skills=frappe.get_all('Functional Skill',{'parenttype': 'Employee Profile'},['*'])
+                edu_qual_arabic=frappe.get_all('Educational Qualification Arabic',{'parenttype': 'Employee Profile'},['*'])
 
                
                 matches_emp_profile = [
@@ -54,6 +55,14 @@ def get_info_emp_profile():
                         for v in item.values()
                     )
                 ]
+                match_edu_qual_arabic=[
+                    item['parent']
+                    for item in edu_qual_arabic
+                    if any(
+                        search_term.lower() in str(v).lower()
+                        for v in item.values()
+                    )
+                ]
                 matched_data=[]
 
 
@@ -65,6 +74,8 @@ def get_info_emp_profile():
                     matched_data=[frappe.utils.get_url_to_form('Employee Profile',a) for a in match_exp]
                 elif len(match_fun_skills):
                     matched_data=[frappe.utils.get_url_to_form('Employee Profile',a) for a in match_fun_skills]
+                elif len(match_edu_qual_arabic):
+                    matched_data=[frappe.utils.get_url_to_form('Employee Profile',a) for a in match_edu_qual_arabic]
                   
                    
                     
