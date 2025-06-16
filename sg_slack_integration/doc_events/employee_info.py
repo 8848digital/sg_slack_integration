@@ -207,6 +207,7 @@ def slack_response(response_url, message_blocks, user_id=None, status=None, cmd=
 
 def get_employee_profile_ai(matched_data,settings_doc=None):
     complete_details=[]
+    frappe.log_error('Matched Data',matched_data)
     if not settings_doc:
         settings_doc=frappe.get_doc('Slack Integration Settings')
     if settings_doc.get('openai_key'):
@@ -220,7 +221,7 @@ def get_employee_profile_ai(matched_data,settings_doc=None):
                 designation =emp_profile.get('employee_designation') if emp_profile.get('employee_designation') else ''
                 department = emp.get('department') if emp.get('department') else ''
                 experience = emp_profile.get('total_exp') if emp_profile.get('total_exp') else 0
-                skills = frappe.get_all('Functional Skill',{'parent':emp_profile.get('name'),'parenttype': 'Employee Profile'},pluck='skills') if emp_profile.get('functional_skills') else ''
+                skills = frappe.get_all('Functional Skill',{'parent':emp_profile.get('name'),'parenttype': 'Employee Profile'},pluck='skills') if emp_profile.get('functional_skills') and len(frappe.get_all('Functional Skill',{'parent':emp_profile.get('name'),'parenttype': 'Employee Profile'},pluck='skills'))  else ''
 
                 # Build the content string dynamically
                 content = (
