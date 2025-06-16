@@ -1,6 +1,7 @@
 import frappe
 import requests
 import json
+import openai
 
 from sg_slack_integration.doc_events.utils import create_slack_log_for_commands
 
@@ -9,11 +10,11 @@ def get_info_emp_profile():
     try:
         req = frappe.form_dict
         settings_doc=frappe.get_doc('Slack Integration Settings')
+        user_id = req.get("user_id") 
+        response_url = req.get("response_url")
+        search_term = req.get("text").strip()
+        text=req.get("text")
         if settings_doc.get('enable_employee_details_search') and settings_doc.get('employee_app_id') and settings_doc.get('employee_app_id')==req.get('api_app_id'):
-            user_id = req.get("user_id") 
-            response_url = req.get("response_url")
-            search_term = req.get("text").strip()
-            text=req.get("text")
             if req.get('command')==settings_doc.get('search_command'):
                 active_id=frappe.get_all('Employee',{'status':['!=','Inactive']},['name'],pluck='name')
                 emp_profile=frappe.get_all('Employee Profile',['*'],{'employee_id':['in',active_id]})
@@ -67,33 +68,49 @@ def get_info_emp_profile():
 
 
                 if len(matches_emp_profile):
-                    matched_data=[frappe.utils.get_url_to_form('Employee Profile',a) for a in matches_emp_profile]
+                    matched_data=[{a:frappe.utils.get_url_to_form('Employee Profile',a)} for a in matches_emp_profile]
                 elif len(match_edu):
-                    matched_data=[frappe.utils.get_url_to_form('Employee Profile',a) for a in match_edu]
+                    matched_data=[{a:frappe.utils.get_url_to_form('Employee Profile',a)} for a in match_edu]
                 elif len(match_exp):
-                    matched_data=[frappe.utils.get_url_to_form('Employee Profile',a) for a in match_exp]
+                    matched_data=[{a:frappe.utils.get_url_to_form('Employee Profile',a)} for a in match_exp]
                 elif len(match_fun_skills):
-                    matched_data=[frappe.utils.get_url_to_form('Employee Profile',a) for a in match_fun_skills]
+                    matched_data=[{a:frappe.utils.get_url_to_form('Employee Profile',a)} for a in match_fun_skills]
                 elif len(match_edu_qual_arabic):
-                    matched_data=[frappe.utils.get_url_to_form('Employee Profile',a) for a in match_edu_qual_arabic]
+                    matched_data=[{a:frappe.utils.get_url_to_form('Employee Profile',a)} for a in match_edu_qual_arabic]
                   
                    
                     
                 if len(matched_data):
+                    complete_profile=get_employee_profile_ai(matched_data,settings_doc)
                     msg_block = [
                         {
                             "type": "section",
                             "text": {"type": "mrkdwn", "text": f"*These are the matched found for employee profile *"}
-                        },
+                        }
+                    ]
+                    if complete_profile:
+                        for comp in complete_profile:
+
+                            msg_block.append(
+                                {
+                                    "type": "section",
+                                    "text": {
+                                        "type": "mrkdwn",
+                                        "text": f"*{comp or 'N/A'}"
+                                    }
+                                }
+                            )
+                            
+                        return slack_response(response_url, msg_block, user_id, "Success", req.get('command'), text, response=json.dumps(msg_block, indent=2))
+                else:
+                    msg_block=[
                         {
                             "type": "section",
-                            "text": {
-                                "type": "mrkdwn",
-                                "text": f"*Matched Profile ID:* {matched_data or 'N/A'}"
-                            }
+                            "text": {"type": "mrkdwn", "text": "❌ No Match found"}
                         }
                     ]
                     return slack_response(response_url, msg_block, user_id, "Success", req.get('command'), text, response=json.dumps(msg_block, indent=2))
+
 
             else:
                 msg_block=[
@@ -102,7 +119,15 @@ def get_info_emp_profile():
                         "text": {"type": "mrkdwn", "text": "❌ Please provide valid parameters: `/start keywords`"}
                     }
                 ]
-                return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="❌ Usage: `/get-info [project-id] [members|proj_details]`")
+                return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="❌ Usage: `/start keyword`")
+        else:
+            msg_block=[
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": "❌ Please ask slack admin to enable the seacrh api"}
+                }
+            ]
+            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="❌ Usage: `/start keyword`")
                 
 
     except Exception as e:
@@ -180,4 +205,41 @@ def slack_response(response_url, message_blocks, user_id=None, status=None, cmd=
     # frappe.local.response["data"] = ""
     return
 
+def get_employee_profile_ai(matched_data,settings_doc=None):
+    try:
+        complete_details=[]
+        if not settings_doc:
+            settings_doc=frappe.get_doc('Slack Integration Settings')
+        if settings_doc.get('openai_key'):
+            api_key = settings_doc.get('openai_key')
+            client = openai.OpenAI(api_key=api_key)
+            for i in matched_data:
+                emp_profile=frappe.get_doc('Employee Profile',i)
+                emp=frappe.get_doc('Employee',emp_profile.get('employee_id'))
+                name =emp_profile.get('employee_name')
+                designation =emp_profile.get('employee_designation')
+                department = emp.get('department')
+                experience = emp_profile.get('total_exp') if emp_profile.get('total_exp') else 0
+                skills = frappe.get_all('Functional Skill',{'parent':emp_profile.get('name'),'parenttype': 'Employee Profile'},pluck='skills') if emp_profile.get('functional_skills') else ''
 
+                # Build the content string dynamically
+                content = (
+                    f"Generate a professional employee profile for {name}, "
+                    f"{designation}, {department} department, "
+                    f"{experience} experience, skills in {', '.join(skills)}."
+                )
+
+                response = client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "user", "content": content}
+                    ]
+                )
+                # print(response)
+                profile_text = response.choices[0].message.content
+                if profile_text:
+                    complete_details.append(profile_text)
+            else:
+                return complete_details
+    except Exception as e:
+        frappe.log_error(f'get_employee_profile_ai',e)
