@@ -206,19 +206,19 @@ def slack_response(response_url, message_blocks, user_id=None, status=None, cmd=
     return
 
 def get_employee_profile_ai(matched_data,settings_doc=None):
-    try:
-        complete_details=[]
-        if not settings_doc:
-            settings_doc=frappe.get_doc('Slack Integration Settings')
-        if settings_doc.get('openai_key'):
-            api_key = settings_doc.get('openai_key')
-            client = openai.OpenAI(api_key=api_key)
-            for i in matched_data:
+    complete_details=[]
+    if not settings_doc:
+        settings_doc=frappe.get_doc('Slack Integration Settings')
+    if settings_doc.get('openai_key'):
+        api_key = settings_doc.get('openai_key')
+        client = openai.OpenAI(api_key=api_key)
+        for i in matched_data:
+            try:
                 emp_profile=frappe.get_doc('Employee Profile',i)
                 emp=frappe.get_doc('Employee',emp_profile.get('employee_id'))
                 name =emp_profile.get('employee_name')
-                designation =emp_profile.get('employee_designation')
-                department = emp.get('department')
+                designation =emp_profile.get('employee_designation') if emp_profile.get('employee_designation') else ''
+                department = emp.get('department') if emp.get('department') else ''
                 experience = emp_profile.get('total_exp') if emp_profile.get('total_exp') else 0
                 skills = frappe.get_all('Functional Skill',{'parent':emp_profile.get('name'),'parenttype': 'Employee Profile'},pluck='skills') if emp_profile.get('functional_skills') else ''
 
@@ -239,7 +239,9 @@ def get_employee_profile_ai(matched_data,settings_doc=None):
                 profile_text = response.choices[0].message.content
                 if profile_text:
                     complete_details.append(profile_text)
-            else:
-                return complete_details
-    except Exception as e:
-        frappe.log_error(f'get_employee_profile_ai',e)
+            except Exception as e:
+                frappe.log_error(f'get_employee_profile_ai',e)
+            
+        else:
+            return complete_details
+    
