@@ -23,17 +23,17 @@ def get_info_emp_profile():
                 ]
                 slack_response(response_url,msg_block)
                 frappe.enqueue(
-                matching_employee_profile,
-                queue="long",
-                timeout=3600,
-                is_async=True,
-                job_name=f"Matching Employee Profile-{search_term}",
-                search_term=search_term,
-                response_url=response_url,
-                settings_doc=settings_doc,
-                user_id=user_id,
-                req=req,
-                text=text
+                    matching_employee_profile,
+                    queue="long",
+                    timeout=3600,
+                    is_async=True,
+                    job_name=f"Matching Employee Profile-{search_term}",
+                    search_term=search_term,
+                    response_url=response_url,
+                    settings_doc=settings_doc,
+                    user_id=user_id,
+                    req=req,
+                    text=text
                 )
 
 
@@ -44,7 +44,7 @@ def get_info_emp_profile():
                         "text": {"type": "mrkdwn", "text": "❌ Please provide valid parameters: `/start keywords`"}
                     }
                 ]
-                return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="❌ Usage: `/start keyword`")
+                return slack_response(response_url, msg_block, user_id, "Success", req.get('command'), text, response="❌ Usage: `/start keyword`")
         else:
             msg_block=[
                 {
@@ -52,13 +52,14 @@ def get_info_emp_profile():
                     "text": {"type": "mrkdwn", "text": "❌ Please ask slack admin to enable the seacrh api"}
                 }
             ]
-            return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="❌ Usage: `/start keyword`")
+            return slack_response(response_url, msg_block, user_id, "Success", req.get('command'), text, response="❌ Usage: `/start keyword`")
                 
 
     except Exception as e:
         frappe.log_error('Emp Search Result',e)
     
 def matching_employee_profile(search_term,response_url,settings_doc,user_id,req,text):
+    # search_term=get_search_term(search_term,settings_doc)
     active_id=frappe.get_all('Employee',{'status':['!=','Inactive']},['name'],pluck='name')
     emp_profile=frappe.get_all('Employee Profile',['*'],{'employee_id':['in',active_id]})
     edu_qual=frappe.get_all('Educational Qualification',{'parenttype': 'Employee Profile'},['*'])
@@ -203,3 +204,19 @@ def get_employee_profile_ai(matched_data,settings_doc=None):
         else:
             return complete_details
     
+
+def get_search_term(search_term,settings_doc):
+    if not settings_doc:
+        settings_doc=frappe.get_doc('Slack Integration Settings')
+    if settings_doc.get('openai_key'):
+        api_key = settings_doc.get('openai_key')
+        client = openai.OpenAI(api_key=api_key)
+
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "Extract the search field and value from the user's request. Return JSON only."},
+                {"role": "user", "content": search_term}
+            ]
+        )
+        return response
