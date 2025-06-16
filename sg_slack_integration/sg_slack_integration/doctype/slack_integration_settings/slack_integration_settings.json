@@ -12,26 +12,19 @@
   "slack_error_notification_email",
   "slack_error_notification_template",
   "special_character_replacement",
-  "token_details_tab",
+  "tab_break_o8t2n",
   "enable_poll",
   "travel_request_poll_token",
   "leave_application_token",
   "expense_claim_token",
-  "project_details_token",
-  "column_break_qhjfg",
+  "column_break_saj77",
   "compensatory_leave_request_token",
   "project_health_assessment_survey_token",
   "supplier_rating_token",
-  "sme_contract_token",
-  "employee_profile_token",
-  "birthday_notification_tab",
-  "send_birthday_reminders_on_slack",
-  "bday_bot_token",
-  "channel_id",
-  "knowledge_helper_score_tab",
-  "enable_scoring",
-  "score_based_on_emoji_reaction",
-  "channel_id_to_calculate_the_score_from"
+  "search_settings_tab",
+  "enable_employee_details_search",
+  "search_command",
+  "employee_app_id"
  ],
  "fields": [
   {
@@ -66,27 +59,6 @@
    "options": "Special Character Replacement"
   },
   {
-   "fieldname": "birthday_notification_tab",
-   "fieldtype": "Tab Break",
-   "label": "Birthday Notification"
-  },
-  {
-   "default": "0",
-   "fieldname": "send_birthday_reminders_on_slack",
-   "fieldtype": "Check",
-   "label": "Send Birthday Reminders on Slack"
-  },
-  {
-   "fieldname": "channel_id",
-   "fieldtype": "Data",
-   "label": "Channel ID (To send the Birthday Message)"
-  },
-  {
-   "fieldname": "bday_bot_token",
-   "fieldtype": "Data",
-   "label": "Bday Bot Token"
-  },
-  {
    "default": "0",
    "fieldname": "enable_poll",
    "fieldtype": "Check",
@@ -108,10 +80,6 @@
    "label": "Expense Claim Token"
   },
   {
-   "fieldname": "column_break_qhjfg",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "compensatory_leave_request_token",
    "fieldtype": "Data",
    "label": "Compensatory Leave Request Token"
@@ -127,52 +95,40 @@
    "label": "Supplier Rating Token"
   },
   {
-   "fieldname": "token_details_tab",
+   "fieldname": "tab_break_o8t2n",
    "fieldtype": "Tab Break",
    "label": "Token Details"
   },
   {
-   "fieldname": "knowledge_helper_score_tab",
+   "fieldname": "column_break_saj77",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "search_settings_tab",
    "fieldtype": "Tab Break",
-   "label": "Knowledge Helper Score"
+   "label": "Search Settings"
   },
   {
    "default": "0",
-   "fieldname": "enable_scoring",
+   "fieldname": "enable_employee_details_search",
    "fieldtype": "Check",
-   "label": "Enable Scoring"
+   "label": "Enable Employee Details Search"
   },
   {
-   "description": "Name of emoji, eg: white_check_mark (for \u2705)",
-   "fieldname": "score_based_on_emoji_reaction",
+   "fieldname": "employee_app_id",
    "fieldtype": "Data",
-   "label": "Score Based on Emoji Reaction"
+   "label": "Employee APP ID"
   },
   {
-   "fieldname": "channel_id_to_calculate_the_score_from",
+   "fieldname": "search_command",
    "fieldtype": "Data",
-   "label": "Channel ID to Calculate the score from"
-  },
-  {
-   "fieldname": "sme_contract_token",
-   "fieldtype": "Data",
-   "label": "SME Contract Token"
-  },
-  {
-   "fieldname": "employee_profile_token",
-   "fieldtype": "Data",
-   "label": "Employee Profile Token"
-  },
-  {
-   "fieldname": "project_details_token",
-   "fieldtype": "Data",
-   "label": "Project Details Token"
+   "label": "Search Command"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-10 11:09:44.254813",
+ "modified": "2025-06-16 09:10:02.363450",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",
