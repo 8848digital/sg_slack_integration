@@ -56,7 +56,7 @@ def get_info_emp_profile():
                 
 
     except Exception as e:
-        frappe.log_error('Emp Search Result',e)
+        frappe.log_error('Emp Search Result',frappe.get_traceback(e))
     
 def matching_employee_profile(search_term,response_url,settings_doc,user_id,req,text):
     # search_term=get_search_term(search_term,settings_doc)
