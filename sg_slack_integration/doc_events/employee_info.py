@@ -22,19 +22,19 @@ def get_info_emp_profile():
                     }
                 ]
                 slack_response(response_url,msg_block)
-                frappe.enqueue(
-                    matching_employee_profile,
-                    queue="long",
-                    timeout=3600,
-                    is_async=True,
-                    job_name=f"Matching Employee Profile-{search_term}",
-                    search_term=search_term,
-                    response_url=response_url,
-                    settings_doc=settings_doc,
-                    user_id=user_id,
-                    req=req,
-                    text=text
-                )
+                # frappe.enqueue(
+                matching_employee_profile,
+                queue="long",
+                timeout=3600,
+                is_async=True,
+                job_name=f"Matching Employee Profile-{search_term}",
+                search_term=search_term,
+                response_url=response_url,
+                settings_doc=settings_doc,
+                user_id=user_id,
+                req=req,
+                text=text
+                # )
 
 
             else:
