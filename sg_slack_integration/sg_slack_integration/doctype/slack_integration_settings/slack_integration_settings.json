@@ -35,7 +35,9 @@
   "search_details_tab",
   "enable_employee_details_search",
   "search_command",
-  "employee_app_id"
+  "employee_app_id",
+  "section_break_ochsf",
+  "openai_key"
  ],
  "fields": [
   {
@@ -192,12 +194,21 @@
    "fieldname": "search_details_tab",
    "fieldtype": "Tab Break",
    "label": "Search Details"
+  },
+  {
+   "fieldname": "section_break_ochsf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "openai_key",
+   "fieldtype": "Data",
+   "label": "Openai Key"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-16 10:41:30.478921",
+ "modified": "2025-06-16 11:53:20.623727",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",
