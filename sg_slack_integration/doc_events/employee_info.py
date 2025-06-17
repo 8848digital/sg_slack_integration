@@ -15,6 +15,13 @@ def get_info_emp_profile():
         text=req.get("text")
         if settings_doc.get('enable_employee_details_search') and settings_doc.get('employee_app_id') and settings_doc.get('employee_app_id')==req.get('api_app_id'):
             if req.get('command')==settings_doc.get('search_command'):
+                msg_block = [
+                    {
+                        "type": "section",
+                        "text": {"type": "mrkdwn", "text": "⏳ Processing your request... You'll receive a response shortly."}
+                    }
+                ]
+                slack_response(response_url,msg_block)
                 frappe.enqueue(
                     matching_employee_profile,
                     queue="long",
@@ -26,14 +33,7 @@ def get_info_emp_profile():
                     user_id=user_id,
                     req=req,
                     text=text
-                )
-                msg_block = [
-                    {
-                        "type": "section",
-                        "text": {"type": "mrkdwn", "text": "⏳ Processing your request... You'll receive a response shortly."}
-                    }
-                ]
-                slack_response(response_url,msg_block)
+                )       
                 
 
 
