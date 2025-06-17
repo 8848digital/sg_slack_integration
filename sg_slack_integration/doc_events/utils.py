@@ -40,15 +40,15 @@ def create_slack_log(self, status, details=None, error=None):
 
 
 def create_slack_log_for_commands(user, status, cmd, param, response, error=None):
-
-	new_doc = frappe.new_doc("Slack Log")
-	new_doc.status = status
-	new_doc.custom_slack_poll_type = "Command"
-	new_doc.custom_command = cmd
-	new_doc.custom_parameters = param
-	new_doc.custom_user = user
-	if not error:
-		new_doc.custom_slack_poll_result = response
-	if error:
-		new_doc.error_response = error
-	new_doc.insert(ignore_permissions=True)
+	if cmd and param and status:
+		new_doc = frappe.new_doc("Slack Log")
+		new_doc.status = status
+		new_doc.custom_slack_poll_type = "Command"
+		new_doc.custom_command = cmd
+		new_doc.custom_parameters = param
+		new_doc.custom_user = user
+		if not error:
+			new_doc.custom_slack_poll_result = response
+		if error:
+			new_doc.error_response = error
+		new_doc.insert(ignore_permissions=True)
