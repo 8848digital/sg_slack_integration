@@ -37,7 +37,10 @@
   "search_command",
   "employee_app_id",
   "section_break_ochsf",
-  "openai_key"
+  "openai_key",
+  "email_group_tab",
+  "eg_enable",
+  "eg_channel_id"
  ],
  "fields": [
   {
@@ -203,12 +206,29 @@
    "fieldname": "openai_key",
    "fieldtype": "Data",
    "label": "Openai Key"
+  },
+  {
+   "fieldname": "email_group_tab",
+   "fieldtype": "Tab Break",
+   "label": "Email Group"
+  },
+  {
+   "description": "The Channel ID in which the Bot will listen and process to the Slash Command",
+   "fieldname": "eg_channel_id",
+   "fieldtype": "Data",
+   "label": "Channel ID"
+  },
+  {
+   "default": "0",
+   "fieldname": "eg_enable",
+   "fieldtype": "Check",
+   "label": "Enable"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-16 11:53:20.623727",
+ "modified": "2025-06-17 12:44:08.948552",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",
