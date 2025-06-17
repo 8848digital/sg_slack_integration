@@ -352,6 +352,7 @@ def process_manage_group(text, user_id, response_url, command):
     Background job to process the manage_group logic and send the final response to Slack.
     """
     try:
+        setting = frappe.get_cached_doc("Slack Integration Settings")
         msg_block = []
         # Lookup Slack user_id -> ERPNext email
         slack_user_email = get_email_id_from_slack_user_id(user_id)
@@ -376,8 +377,12 @@ def process_manage_group(text, user_id, response_url, command):
         #     return slack_response(response_url, msg_block)
 
         # Check if user has 'Projects Manager' role
+        allowed_roles = [each.role for each in setting.allowed_roles]
         user_roles = frappe.get_roles(slack_user_email)
-        if "Projects Manager" not in user_roles:  # Fixed role name to match error message
+        # Check if user has at least one allowed role
+        has_permission = any(role in allowed_roles for role in user_roles)
+
+        if not has_permission:  # Fixed role name to match error message
             msg_block = [
                 {
                     "type": "section",
