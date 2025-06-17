@@ -31,7 +31,7 @@ def get_info_emp_profile():
                     search_term=search_term,
                     response_url=response_url,
                     user_id=user_id,
-                    req=req,
+                    req_command=req.get('command'),
                     text=text
                 )       
                 
@@ -58,7 +58,7 @@ def get_info_emp_profile():
     except Exception as e:
         frappe.log_error('Emp Search Result',frappe.get_traceback(e))
     
-def matching_employee_profile(search_term,response_url,user_id,req,text):
+def matching_employee_profile(search_term,response_url,user_id,req_command,text):
     # search_term=get_search_term(search_term,settings_doc)
     settings_doc=frappe.get_doc('Slack Integration Settings')
     active_id=frappe.get_all('Employee',{'status':['!=','Inactive']},['name'],pluck='name')
@@ -169,7 +169,7 @@ def matching_employee_profile(search_term,response_url,user_id,req,text):
                 )
 
                 
-            return slack_response(response_url, msg_block, user_id, "Success", req.get('command'), text, response=json.dumps(msg_block, indent=2))
+            return slack_response(response_url, msg_block, user_id, "Success", req_command, text, response=json.dumps(msg_block, indent=2))
     else:
         msg_block=[
             {
@@ -177,7 +177,7 @@ def matching_employee_profile(search_term,response_url,user_id,req,text):
                 "text": {"type": "mrkdwn", "text": "❌ No Match found"}
             }
         ]
-        return slack_response(response_url, msg_block, user_id, "Success", req.get('command'), text, response=json.dumps(msg_block, indent=2))
+        return slack_response(response_url, msg_block, user_id, "Success", req_command, text, response=json.dumps(msg_block, indent=2))
 
 
 def get_employee_profile_ai(matched_data,settings_doc=None):
