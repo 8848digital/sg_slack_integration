@@ -15,13 +15,6 @@ def get_info_emp_profile():
         text=req.get("text")
         if settings_doc.get('enable_employee_details_search') and settings_doc.get('employee_app_id') and settings_doc.get('employee_app_id')==req.get('api_app_id'):
             if req.get('command')==settings_doc.get('search_command'):
-                msg_block = [
-                    {
-                        "type": "section",
-                        "text": {"type": "mrkdwn", "text": "⏳ Processing your request... You'll receive a response shortly."}
-                    }
-                ]
-                slack_response(response_url,msg_block)
                 frappe.enqueue(
                     matching_employee_profile,
                     queue="long",
@@ -34,6 +27,14 @@ def get_info_emp_profile():
                     req=req,
                     text=text
                 )
+                msg_block = [
+                    {
+                        "type": "section",
+                        "text": {"type": "mrkdwn", "text": "⏳ Processing your request... You'll receive a response shortly."}
+                    }
+                ]
+                slack_response(response_url,msg_block)
+                
 
 
             else:
@@ -144,6 +145,29 @@ def matching_employee_profile(search_term,response_url,user_id,req,text):
                         }
                     }
                 )
+        else:
+            for match_data in matched_data:
+                emp_profile=frappe.get_doc('Employee Profile',match_data)
+                emp=frappe.get_doc('Employee',emp_profile.get('employee_id'))
+                skills = frappe.get_all('Functional Skill',{'parent':emp_profile.get('name'),'parenttype': 'Employee Profile'},pluck='skills') if emp_profile.get('functional_skills') and frappe.db.exists('Functional Skill',{'parent':emp_profile.get('name'),'parenttype': 'Employee Profile'})  else ''
+                all_skills=[s for s in skills if s!=None]
+                content=f'''
+                    Name ={emp_profile.get('employee_name')}\n
+                    Designation = {emp_profile.get('employee_designation') if emp_profile.get('employee_designation') else ''}\n
+                    Department = {emp.get('department') if emp.get('department') else ''}\n
+                    Experience = {emp_profile.get('total_exp') if emp_profile.get('total_exp') else 0}\n
+                    Skills={all_skills if all_skills else ''}
+                '''
+                msg_block.append(
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": f"*{content or 'N/A'}"
+                        }
+                    }
+                )
+
                 
             return slack_response(response_url, msg_block, user_id, "Success", req.get('command'), text, response=json.dumps(msg_block, indent=2))
     else:
