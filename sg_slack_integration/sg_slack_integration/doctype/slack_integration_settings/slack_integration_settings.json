@@ -40,7 +40,17 @@
   "openai_key",
   "email_group_tab",
   "eg_enable",
-  "eg_channel_id"
+  "column_break_hv7fb",
+  "eg_channel_id",
+  "section_break_dsmpa",
+  "allowed_roles",
+  "project_details_ai_tab",
+  "project_enable",
+  "project_channel_id",
+  "column_break_q6hme",
+  "project_ai_key",
+  "section_break_5iv8u",
+  "project_allowed_roles"
  ],
  "fields": [
   {
@@ -223,12 +233,61 @@
    "fieldname": "eg_enable",
    "fieldtype": "Check",
    "label": "Enable"
+  },
+  {
+   "fieldname": "allowed_roles",
+   "fieldtype": "Table",
+   "label": "Allowed Roles",
+   "options": "Allowed Role"
+  },
+  {
+   "fieldname": "project_details_ai_tab",
+   "fieldtype": "Tab Break",
+   "label": "Project Details AI"
+  },
+  {
+   "default": "0",
+   "fieldname": "project_enable",
+   "fieldtype": "Check",
+   "label": "Enable"
+  },
+  {
+   "fieldname": "project_ai_key",
+   "fieldtype": "Data",
+   "label": "AI Key"
+  },
+  {
+   "fieldname": "project_allowed_roles",
+   "fieldtype": "Table",
+   "label": "Allowed Roles",
+   "options": "Allowed Role"
+  },
+  {
+   "fieldname": "column_break_hv7fb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_dsmpa",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_q6hme",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_5iv8u",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "project_channel_id",
+   "fieldtype": "Data",
+   "label": "Channel ID"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-17 12:44:08.948552",
+ "modified": "2025-06-17 13:58:44.552593",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",
