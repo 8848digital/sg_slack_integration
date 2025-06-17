@@ -47,6 +47,8 @@ def handle_slack_events():
             frappe.enqueue(
                 "sg_slack_integration.doc_events.project_details.process_project_info",
                 queue="short",
+                job_name="fetch_project_details",
+                is_async=True,
                 channel=channel,
                 user_message=user_message,
                 user_id=user_id,
@@ -71,7 +73,7 @@ def handle_slack_events():
 
 
 def process_project_info(channel, user_message, user_id, thread_ts, bot_token):
-    setting = frappe.cached_doc("Slack Integration Settings")
+    setting = frappe.get_cached_doc("Slack Integration Settings")
     # Check if command is enabled (based on your previous message)
     if not is_command_enabled():
         send_slack_response(
