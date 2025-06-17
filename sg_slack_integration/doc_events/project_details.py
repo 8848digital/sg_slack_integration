@@ -167,9 +167,9 @@ def query_erp_project(project_id, detail_type):
         # Define available project details
         detail_map = {
             "status": f"📊 Project Status: {project.status}",
-            "budget": f"💰 Project Budget: {project.total_cost or 'Not set'}",
-            "deadline": f"⏰ Project Deadline: {project.expected_end_date or 'Not set'}",
-            "members": f"👥 Project Members: {', '.join([m.user for m in project.project_users]) or 'None'}"
+            # "budget": f"💰 Project Budget: {project.total_cost or 'Not set'}",
+            # "deadline": f"⏰ Project Deadline: {project.expected_end_date or 'Not set'}",
+            # "members": f"👥 Project Members: {', '.join([m.user for m in project.project_users]) or 'None'}"
         }
 
         # Handle different detail_type inputs
