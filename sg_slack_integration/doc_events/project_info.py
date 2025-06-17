@@ -601,6 +601,7 @@ def process_manage_group(text, user_id, response_url, command):
                     egm = frappe.new_doc("Email Group Member")
                     egm.email_group = eg_created
                     egm.email = email
+                    egm.custom_project = project_id
                     egm.save(ignore_permissions=True)
                     frappe.set_user("Administrator")
                     added_emails.append(email)
