@@ -92,7 +92,7 @@ def process_project_info(channel, user_message, user_id, thread_ts, bot_token):
         return
     frappe.log_error("AI user found")
     # Check if user has role
-    allowed_roles = [each.role for each in setting.allowed_roles]
+    allowed_roles = [each.role for each in setting.project_allowed_roles]
     user_roles = frappe.get_roles(slack_user_email)
     # Check if user has at least one allowed role
     has_permission = any(role in allowed_roles for role in user_roles)
@@ -134,16 +134,19 @@ def is_command_enabled():
 
 def interpret_request_with_openai(message):
     settings = frappe.get_cached_doc("Slack Integration Settings")
-    openai.api_key = settings.project_ai_key
     try:
-        response = openai.ChatCompletion.create(
+        from openai import OpenAI
+        client = OpenAI(api_key=settings.project_ai_key)
+
+        response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
                     "content": (
                         "You are an assistant that interprets user requests for project details from an ERP system. "
-                        "Extract the project ID (or name) and the specific detail requested (e.g., status, budget, deadline, members). "
+                        "Extract the project ID (or name) and the specific detail(s) requested (e.g., status, budget, deadline, members, or 'all' for all details). "
+                        "If multiple details are requested, return them as a list. If the user asks for everything, return 'all'. "
                         "Return a JSON object with 'project_id' and 'detail_type'. If unclear, return an empty object."
                     )
                 },
@@ -155,7 +158,6 @@ def interpret_request_with_openai(message):
     except Exception as e:
         frappe.log_error(f"OpenAI Error: {str(e)}")
         return {}
-
 
 def query_erp_project(project_id, detail_type):
     try:
@@ -196,10 +198,14 @@ def send_slack_response(channel, thread_ts, bot_token, text):
     slack_url = "https://slack.com/api/chat.postMessage"
     headers = {"Authorization": f"Bearer {bot_token}",
                "Content-Type": "application/json"}
+    # Split text into chunks of 2900 characters to stay under limit
+    chunks = [text[i:i+2900] for i in range(0, len(text), 2900)]
+    blocks = [{"type": "section", "text": {"type": "mrkdwn", "text": chunk}}
+              for chunk in chunks]
     payload = {
         "channel": channel,
-        "text": text,
         "thread_ts": thread_ts,
+        "blocks": blocks,
         "response_type": "in_channel"
     }
     try:
