@@ -68,7 +68,7 @@ def send_to_slack(text):
 		"Authorization": f"Bearer {bot_token}",
 		"Content-Type": "application/json"
 	}
-	f
+
 	response = requests.post(
 		"https://slack.com/api/chat.postMessage", json=payload, headers=headers)
 
