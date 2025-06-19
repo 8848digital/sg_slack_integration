@@ -23,8 +23,6 @@ def send_slack_birthday_greetings():
 		birthday_person_emails = [
 			doc.get('user_id') for doc in birthday_persons]
 		mentions = []
-		dummy_data = frappe._dict()
-		dummy_data.update({"name": "Slack Birthday Reminder"})
 		for emp in birthday_person_emails:
 			slack_user_id = fetch_slack_user_id_by_email(email=emp)
 			if slack_user_id:
@@ -70,13 +68,15 @@ def send_to_slack(text):
 		"Authorization": f"Bearer {bot_token}",
 		"Content-Type": "application/json"
 	}
-
+	f
 	response = requests.post(
 		"https://slack.com/api/chat.postMessage", json=payload, headers=headers)
 
 	if not response.ok or not response.json().get('ok'):
 		frappe.log_error(f"Slack API Error: {response.text}")
 		return
+	frappe.log_error(f"Send Slack Birthday Reminder",
+	                 f"{frappe.utils.get_url()} -> {str(frappe.utils.now_datetime())}")
 
 	resp_json = response.json()
 	# 🎯 If message was sent successfully, add a reaction
