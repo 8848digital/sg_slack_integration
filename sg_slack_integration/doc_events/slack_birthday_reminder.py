@@ -59,30 +59,38 @@ def send_to_slack(text):
 	channel_id = frappe.db.get_single_value(
 		"Slack Integration Settings", "channel_id")
 
-	payload = {
-		"channel": channel_id,
-		"text": text,
-	}
+	site_verified = False
+	site_url = frappe.db.get_single_value(
+		"Strategic Gears HR Settings", "site_url") or None
+	if site_url:
+		if site_url == frappe.utils.get_url():
+			site_verified = True
 
-	headers = {
-		"Authorization": f"Bearer {bot_token}",
-		"Content-Type": "application/json"
-	}
+	if site_verified:
+		payload = {
+			"channel": channel_id,
+			"text": text,
+		}
 
-	response = requests.post(
-		"https://slack.com/api/chat.postMessage", json=payload, headers=headers)
+		headers = {
+			"Authorization": f"Bearer {bot_token}",
+			"Content-Type": "application/json"
+		}
 
-	if not response.ok or not response.json().get('ok'):
-		frappe.log_error(f"Slack API Error: {response.text}")
-		return
-	frappe.log_error(f"Send Slack Birthday Reminder",
-	                 f"{frappe.utils.get_url()} -> {str(frappe.utils.now_datetime())}")
+		response = requests.post(
+			"https://slack.com/api/chat.postMessage", json=payload, headers=headers)
 
-	resp_json = response.json()
-	# 🎯 If message was sent successfully, add a reaction
-	ts = resp_json.get("ts")
-	if ts:
-		add_reaction_to_message(channel_id, ts, "tada", bot_token)
+		if not response.ok or not response.json().get('ok'):
+			frappe.log_error(f"Slack API Error: {response.text}")
+			return
+		frappe.log_error(f"Send Slack Birthday Reminder",
+                   f"{frappe.utils.get_url()} -> {str(frappe.utils.now_datetime())}")
+
+		resp_json = response.json()
+		# 🎯 If message was sent successfully, add a reaction
+		ts = resp_json.get("ts")
+		if ts:
+			add_reaction_to_message(channel_id, ts, "tada", bot_token)
 
 
 def add_reaction_to_message(channel, ts, emoji_name, bot_token):
@@ -111,6 +119,8 @@ def get_employees_having_an_event_today(event_type):
 	can be `birthday` or `work_anniversary`"""
 
 	from collections import defaultdict
+	from frappe.utils import today
+
 
 	# Set column based on event type
 	if event_type == "birthday":
