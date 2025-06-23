@@ -119,8 +119,6 @@ def get_employees_having_an_event_today(event_type):
 	can be `birthday` or `work_anniversary`"""
 
 	from collections import defaultdict
-	from frappe.utils import today
-
 
 	# Set column based on event type
 	if event_type == "birthday":
