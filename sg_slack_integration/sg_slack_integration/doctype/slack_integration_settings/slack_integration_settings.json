@@ -41,12 +41,12 @@
   "email_group_tab",
   "eg_enable",
   "column_break_hv7fb",
-  "eg_channel_id",
+  "eg_app_id",
   "section_break_dsmpa",
   "allowed_roles",
   "project_details_ai_tab",
   "project_enable",
-  "project_channel_id",
+  "project_app_id",
   "column_break_q6hme",
   "project_ai_key",
   "section_break_5iv8u",
@@ -223,12 +223,6 @@
    "label": "Email Group"
   },
   {
-   "description": "The Channel ID in which the Bot will listen and process to the Slash Command",
-   "fieldname": "eg_channel_id",
-   "fieldtype": "Data",
-   "label": "Channel ID"
-  },
-  {
    "default": "0",
    "fieldname": "eg_enable",
    "fieldtype": "Check",
@@ -279,15 +273,21 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "project_channel_id",
+   "description": "The APP ID will listen and process to the Slash Command",
+   "fieldname": "eg_app_id",
    "fieldtype": "Data",
-   "label": "Channel ID"
+   "label": "App ID"
+  },
+  {
+   "fieldname": "project_app_id",
+   "fieldtype": "Data",
+   "label": "App ID"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-23 09:40:03.906792",
+ "modified": "2025-06-24 10:19:32.976703",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",

@@ -265,6 +265,7 @@ def manage_group():
         user_id = req.form.get("user_id")  # Slack user ID
         response_url = req.form.get("response_url")  # Slack response URL
         channel_id = req.form.get("channel_id")
+        app_id = req.form.get("api_app_id")
 
         setting = frappe.get_cached_doc("Slack Integration Settings")
         if not setting.eg_enable:
@@ -277,7 +278,7 @@ def manage_group():
             return slack_response(response_url, msg_block, user_id, "Success", req.form.get('command'), text, response="🚨 /gm Slash command disabled in Slack Integration Setting. Kindly enable it under the Email Group Tab. ⚙️")
 
         # Validate the bot replies only when texted to "Project Info" App
-        if setting.eg_channel_id != channel_id:
+        if setting.eg_app_id != app_id:
             msg_block = [
                 {
                     "type": "section",
