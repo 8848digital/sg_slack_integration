@@ -30,13 +30,15 @@ def handle_slack_events():
         frappe.log_error("AI event data", json.dumps(event, indent=2))
         if event.get("type") in ["message.channels", "message.im", "message"] and not event.get("bot_id"):
             channel = event.get("channel")
+            app_id = event.get("app_id")
+
             user_message = event.get("text")
             user_id = event.get("user")
             thread_ts = event.get("ts")
             # thread_ts = event.get("channel_id")
             bot_token = setting.project_details_token
             response_text = "⏳ Processing your request... You'll receive a response shortly."
-            if str(setting.project_channel_id) != str(channel):
+            if str(setting.project_app_id) != str(app_id):
                 response_text = "You can only ask this to the Project Info App directly as a message"
             # Acknowledge immediately
             frappe.response["status_code"] = 200
