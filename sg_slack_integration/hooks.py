@@ -143,9 +143,9 @@ doc_events = {
 		"on_update":"sg_slack_integration.doc_events.compensatory_leave_request.on_update",
         "before_insert":"sg_slack_integration.doc_events.compensatory_leave_request.before_insert"
 	},
-    "Project Health Assessment Survey": {
-        "after_insert":"sg_slack_integration.doc_events.project_health_assessment_survey.after_insert",
-    },
+    # "Project Health Assessment Survey": {
+    #     "after_insert":"sg_slack_integration.doc_events.project_health_assessment_survey.after_insert",
+    # },
     "Contract": {
         "after_insert": "sg_slack_integration.doc_events.sme_contract.after_insert",
         # "on_update": "sg_slack_integration.doc_events.sme_contract.on_update",
