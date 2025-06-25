@@ -142,6 +142,8 @@ def handle_poll_response():
 
         return {"text": f"Vote for '{str(selected_option)}' recorded."}
     except Exception as e:
+        doc={'doctype':'Project Health Assessment Survey','name':poll_id}
+        doc = _dict(doc)
         create_slack_log_for_poll(self=doc, status="Error",
 		                          poll_type="Receive Response", error=str(frappe.get_traceback(e)))
         frappe.log_error("Error in slack", frappe.get_traceback(e))
