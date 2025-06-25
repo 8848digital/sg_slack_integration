@@ -107,7 +107,7 @@ def handle_poll_response():
         # get_mail = get_slack_user_details( slack_data.get("user", {}).get("id"), slack_token)
         ts = slack_data.get("message",{}).get("ts", "")
         frappe.log_error('Response',slack_data)
-        if poll_id and selected_option and 'answers-' in block_id:
+        if poll_id and selected_option and 'answer-' in block_id:
             emp_id=poll_id.split('_')[0]
             project_id=poll_id.split('_')[1]
             month_val=poll_id.split('_')[2]
