@@ -14,6 +14,7 @@
   "special_character_replacement",
   "token_details_tab",
   "enable_poll",
+  "erpnext_notifications",
   "travel_request_poll_token",
   "leave_application_token",
   "expense_claim_token",
@@ -282,12 +283,17 @@
    "fieldname": "project_app_id",
    "fieldtype": "Data",
    "label": "App ID"
+  },
+  {
+   "fieldname": "erpnext_notifications",
+   "fieldtype": "Data",
+   "label": "Erpnext Notifications"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-24 10:19:32.976703",
+ "modified": "2025-07-15 14:21:06.378767",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",
