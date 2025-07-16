@@ -33,7 +33,7 @@ def post_poll_travel_request(approver,options,doc_name):
 			"Slack Integration Settings", 'enable_poll')
     if poll_enabled:
         slack_token = frappe.db.get_single_value(
-                "Slack Integration Settings", 'travel_request_poll_token')
+                "Slack Integration Settings", 'erpnext_notifications')
         if slack_token and len(slack_token)>0:
             header_block = {
                 "type": "header",
@@ -99,16 +99,10 @@ def post_poll_travel_request(approver,options,doc_name):
 
 
 @frappe.whitelist(allow_guest=True)
-def handle_poll_response():
+def handle_poll_response(slack_data):
     try:
         slack_token = frappe.db.get_single_value(
-			"Slack Integration Settings", 'travel_request_poll_token')
-        payload = frappe.request.form.get("payload")
-        if not payload:
-            frappe.log_error("error in format")
-            return {"error": "Invalid payload format."}
-
-        slack_data = json.loads(payload)
+			"Slack Integration Settings", 'erpnext_notifications')
         user_id = slack_data.get("user", {}).get("username")
         channel_id = slack_data.get("channel", {}).get("id")
         action = slack_data.get("actions", [])[0]
