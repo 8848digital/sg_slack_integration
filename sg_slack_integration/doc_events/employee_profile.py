@@ -8,7 +8,7 @@ import json
 
 def send_poll_for_employee_profile(status=None):
 	slack_token = frappe.db.get_single_value(
-		"Slack Integration Settings", "employee_profile_token")
+		"Slack Integration Settings", "erpnext_notifications")
 	emp_list = []
 	if status is None:
 		emp_list = frappe.get_all("Employee Profile", ["name", "employee_id"])
@@ -100,14 +100,8 @@ def start_poll(doc_name, slack_token):
 
 
 @frappe.whitelist(allow_guest=True)
-def handle_poll_response():
+def handle_poll_response(slack_data):
 	try:
-		payload = frappe.request.form.get("payload")
-		if not payload:
-			frappe.log_error("Slack Poll | Handle Response | error in format")
-			return {"error": "Invalid payload format."}
-
-		slack_data = json.loads(payload)
 		frappe.log_error(
 			"Slack Poll | Handle Poll Response | Response", str(slack_data))
 
@@ -122,7 +116,7 @@ def handle_poll_response():
 
 		# Identify the doctype
 		doctype = "Employee Profile"
-		token = "employee_profile_token"
+		token = "erpnext_notifications"
 
 		slack_token = frappe.db.get_single_value("Slack Integration Settings", token)
 
