@@ -89,7 +89,7 @@ def post_poll_ped(employee_details,doc_name,doc):
                 }
                 questions_and_answers.append(answer_block)
                 payload = {
-                    "text": doc.name,
+                    "text": distribution_details_doc.name,
                     "blocks": questions_and_answers
                 }
                 # approver=emp.get('employee_user_id')
