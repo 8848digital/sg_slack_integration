@@ -29,6 +29,7 @@ def on_update(self,method):
      
 
 def post_poll_ped(employee_details,doc_name,doc):
+    
     slack_token = frappe.db.get_single_value(
             "Slack Integration Settings", 'ped_token')
     if slack_token and len(slack_token)>0:
@@ -36,68 +37,71 @@ def post_poll_ped(employee_details,doc_name,doc):
         if employee_details:
             for emp in employee_details:
                 if emp.get('invite_sent')!=1:
-                    distribution_details_doc=frappe.get_doc('Project Employee Distribution Detail',emp.get('name'))
-                    header_block = {
-                        "type": "header",
-                        "text": {"type": "plain_text", "text": 'New Allocation in PED for Proposal- ' + doc_name}
-                    }
-                    questions_and_answers = []
-                    questions_and_answers.append(header_block)
-                    sections = [
-                        {"title": "From Date", "content": emp.get('from_date')},
-                        {"title":"To Date","content":emp.get('to_date')},
-                        {"title":"Allocation %","content":emp.get('ratio_')},
-                        {"title":"Proposal Name","content":opportunity_doc.get('proposal_name')},
-                    ]
-
-                    for section in sections:
-                        description_block = {
-                            "type": "section",
-                            "text": {
-                                "type": "mrkdwn",
-                                "text": f"*{section['title']}*: *{section['content']}*"
-                            },
+                    try:
+                        distribution_details_doc=frappe.get_doc('Project Employee Distribution Detail',emp.get('name'))
+                        header_block = {
+                            "type": "header",
+                            "text": {"type": "plain_text", "text": 'New Allocation in PED for Proposal- ' + doc_name}
                         }
-                        questions_and_answers.append(description_block)
-                    question_text = 'Are you available to work on this proposal?'
-                    # for val in options:
-                    question_block = {
-                        "type": "section",
-                        "block_id": f"question_{len(questions_and_answers) + 1}",
-                        "text": {"type": "mrkdwn", "text": f"*{question_text}*"}
-                    }
-                    questions_and_answers.append(question_block)
-                    options = ['Yes',
-                                '❌Over-utilized(within system)', '❌Over-utilized(outside system)', '🏖️ On leave']
-                    answer_elements = [
-                            {
-                                "type": "button",
-                                "text": {"type": "plain_text", "text": option.strip()},
-                                "value": option.strip(),
-                                "style": "primary"
-                            }
-                            for option in options
+                        questions_and_answers = []
+                        questions_and_answers.append(header_block)
+                        sections = [
+                            {"title": "From Date", "content": emp.get('from_date')},
+                            {"title":"To Date","content":emp.get('to_date')},
+                            {"title":"Allocation %","content":emp.get('ratio_')},
+                            {"title":"Proposal Name","content":opportunity_doc.get('proposal_name')},
                         ]
-                    answer_block = {
-                        "type": "actions",
-                        "block_id": f"answer_{len(questions_and_answers) // 2 + 1}",
-                        "elements": answer_elements
-                    }
-                    questions_and_answers.append(answer_block)
-                    payload = {
-                        "text": distribution_details_doc.name,
-                        "blocks": questions_and_answers
-                    }
-                    # approver=emp.get('employee_user_id')
-                    approver='kanchan@8848digital.com'
-                    user_emails = [approver]
-                    for email in user_emails:
-                        user_id = get_user_id_by_email(email, slack_token)
-                        if user_id:
-                            payload = payload.copy()
-                            payload["channel"] = user_id
-                            post_poll_to_slacks(slack_token, payload,distribution_details_doc,approver) 
-                            frappe.db.set_value('Project Employee Distribution Detail',distribution_details_doc.name,'invite_sent',1,update_modified=False)       
+
+                        for section in sections:
+                            description_block = {
+                                "type": "section",
+                                "text": {
+                                    "type": "mrkdwn",
+                                    "text": f"*{section['title']}*: *{section['content']}*"
+                                },
+                            }
+                            questions_and_answers.append(description_block)
+                        question_text = 'Are you available to work on this proposal?'
+                        # for val in options:
+                        question_block = {
+                            "type": "section",
+                            "block_id": f"question_{len(questions_and_answers) + 1}",
+                            "text": {"type": "mrkdwn", "text": f"*{question_text}*"}
+                        }
+                        questions_and_answers.append(question_block)
+                        options = ['Yes',
+                                    '❌Over-utilized(within system)', '❌Over-utilized(outside system)', '🏖️ On leave']
+                        answer_elements = [
+                                {
+                                    "type": "button",
+                                    "text": {"type": "plain_text", "text": option.strip()},
+                                    "value": option.strip(),
+                                    "style": "primary"
+                                }
+                                for option in options
+                            ]
+                        answer_block = {
+                            "type": "actions",
+                            "block_id": f"answer_{len(questions_and_answers) // 2 + 1}",
+                            "elements": answer_elements
+                        }
+                        questions_and_answers.append(answer_block)
+                        payload = {
+                            "text": distribution_details_doc.name,
+                            "blocks": questions_and_answers
+                        }
+                        # approver=emp.get('employee_user_id')
+                        approver='kanchan@8848digital.com'
+                        user_emails = [approver]
+                        for email in user_emails:
+                            user_id = get_user_id_by_email(email, slack_token)
+                            if user_id:
+                                payload = payload.copy()
+                                payload["channel"] = user_id
+                                post_poll_to_slacks(slack_token, payload,distribution_details_doc,approver) 
+                                frappe.db.set_value('Project Employee Distribution Detail',distribution_details_doc.name,'invite_sent',1,update_modified=False) 
+                    except Exception as e:
+                        frappe.log_error(f"Sending Poll in slack {emp.get('employee')}", frappe.get_traceback(e))
 
 
 
