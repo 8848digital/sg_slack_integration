@@ -25,6 +25,7 @@
   "supplier_rating_token",
   "sme_contract_token",
   "employee_profile_token",
+  "ped_token",
   "birthday_notification_tab",
   "send_birthday_reminders_on_slack",
   "bday_bot_token",
@@ -288,12 +289,17 @@
    "fieldname": "erpnext_notifications",
    "fieldtype": "Data",
    "label": "Erpnext Notifications"
+  },
+  {
+   "fieldname": "ped_token",
+   "fieldtype": "Data",
+   "label": "PED Token"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-07-15 14:21:06.378767",
+ "modified": "2025-08-07 11:28:11.218935",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",

@@ -150,10 +150,15 @@ doc_events = {
         "after_insert": "sg_slack_integration.doc_events.sme_contract.after_insert",
         # "on_update": "sg_slack_integration.doc_events.sme_contract.on_update",
         "on_update_after_submit": "sg_slack_integration.doc_events.sme_contract.on_update_after_submit"
-    }
+    },
     # "Supplier Rating": {
     #     "after_insert":"sg_slack_integration.doc_events.supplier_rating.after_insert",
 	# },
+    "Project Employee Distribution":
+    {
+    	"after_insert":"sg_slack_integration.doc_events.project_employee_distribution.after_insert",
+        "on_update":"sg_slack_integration.doc_events.project_employee_distribution.on_update",
+	}
 }
 
 # Scheduled Tasks
