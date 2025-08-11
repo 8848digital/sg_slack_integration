@@ -90,8 +90,8 @@ def post_poll_ped(employee_details,doc_name,doc):
                             "text": distribution_details_doc.name,
                             "blocks": questions_and_answers
                         }
-                        # approver=emp.get('employee_user_id')
-                        approver='kanchan@8848digital.com'
+                        approver=emp.get('employee_user_id')
+                        # approver='kanchan@8848digital.com'
                         user_emails = [approver]
                         for email in user_emails:
                             user_id = get_user_id_by_email(email, slack_token)
@@ -138,20 +138,20 @@ def handle_poll_response():
                 if approver:
                     frappe.set_user(approver)
                     for ped_emp in ped.get('distribution_detail'):
-                        if ped_emp.get('name')==poll_id:
+                        if ped_emp.get('name')==poll_id and not ped_emp.get('invite_accepted') and not ped_emp.get('invite_rejected'):
                             if selected_option=='Yes':
                                 ped_emp.update({'invite_accepted':1})
                             else:
                                 ped_emp.update({'invite_rejected':selected_option})
                                 ped.append('users_rejected',{'employee':distribution_details.get('employee'),'employee_name':distribution_details.get('employee_name')})
                             ped.save(ignore_permissions=True)
-                        send_ephemeral_message(
-                            slack_token, channel_id, user_id, ts, selected_option, slack_data.get("message", {}).get("blocks", ""), block_id, poll_id
-                        )
-                        send_confirmation_message(slack_token,distribution_details,approver)
-                        poll_message = f"Response Received by Employee - {user_id} in {poll_id}\n - {selected_option}"
-                        create_slack_log_for_poll(self=distribution_details, status="Success",
-                                                            poll_type="Receive Response", poll_result=poll_message)
+                            send_ephemeral_message(
+                                slack_token, channel_id, user_id, ts, selected_option, slack_data.get("message", {}).get("blocks", ""), block_id, poll_id
+                            )
+                            send_confirmation_message(slack_token,distribution_details,approver)
+                            poll_message = f"Response Received by Employee - {user_id} in {poll_id}\n - {selected_option}"
+                            create_slack_log_for_poll(self=distribution_details, status="Success",
+                                                                poll_type="Receive Response", poll_result=poll_message)
 
             return {"text": f"Response Recorded for '{selected_option}' recorded."}
     except Exception as e:
