@@ -156,12 +156,13 @@ def add_or_remove_users(self, channel):
 def get_users(self, add_or_remove_user, method=None):
 	slack_user_ids = {}
 	remove_slack_user_ids = []
+	is_proposal_ped = True if self.ped_from == "Opportunity" else False
 	if add_or_remove_user == "add":
 		if self.distribution_detail:
 			for user in self.distribution_detail:
 				proceed_to_add = True
-				if self.ped_from == "Opportunity":
-					proceed_to_add = True if user.invite_accepted == 1 else False
+				if is_proposal_ped and user.invite_accepted != 1:
+					proceed_to_add = False
 				if proceed_to_add:
 					if not user.custom_is_user_added:
 						email = frappe.db.get_value("Employee", user.employee, "company_email")
