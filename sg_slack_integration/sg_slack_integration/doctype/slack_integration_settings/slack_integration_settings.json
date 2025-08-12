@@ -26,6 +26,10 @@
   "sme_contract_token",
   "employee_profile_token",
   "ped_token",
+  "ped_slack_mail_section",
+  "accepted_notification",
+  "rejected_notification",
+  "email_group",
   "birthday_notification_tab",
   "send_birthday_reminders_on_slack",
   "bday_bot_token",
@@ -294,12 +298,35 @@
    "fieldname": "ped_token",
    "fieldtype": "Data",
    "label": "PED Token"
+  },
+  {
+   "fieldname": "ped_slack_mail_section",
+   "fieldtype": "Section Break",
+   "label": "Ped Slack Mail"
+  },
+  {
+   "fieldname": "accepted_notification",
+   "fieldtype": "Link",
+   "label": "Accepted Notification",
+   "options": "Email Template"
+  },
+  {
+   "fieldname": "rejected_notification",
+   "fieldtype": "Link",
+   "label": "Rejected Notification",
+   "options": "Email Template"
+  },
+  {
+   "fieldname": "email_group",
+   "fieldtype": "Link",
+   "label": "Email Group",
+   "options": "Email Group"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-08-07 11:28:11.218935",
+ "modified": "2025-08-12 08:53:30.521674",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",
