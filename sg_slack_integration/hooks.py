@@ -123,9 +123,9 @@ doc_events = {
 	"Project": {
 		"on_update": "sg_slack_integration.doc_events.project.on_update",
 	},
-	"Project Employee Distribution": {
-		"validate": "sg_slack_integration.doc_events.ped.validate",
-	},
+	# "Project Employee Distribution": {
+		
+	# },
 	"Opportunity": {
 		"validate": "sg_slack_integration.doc_events.opportunity.validate",
 	},
@@ -156,6 +156,7 @@ doc_events = {
 	# },
     "Project Employee Distribution":
     {
+        "validate": "sg_slack_integration.doc_events.ped.validate",
     	"after_insert":"sg_slack_integration.doc_events.project_employee_distribution.after_insert",
         "on_update":"sg_slack_integration.doc_events.project_employee_distribution.on_update",
 	}
@@ -186,6 +187,7 @@ scheduler_events = {
 		# At 9am KSA daily
 		"0 9 * * *": [
 			"sg_slack_integration.doc_events.slack_birthday_reminder.send_slack_birthday_greetings",
+            "sg_slack_integration.doc_events.project_employee_distribution.send_action_reminder",
 		],
 	}
 }
