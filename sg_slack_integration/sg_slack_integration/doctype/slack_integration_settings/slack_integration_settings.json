@@ -307,7 +307,7 @@
   {
    "fieldname": "accepted_notification",
    "fieldtype": "Link",
-   "label": "Accepted Notification",
+   "label": "Complete Form Notification",
    "options": "Email Template"
   },
   {
@@ -326,7 +326,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-08-12 08:53:30.521674",
+ "modified": "2025-08-12 15:52:25.992832",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",

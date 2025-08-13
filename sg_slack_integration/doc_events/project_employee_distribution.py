@@ -107,7 +107,6 @@ def post_poll_ped(employee_details,doc_name,doc):
 
 
 
-
 @frappe.whitelist(allow_guest=True)
 def handle_poll_response():
     try:
@@ -136,38 +135,48 @@ def handle_poll_response():
                 distribution_details=frappe.get_doc('Project Employee Distribution Detail',poll_id)
                 ped=frappe.get_doc('Project Employee Distribution',distribution_details.get('parent'))
                 approver=distribution_details.get('employee_user_id')
-                if approver:
-                    frappe.set_user(approver)
-                    for ped_emp in ped.get('distribution_detail'):
-                        if ped_emp.get('name')==poll_id:
-                            email_template=''
-                            if selected_option=='Yes':
-                                ped_emp.update({'invite_accepted':1})
-                                email_template = frappe.db.get_single_value(
-                                    "Slack Integration Settings", 'accepted_notification')
-                            else:
-                                ped_emp.update({'invite_rejected':selected_option})
-                                ped.append('users_rejected',{'employee':distribution_details.get('employee'),'employee_name':distribution_details.get('employee_name')})
-                                email_template = frappe.db.get_single_value(
-                                    "Slack Integration Settings", 'rejected_notification')
-                            ped.save(ignore_permissions=True)
-                            frappe.log_error('saving ped Data',approver)
-                            send_ephemeral_message(
-                                slack_token, channel_id, user_id, ts, selected_option, slack_data.get("message", {}).get("blocks", ""), block_id, poll_id
-                            )
-                            send_confirmation_message(slack_token,distribution_details,approver)
-                            poll_message = f"Response Received by Employee - {user_id} in {poll_id}\n - {selected_option}"
-                            create_slack_log_for_poll(self=distribution_details, status="Success",
-                                                                poll_type="Receive Response", poll_result=poll_message)
-                            frappe.log_error('saving slack resturn Data',approver)
-                            
-                            if email_template:
-                                sending_response_mail(email_template,ped_doc=distribution_details.get('parent'),ped_child_table=distribution_details)
+                frappe.enqueue(
+                    ped_response_store,
+                    queue="long",
+                    timeout=25000,
+                    poll_id=poll_id,selected_option=selected_option,slack_token=slack_token,channel_id=channel_id,user_id=user_id,ts=ts,slack_data=slack_data,block_id=block_id,
+                    ped=ped,distribution_details=distribution_details
+                )
+                send_intimate_message(slack_token,distribution_details,approver)
             return {"text": f"Response Recorded for '{selected_option}' recorded."}
     except Exception as e:
         create_slack_log_for_poll(self=doc, status="Error",
 		                          poll_type="Receive Response", error=str(frappe.get_traceback(e)))
         frappe.log_error("Error in slack", frappe.get_traceback(e))
+def ped_response_store(poll_id,selected_option,slack_token,channel_id,user_id,ts,slack_data,block_id,approver,ped,distribution_details):
+    if approver:
+        frappe.set_user(approver)
+        for ped_emp in ped.get('distribution_detail'):
+            if ped_emp.get('name')==poll_id:
+                email_template=''
+                if selected_option=='Yes':
+                    ped_emp.update({'invite_accepted':1})
+                    # email_template = frappe.db.get_single_value(
+                    #     "Slack Integration Settings", 'accepted_notification')
+                else:
+                    ped_emp.update({'invite_rejected':selected_option})
+                    ped.append('users_rejected',{'employee':distribution_details.get('employee'),'employee_name':distribution_details.get('employee_name')})
+                    email_template = frappe.db.get_single_value(
+                        "Slack Integration Settings", 'rejected_notification')
+                ped.save(ignore_permissions=True)
+                frappe.log_error('saving ped Data',approver)
+                send_ephemeral_message(
+                    slack_token, channel_id, user_id, ts, selected_option, slack_data.get("message", {}).get("blocks", ""), block_id, poll_id
+                )
+                send_confirmation_message(slack_token,distribution_details,approver)
+                poll_message = f"Response Received by Employee - {user_id} in {poll_id}\n - {selected_option}"
+                create_slack_log_for_poll(self=distribution_details, status="Success",
+                                                    poll_type="Receive Response", poll_result=poll_message)
+                frappe.log_error('saving slack resturn Data',approver)
+                
+                if email_template:
+                    sending_response_mail(email_template,ped_doc=distribution_details.get('parent'),ped_child_table=distribution_details)
+                complete_form_notification(distribution_details.get('parent'))
 
 def sending_response_mail(email_template,ped_doc,ped_child_table):
     doc=frappe.get_doc('Project Employee Distribution',ped_doc)
@@ -184,6 +193,28 @@ def sending_response_mail(email_template,ped_doc,ped_child_table):
                  content=content,
                  reference_doctype=doc.doctype, 
                  reference_name=doc.name)
+
+def complete_form_notification(ped):
+    ped_doc=frappe.get_doc('Project Employee Distribution',ped)
+    for ped_emp in ped_doc.get('distribution_detail'):
+        if ped_emp.get('invite_accepted')==0 and ( not ped_emp.get('invite_rejected')):
+            break
+    else:
+        email_group = frappe.db.get_single_value(
+                                    "Slack Integration Settings", 'email_group')
+        if email_group:
+            email_template = frappe.db.get_single_value(
+                                    "Slack Integration Settings", 'accepted_notification')
+            email_group_users=get_users_from_email_group(email_group)
+            email_template_doc=frappe.get_doc('Email Template',email_template)
+            subject=email_template_doc.get('subject')
+            # doc.update({'employee_name':ped_child_table.get('employee_name'),'from_date_employee':ped_child_table.get('from_date'),'to_date_employee':ped_child_table.get('to_date')})
+            content = frappe.render_template(email_template_doc.response_html, {"doc": ped_doc})
+            frappe.sendmail(recipients=email_group_users,
+                    subject=subject,
+                    content=content,
+                    reference_doctype=ped_doc.doctype, 
+                    reference_name=ped_doc.name)
 
 @frappe.whitelist()
 def send_action_reminder():
@@ -222,3 +253,34 @@ def send_reminder_on_slack(users_list):
                 }
                 response = requests.post(url, headers=headers, json=payload)
 
+
+def send_intimate_message(slack_token,doctype,email):
+    response_data=[{
+		"type": "section",
+		"text": {"type": "mrkdwn", "text": "* Your response is been under process! :white_check_mark: *"}
+	}]
+    user_id = get_user_id_by_email(email, slack_token)
+    payload ={
+        "type": doctype.name,
+        "blocks": response_data
+    }
+    payload["channel"] = user_id
+    url = "https://slack.com/api/chat.postMessage"
+    headers = {
+        "Authorization": f"Bearer {slack_token}",
+        "Content-Type": "application/json",
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+    frappe.log_error(f"Slack Confirmation message {doctype.doctype}", response.json())
+    if not response.json().get("ok"):
+        create_slack_log_for_poll(self=doctype, status="Error",
+                                    poll_type="Confirmation Message", error=str(response.json()))
+        print("Failed to post poll:", response.json())
+    else:
+        if doctype and email:
+            result = response.json()
+            message = f"{result.get('message').get('text')} triggered to {email}\n{str(result.get('message').get('blocks'))}"
+            create_slack_log_for_poll(
+                    self=doctype, status="Success", poll_type="Confirmation Message", poll_result=message)
+        print("Poll posted successfully:", response.json())
