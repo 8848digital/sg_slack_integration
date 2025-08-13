@@ -139,8 +139,9 @@ def handle_poll_response():
                     ped_response_store,
                     queue="long",
                     timeout=25000,
+                    job_name=f"Response employee form {poll_id}",
                     poll_id=poll_id,selected_option=selected_option,slack_token=slack_token,channel_id=channel_id,user_id=user_id,ts=ts,slack_data=slack_data,block_id=block_id,
-                    ped=ped,distribution_details=distribution_details
+                    ped=ped,distribution_details=distribution_details,approver=approver
                 )
                 send_intimate_message(slack_token,distribution_details,approver)
             return {"text": f"Response Recorded for '{selected_option}' recorded."}
