@@ -158,7 +158,7 @@ def handle_poll_response():
 
 def ped_response_store(poll_id,selected_option,slack_token,channel_id,user_id,ts,slack_data,block_id,approver,ped,distribution_details):
     if approver:
-        frappe.set_user(approver)
+        frappe.set_user('Administrator')
         for ped_emp in ped.get('distribution_detail'):
             if ped_emp.get('name')==poll_id:
                 # email_template=''
@@ -172,7 +172,7 @@ def ped_response_store(poll_id,selected_option,slack_token,channel_id,user_id,ts
                     # email_template = frappe.db.get_single_value(
                     #     "Slack Integration Settings", 'rejected_notification')
                 ped.save(ignore_permissions=True)
-                frappe.log_error('saving ped Data',approver)
+                frappe.set_user(approver)
                 send_ephemeral_message(
                     slack_token, channel_id, user_id, ts, selected_option, slack_data.get("message", {}).get("blocks", ""), block_id, poll_id
                 )
@@ -180,7 +180,6 @@ def ped_response_store(poll_id,selected_option,slack_token,channel_id,user_id,ts
                 poll_message = f"Response Received by Employee - {user_id} in {poll_id}\n - {selected_option}"
                 create_slack_log_for_poll(self=distribution_details, status="Success",
                                                     poll_type="Receive Response", poll_result=poll_message)
-                frappe.log_error('saving slack resturn Data',approver)
                 
 
 def sending_response_mail(email_template,ped_doc,ped_child_table):
