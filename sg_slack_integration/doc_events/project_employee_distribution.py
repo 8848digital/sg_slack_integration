@@ -162,6 +162,7 @@ def ped_response_store(poll_id,selected_option,slack_token,channel_id,user_id,ts
         for ped_emp in ped.get('distribution_detail'):
             if ped_emp.get('name')==poll_id:
                 # email_template=''
+                check_validation=True
                 if selected_option=='Yes':
                     ped_emp.update({'invite_accepted':1})
                     # email_template = frappe.db.get_single_value(
@@ -169,8 +170,11 @@ def ped_response_store(poll_id,selected_option,slack_token,channel_id,user_id,ts
                 else:
                     ped_emp.update({'invite_rejected':selected_option})
                     ped.append('users_rejected',{'employee':distribution_details.get('employee'),'employee_name':distribution_details.get('employee_name')})
+                    check_validation=False
                     # email_template = frappe.db.get_single_value(
                     #     "Slack Integration Settings", 'rejected_notification')
+                if not check_validation:
+                    ped.flags.ignore_validate=True
                 ped.save(ignore_permissions=True)
                 frappe.set_user(approver)
                 send_ephemeral_message(
