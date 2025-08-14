@@ -189,6 +189,9 @@ scheduler_events = {
 			"sg_slack_integration.doc_events.slack_birthday_reminder.send_slack_birthday_greetings",
             "sg_slack_integration.doc_events.project_employee_distribution.send_action_reminder",
 		],
+		"0 7-23 * * *": [
+			"sg_slack_integration.doc_events.ped_invites_and_reminder.ped_reminder_scheduler"
+		]
 	}
 }
 
