@@ -225,6 +225,8 @@ def complete_form_notification(ped):
         if opporunity_doc.get('custom_partner_user'):
             users_list.append(opporunity_doc.get('custom_partner_user'))
         users_list.append(ped.get(''))
+        frappe.db.set_value("Project Employee Distribution",
+                            ped_doc.name, "invite_completed", 1)
 
         if users_list:
             email_template = frappe.db.get_single_value(
