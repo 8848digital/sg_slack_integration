@@ -6,7 +6,7 @@ from sg_slack_integration.doc_events.poll_api import *
 from frappe.model.workflow import apply_workflow
 from frappe.core.doctype.version.version import get_diff
 from strategic_gears.strategic_gears.utils.mail import get_users_from_email_group
-from frappe.utils import getdate
+from frappe.utils import getdate,now
 def after_insert(self,method):
     if self.ped_from=='Opportunity':
         employee_details=self.distribution_detail
@@ -99,7 +99,8 @@ def post_poll_ped(employee_details,doc_name,doc):
                                 payload = payload.copy()
                                 payload["channel"] = user_id
                                 post_poll_to_slacks(slack_token, payload,distribution_details_doc,approver) 
-                                frappe.db.set_value('Project Employee Distribution Detail',distribution_details_doc.name,'invite_sent',1,update_modified=False) 
+                                frappe.db.set_value('Project Employee Distribution Detail',distribution_details_doc.name,'invite_sent',1,update_modified=False)
+                                frappe.db.set_value('Project Employee Distribution Detail',distribution_details_doc.name,'invite_sent_at',now(),update_modified=False) 
                     except Exception as e:
                         frappe.log_error(f"Sending Poll in slack {emp.get('employee')}", frappe.get_traceback(e))
 
