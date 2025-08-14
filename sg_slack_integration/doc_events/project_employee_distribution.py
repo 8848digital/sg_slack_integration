@@ -7,6 +7,8 @@ from frappe.model.workflow import apply_workflow
 from frappe.core.doctype.version.version import get_diff
 from strategic_gears.strategic_gears.utils.mail import get_users_from_email_group
 from frappe.utils import getdate,now
+
+
 def after_insert(self,method):
     if self.ped_from=='Opportunity':
         employee_details=self.distribution_detail
@@ -101,6 +103,10 @@ def post_poll_ped(employee_details,doc_name,doc):
                                 post_poll_to_slacks(slack_token, payload,distribution_details_doc,approver) 
                                 frappe.db.set_value('Project Employee Distribution Detail',distribution_details_doc.name,'invite_sent',1,update_modified=False)
                                 frappe.db.set_value('Project Employee Distribution Detail',distribution_details_doc.name,'invite_sent_at',now(),update_modified=False) 
+                                if not doc.first_invite_sent_at:
+                                    frappe.db.set_value(
+                                        'Project Employee Distribution', doc.name, 'first_invite_sent_at', now(), update_modified=False)
+
                     except Exception as e:
                         frappe.log_error(f"Sending Poll in slack {emp.get('employee')}", frappe.get_traceback(e))
 
@@ -255,8 +261,7 @@ def send_reminder_on_slack(users_list):
         for email in users_list:
             user_id = get_user_id_by_email(email, slack_token)            
             if user_id:
-                
-                payload ={
+                payload = {
                     "type": 'header',
                     "blocks": response_data
                 }
@@ -269,6 +274,29 @@ def send_reminder_on_slack(users_list):
                 }
                 response = requests.post(url, headers=headers, json=payload)
 
+
+def send_reminder_on_slack_to_user(user, slack_token):
+
+    if slack_token and len(slack_token) > 0:
+        response_data = [{
+            "type": "header",
+            "text": {"type": "plain_text", "text": "* This is a gentle reminder to take action on proposals that are pending your approval or rejection. *"}
+        }]
+
+        user_id = get_user_id_by_email(user, slack_token)
+        if user_id:
+            payload = {
+                "type": 'header',
+                "blocks": response_data
+            }
+            payload["channel"] = user_id
+            payload = payload.copy()
+            url = "https://slack.com/api/chat.postMessage"
+            headers = {
+                "Authorization": f"Bearer {slack_token}",
+                "Content-Type": "application/json",
+            }
+            response = requests.post(url, headers=headers, json=payload)
 
 def send_intimate_message(slack_token,doctype,email):
     response_data=[{
