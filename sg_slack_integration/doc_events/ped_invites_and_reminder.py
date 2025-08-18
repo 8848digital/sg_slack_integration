@@ -98,9 +98,14 @@ def ped_reminder_scheduler():
 				not row.reminder_sent and
 				frappe.utils.time_diff_in_hours(now, row.invite_sent_at) >= 24
 			):
-				send_reminder_on_slack_to_user(row, slack_token=slack_token)
-				frappe.db.set_value("Project Employee Distribution Detail", row.name, "reminder_sent",1)
-		
+				if row.employee_user_id:
+					send_reminder_on_slack_to_user(
+						row.employee_user_id, slack_token=slack_token)
+					frappe.db.set_value(
+						"Project Employee Distribution Detail", row.name, "reminder_sent", 1)
+				else:
+					frappe.log_error("PED Slack Reminder", "Employee user id is empty")
+
 
 
 def __send_email_to_pmo(ped_doc,pending_employees):
@@ -110,11 +115,16 @@ def __send_email_to_pmo(ped_doc,pending_employees):
 			"ped_name": ped_doc.name,
 			"proposal": ped_doc.opportunity
 		})
-	send_mail_custom(
-			sender=setting.email_group,
-			template_name="Non-Confirmed Users from PED",
-			doc=doc_context,
-			direct_user_group="PMO",
-			ref_dt=ped_doc.doctype,
-			ref_dn=ped_doc.name
-		)
+	if setting.reminder_notification:
+
+		send_mail_custom(
+                    sender=setting.email_group,
+                    template_name=setting.reminder_notification,
+                    doc=doc_context,
+                    direct_user_group="PMO",
+                    ref_dt=ped_doc.doctype,
+                    ref_dn=ped_doc.name
+                )
+	else:
+		frappe.log_error(
+			"PED Reminder", "Email Template not set - Reminder Notification")
