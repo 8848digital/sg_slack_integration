@@ -92,8 +92,8 @@ def post_poll_ped(employee_details,doc_name,doc):
                             "text": distribution_details_doc.name,
                             "blocks": questions_and_answers
                         }
-                        # approver=emp.get('employee_user_id')
-                        approver='kanchan@8848digital.com'
+                        approver=emp.get('employee_user_id')
+                        # approver='kanchan@8848digital.com'
                         user_emails = [approver]
                         for email in user_emails:
                             user_id = get_user_id_by_email(email, slack_token)
@@ -230,7 +230,7 @@ def complete_form_notification(ped):
             users_list.append(opporunity_doc.get('custom_tech_user'))
         if opporunity_doc.get('custom_partner_user'):
             users_list.append(opporunity_doc.get('custom_partner_user'))
-        users_list.append(ped.get(''))
+        # users_list.append(ped.get(''))
         frappe.db.set_value("Project Employee Distribution",
                             ped_doc.name, "invite_completed", 1)
 
