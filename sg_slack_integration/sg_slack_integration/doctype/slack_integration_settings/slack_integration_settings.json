@@ -29,6 +29,7 @@
   "ped_slack_mail_section",
   "accepted_notification",
   "rejected_notification",
+  "reminder_notification",
   "email_group",
   "birthday_notification_tab",
   "send_birthday_reminders_on_slack",
@@ -307,7 +308,7 @@
   {
    "fieldname": "accepted_notification",
    "fieldtype": "Link",
-   "label": "Accepted Notification",
+   "label": "Complete Form Notification",
    "options": "Email Template"
   },
   {
@@ -321,12 +322,18 @@
    "fieldtype": "Link",
    "label": "Email Group",
    "options": "Email Group"
+  },
+  {
+   "fieldname": "reminder_notification",
+   "fieldtype": "Link",
+   "label": "Reminder Notification",
+   "options": "Email Template"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-08-12 08:53:30.521674",
+ "modified": "2025-08-18 10:26:35.626054",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",
