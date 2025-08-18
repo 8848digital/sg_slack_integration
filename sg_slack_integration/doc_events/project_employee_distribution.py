@@ -173,6 +173,12 @@ def ped_response_store(poll_id,selected_option,slack_token,channel_id,user_id,ts
                                                             poll_type="Receive Response", poll_result=poll_message)  
                         complete_form_notification(distribution_details.get('parent'))                         
                     else:
+                        send_ephemeral_message(
+                            slack_token, channel_id, user_id, ts, selected_option, slack_data.get("message", {}).get("blocks", ""), block_id, poll_id
+                            )
+                        poll_message = f"Response Received by Employee - {user_id} in {poll_id}\n - {selected_option}"
+                        create_slack_log_for_poll(self=distribution_details, status="Success",
+                                                            poll_type="Receive Response", poll_result=poll_message)     
                         resend_poll(ped_emp,slack_token)
                         
                 else:
@@ -218,7 +224,7 @@ def complete_form_notification(ped):
         if ped_emp.get('invite_accepted')==0 and ( not ped_emp.get('invite_rejected')):
             break
     else:
-        users_list=frappe.get_all('Project Employee Distribution Details',{'parent':ped},plick="employee_user_id")
+        users_list=frappe.get_all('Project Employee Distribution Details',{'parent':ped},pluck="employee_user_id")
         opporunity_doc=frappe.get_doc('Opportunity',ped_doc.get('opportunity'))
         if opporunity_doc.get('custom_tech_user'):
             users_list.append(opporunity_doc.get('custom_tech_user'))
