@@ -139,7 +139,7 @@ def handle_poll_response():
             ts = slack_data.get("message",{}).get("ts", "")
             if poll_id and selected_option:
                 distribution_details=frappe.get_doc('Project Employee Distribution Detail',poll_id)
-                ped=frappe.get_doc('Project Employee Distribution',distribution_details.get('parent'))
+                # ped=frappe.get_doc('Project Employee Distribution',distribution_details.get('parent'))
                 approver=distribution_details.get('employee_user_id')
                 frappe.enqueue(
                     ped_response_store,
@@ -147,7 +147,7 @@ def handle_poll_response():
                     timeout=25000,
                     job_name=f"Response employee form {poll_id}",
                     poll_id=poll_id,selected_option=selected_option,slack_token=slack_token,channel_id=channel_id,user_id=user_id,ts=ts,slack_data=slack_data,block_id=block_id,
-                    ped=ped,distribution_details=distribution_details,approver=approver
+                    ped_name=distribution_details.get('parent'),distribution_details=distribution_details,approver=approver
                 )
                 send_intimate_message(slack_token,distribution_details,approver)
             return {"text": f"Response Recorded for '{selected_option}' recorded."}
@@ -156,9 +156,10 @@ def handle_poll_response():
 		                          poll_type="Receive Response", error=str(frappe.get_traceback(e)))
         frappe.log_error("Error in slack", frappe.get_traceback(e))
 
-def ped_response_store(poll_id,selected_option,slack_token,channel_id,user_id,ts,slack_data,block_id,approver,ped,distribution_details):
+def ped_response_store(poll_id,selected_option,slack_token,channel_id,user_id,ts,slack_data,block_id,approver,ped_name,distribution_details):
     if approver:
         frappe.set_user('Administrator')
+        ped=frappe.get_doc('Project Employee Distribution',ped_name)
         for ped_emp in ped.get('distribution_detail'):
             if ped_emp.get('name')==poll_id:
                 if selected_option in ['Yes','No']:
@@ -202,6 +203,7 @@ def ped_response_store(poll_id,selected_option,slack_token,channel_id,user_id,ts
                     if email_template:
                         sending_response_mail(email_template,ped_doc=distribution_details.get('parent'),ped_child_table=distribution_details,response=selected_option)
                     complete_form_notification(distribution_details.get('parent'))
+                break
 
 
 def sending_response_mail(email_template,ped_doc,ped_child_table,response):
