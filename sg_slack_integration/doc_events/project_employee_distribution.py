@@ -224,7 +224,7 @@ def complete_form_notification(ped):
         if ped_emp.get('invite_accepted')==0 and ( not ped_emp.get('invite_rejected')):
             break
     else:
-        users_list=frappe.get_all('Project Employee Distribution Details',{'parent':ped},pluck="employee_user_id")
+        users_list=frappe.get_all('Project Employee Distribution Detail',{'parent':ped},pluck="employee_user_id")
         opporunity_doc=frappe.get_doc('Opportunity',ped_doc.get('opportunity'))
         if opporunity_doc.get('custom_tech_user'):
             users_list.append(opporunity_doc.get('custom_tech_user'))
