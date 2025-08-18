@@ -393,8 +393,8 @@ def resend_poll(ped_emp,slack_token):
                 "text": ped_emp.name,
                 "blocks": questions_and_answers
             }
-            # approver=ped_emp.get('employee_user_id')
-            approver='kanchan@8848digital.com'
+            approver=ped_emp.get('employee_user_id')
+            # approver='kanchan@8848digital.com'
             user_emails = [approver]
             for email in user_emails:
                 user_id = get_user_id_by_email(email, slack_token)
