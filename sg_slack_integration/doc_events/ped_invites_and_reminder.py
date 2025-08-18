@@ -72,7 +72,7 @@ def ped_reminder_scheduler():
 		if frappe.utils.time_diff_in_hours(now, ped_doc.first_invite_sent_at) >= 24:
 			pending_employees = [
 				row for row in ped_doc.distribution_detail
-				if (row.invite_sent==1 and row.invited_accepted==0 and (row.invite_rejected in [None, ""]))
+				if (row.invite_sent == 1 and row.invite_accepted == 0 and (row.invite_rejected in [None, ""]))
 			]
 			if pending_employees:
 				__send_email_to_pmo(ped_doc, pending_employees)
