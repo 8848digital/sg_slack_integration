@@ -423,7 +423,7 @@ def send_no_show_employee(pedd_detail,ped_doc,slack_token):
                     ped_name=ped_doc.name,distribution_details=pedd_detail
                 )
     if slack_token and len(slack_token) > 0:
-        message=f'Hi {pedd_detail.get('employee_name')}, you have been de-allocated from the proposal Proposal {ped_doc.get('name')}-"{ped_doc.get('custom_proposal_name')}"  due to no response for Duration: {pedd_detail.get('from_date')} → {pedd_detail.get('from_date')}'
+        message=f'''Hi {pedd_detail.get('employee_name')}, you have been de-allocated from the proposal Proposal {ped_doc.get('name')}-"{ped_doc.get('custom_proposal_name')}"  due to no response for Duration: {pedd_detail.get('from_date')} → {pedd_detail.get('from_date')}'''
         response_data = [{
             "type": "header",
             "text": {"type": "plain_text", "text": f"* {message} *"}
