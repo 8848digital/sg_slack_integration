@@ -313,7 +313,7 @@ def send_reminder_on_slack_to_user(user, slack_token):
 def send_intimate_message(slack_token,doctype,email):
     response_data=[{
 		"type": "section",
-		"text": {"type": "mrkdwn", "text": "* Your response is been under process! :white_check_mark: *"}
+		"text": {"type": "mrkdwn", "text": "* ⏳ Processing your response... You'll receive a confirmation shortly. *"}
 	}]
     user_id = get_user_id_by_email(email, slack_token)
     payload ={
