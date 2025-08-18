@@ -406,5 +406,3 @@ def resend_poll(ped_emp,slack_token):
                     post_poll_to_slacks(slack_token, payload,ped_emp,approver) 
         except Exception as e:
             frappe.log_error(f"Sending Poll in slack {ped_emp.get('employee')}", frappe.get_traceback(e))
-
-
