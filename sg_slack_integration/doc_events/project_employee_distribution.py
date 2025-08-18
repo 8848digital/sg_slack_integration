@@ -291,20 +291,30 @@ def send_reminder_on_slack(users_list):
 
 
 def send_reminder_on_slack_to_user(pedd_details,ped_doc, slack_token):
-
     if slack_token and len(slack_token) > 0:
-        message=f'''Hi {pedd_details.get('employee_name')}, this is a reminder that you have not yet responded to the invite for {ped_doc.get('name')}-{ped_doc.get('custom_proposal_name')}.
-            Kindly respond to the invite for the mentioned allocation at your earliest convenience.
-            '''
-        response_data = [{
+        response_data=[]
+        header_block = {
             "type": "header",
-            "text": {"type": "plain_text", "text": f"* {message} *"}
-        }]
+            "text": {"type": "plain_text", "text": 'Gentle Reminder'}
+        }
+        message=f'''Hi {pedd_details.get('employee_name')}, this is a reminder that you have not yet responded to the invite for {ped_doc.get('name')}-{ped_doc.get('custom_proposal_name')}.'''
+        response_data.append(header_block)
+        header_message = {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f" *{message}*"}
+        }
+        response_data.append(header_message)
+        message_action='''Kindly respond to the invite for the mentioned allocation at your earliest convenience.'''
+        header_message_action = {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f" *{message_action}*"}
+        }
+        response_data.append(header_message_action)
 
         user_id = get_user_id_by_email(pedd_details.get('employee_user_id'), slack_token)
         if user_id:
             payload = {
-                "type": 'header',
+                "text": "Reminder",
                 "blocks": response_data
             }
             payload["channel"] = user_id
@@ -425,14 +435,14 @@ def send_no_show_employee(pedd_detail,ped_doc,slack_token):
     if slack_token and len(slack_token) > 0:
         message=f'''Hi {pedd_detail.get('employee_name')}, you have been de-allocated from the proposal Proposal {ped_doc.get('name')}-"{ped_doc.get('custom_proposal_name')}"  due to no response for Duration: {pedd_detail.get('from_date')} → {pedd_detail.get('from_date')}'''
         response_data = [{
-            "type": "header",
-            "text": {"type": "plain_text", "text": f"* {message} *"}
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*{message}*"}
         }]
 
         user_id = get_user_id_by_email(pedd_detail.get('employee_user_id'), slack_token)
         if user_id:
             payload = {
-                "type": 'header',
+                "text": "No Show",
                 "blocks": response_data
             }
             payload["channel"] = user_id
