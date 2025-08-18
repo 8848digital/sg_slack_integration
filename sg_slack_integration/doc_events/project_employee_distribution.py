@@ -103,6 +103,8 @@ def post_poll_ped(employee_details,doc_name,doc):
                                 post_poll_to_slacks(slack_token, payload,distribution_details_doc,approver) 
                                 frappe.db.set_value('Project Employee Distribution Detail',distribution_details_doc.name,'invite_sent',1,update_modified=False)
                                 frappe.db.set_value('Project Employee Distribution Detail',distribution_details_doc.name,'invite_sent_at',now(),update_modified=False) 
+                                frappe.db.set_value(
+                                    'Project Employee Distribution', doc.name, 'invite_completed', 0, update_modified=False)
                                 if not doc.first_invite_sent_at:
                                     frappe.db.set_value(
                                         'Project Employee Distribution', doc.name, 'first_invite_sent_at', now(), update_modified=False)
