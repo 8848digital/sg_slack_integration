@@ -92,7 +92,7 @@ def ped_reminder_scheduler():
 	for ped in ped_with_pending:
 		ped_doc = frappe.get_doc("Project Employee Distribution", ped.name)
 
-		for row in ped_doc.employee_details:
+		for row in ped_doc.distribution_detail:
 			if (
 				row.invite_sent == 1 and row.invite_accepted==0 and (row.invite_rejected in [None,""]) and
 				not row.reminder_sent and
