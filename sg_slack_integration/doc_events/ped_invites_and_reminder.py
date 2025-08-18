@@ -84,7 +84,8 @@ def ped_reminder_scheduler():
 		"Project Employee Distribution",
 		filters={
 			"ped_from": "Opportunity",
-			"invite_completed": 0
+			"invite_completed": 0,
+			"first_invite_sent_at":['is','set']
 			},
 		fields=["name"]
 	)
