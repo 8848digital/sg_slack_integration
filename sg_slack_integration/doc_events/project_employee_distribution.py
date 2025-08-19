@@ -467,6 +467,6 @@ def update_ped(ped_name,distribution_details):
     frappe.set_user('Administrator')
     ped_doc=frappe.get_doc("Project Employee Distribution", ped_name)
     ped_doc.append('users_rejected',{'employee':distribution_details.get('employee'),'employee_name':distribution_details.get('employee_name'),'from_date':distribution_details.get('from_date'),'to_date':distribution_details.get('to_date'),'reason':'No Show'})
-    ped_doc.flags.dont_send_update_mail=1
+    ped_doc.set_onload('dont_send_update_mail',1)
     ped_doc.save(ignore_permissions=True)
     complete_form_notification(ped_name)
