@@ -7,10 +7,11 @@ SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Settings", "issue_token")  #
 @frappe.whitelist(allow_guest=True)
 def create_dialog_slack():
     data = frappe.local.form_dict  # Slack sends form data, not JSON
+    frappe.log_error('Received Data',data)
     trigger_id = data.get("trigger_id")
     user_id = data.get("user_id")
     channel_id = data.get("channel_id")
-    frappe.log_error('Data',data)
+    # frappe.log_error('Data',data)
     # Immediately respond to Slack within 3s (required)
     frappe.response["type"] = "plain"
     frappe.response["message"] = ""   # just empty response (modal opens separately)
