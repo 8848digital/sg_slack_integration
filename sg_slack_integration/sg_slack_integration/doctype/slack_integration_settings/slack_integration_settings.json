@@ -30,7 +30,9 @@
   "accepted_notification",
   "rejected_notification",
   "reminder_notification",
+  "column_break_xqkfl",
   "email_group",
+  "default_email",
   "birthday_notification_tab",
   "send_birthday_reminders_on_slack",
   "bday_bot_token",
@@ -328,12 +330,22 @@
    "fieldtype": "Link",
    "label": "Reminder Notification",
    "options": "Email Template"
+  },
+  {
+   "fieldname": "column_break_xqkfl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_email",
+   "fieldtype": "Link",
+   "label": "Default Email",
+   "options": "Email Account"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-08-18 10:26:35.626054",
+ "modified": "2025-08-19 09:21:05.669596",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",

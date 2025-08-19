@@ -219,11 +219,15 @@ def sending_response_mail(email_template,ped_doc,ped_child_table,response):
         subject=email_template_doc.get('subject')
         doc.update({'employee_name':ped_child_table.get('employee_name'),'from_date_employee':ped_child_table.get('from_date'),'to_date_employee':ped_child_table.get('to_date'),'rejected_reason':response})
         content = frappe.render_template(email_template_doc.response_html, {"doc": doc})
-        frappe.sendmail(recipients=email_group_users,
-                 subject=subject,
-                 content=content,
-                 reference_doctype=doc.doctype, 
-                 reference_name=doc.name)
+        sender_email_account=frappe.db.get_single_value('Slack Integration Settings','default_email')
+        sender_id=frappe.db.get_value('Email Account',sender_email_account,['email_id'])
+        frappe.sendmail(
+            sender =sender_id,
+            recipients=email_group_users,
+            subject=subject,
+            content=content,
+            reference_doctype=doc.doctype, 
+            reference_name=doc.name)
 
 def complete_form_notification(ped):
     ped_doc=frappe.get_doc('Project Employee Distribution',ped)
@@ -247,7 +251,11 @@ def complete_form_notification(ped):
             email_template_doc=frappe.get_doc('Email Template',email_template)
             subject=email_template_doc.get('subject')
             content = frappe.render_template(email_template_doc.response_html, {"doc": ped_doc})
-            frappe.sendmail(recipients=users_list,
+            sender_email_account=frappe.db.get_single_value('Slack Integration Settings','default_email')
+            sender_id=frappe.db.get_value('Email Account',sender_email_account,['email_id'])
+            frappe.sendmail(
+                    sender =sender_id,
+                    recipients=users_list,
                     subject=subject,
                     content=content,
                     reference_doctype=ped_doc.doctype, 
