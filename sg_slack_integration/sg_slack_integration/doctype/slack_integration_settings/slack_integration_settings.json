@@ -19,6 +19,7 @@
   "leave_application_token",
   "expense_claim_token",
   "project_details_token",
+  "issue_token",
   "column_break_qhjfg",
   "compensatory_leave_request_token",
   "project_health_assessment_survey_token",
@@ -340,12 +341,17 @@
    "fieldtype": "Link",
    "label": "Default Email",
    "options": "Email Account"
+  },
+  {
+   "fieldname": "issue_token",
+   "fieldtype": "Data",
+   "label": "Issue Token"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-08-19 09:21:05.669596",
+ "modified": "2025-08-19 14:21:21.715805",
  "modified_by": "Administrator",
  "module": "sg_slack_integration",
  "name": "Slack Integration Settings",
