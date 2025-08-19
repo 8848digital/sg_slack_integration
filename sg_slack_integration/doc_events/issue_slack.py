@@ -6,7 +6,8 @@ SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Settings", "issue_token")  #
 
 @frappe.whitelist(allow_guest=True)
 def create_dialog_slack():
-    data = frappe.local.form_dict  # Slack sends form data, not JSON
+    req = frappe.request
+    data = req.form  # Slack sends form data, not JSON
     frappe.log_error('Received Data',data)
     trigger_id = data.get("trigger_id")
     user_id = data.get("user_id")
