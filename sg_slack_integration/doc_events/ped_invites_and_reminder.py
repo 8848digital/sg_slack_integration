@@ -1,7 +1,7 @@
 import frappe
 
 from strategic_gears.strategic_gears.utils.mail import send_mail_custom
-from sg_slack_integration.doc_events.project_employee_distribution import send_reminder_on_slack_to_user
+from sg_slack_integration.doc_events.project_employee_distribution import send_reminder_on_slack_to_user,send_no_show_employee
 # def enqueue_reminder(self):
 # 	# Get the old doc from DB
 # 	old_doc = frappe.get_doc(self.doctype, self.name)
@@ -72,7 +72,7 @@ def ped_reminder_scheduler():
 		if frappe.utils.time_diff_in_hours(now, ped_doc.first_invite_sent_at) >= 24:
 			pending_employees = [
 				row for row in ped_doc.distribution_detail
-				if (row.invite_sent == 1 and row.invite_accepted == 0 and (row.invite_rejected in [None, ""]))
+				if (row.invite_sent == 1 and row.invite_accepted == 0 and (row.invite_rejected in [None, "",'No Show']))
 			]
 			if pending_employees:
 				__send_email_to_pmo(ped_doc, pending_employees)
@@ -84,7 +84,8 @@ def ped_reminder_scheduler():
 		"Project Employee Distribution",
 		filters={
 			"ped_from": "Opportunity",
-			"invite_completed": 0
+			"invite_completed": 0,
+			"first_invite_sent_at":['is','set']
 			},
 		fields=["name"]
 	)
@@ -96,15 +97,26 @@ def ped_reminder_scheduler():
 			if (
 				row.invite_sent == 1 and row.invite_accepted==0 and (row.invite_rejected in [None,""]) and
 				not row.reminder_sent and
-				frappe.utils.time_diff_in_hours(now, row.invite_sent_at) >= 24
+				frappe.utils.time_diff_in_hours(now, row.invite_sent_at) >= 12
 			):
 				if row.employee_user_id:
 					send_reminder_on_slack_to_user(
-						row.employee_user_id, slack_token=slack_token)
+						row,ped_doc, slack_token=slack_token)
 					frappe.db.set_value(
 						"Project Employee Distribution Detail", row.name, "reminder_sent", 1)
 				else:
 					frappe.log_error("PED Slack Reminder", "Employee user id is empty")
+			if (
+				row.invite_sent == 1 and row.invite_accepted==0 and (row.invite_rejected in [None,""]) and
+								frappe.utils.time_diff_in_hours(now, row.invite_sent_at) >= 24
+			):
+				if row.employee_user_id:
+					send_no_show_employee(
+						row,ped_doc, slack_token=slack_token)
+	
+				else:
+					frappe.log_error("PED Slack Reminder", "Employee user id is empty")
+					
 
 
 

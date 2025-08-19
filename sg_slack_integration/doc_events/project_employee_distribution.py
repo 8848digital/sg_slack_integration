@@ -160,11 +160,13 @@ def ped_response_store(poll_id,selected_option,slack_token,channel_id,user_id,ts
     if approver:
         frappe.set_user('Administrator')
         ped=frappe.get_doc('Project Employee Distribution',ped_name)
+        ped.flags.dont_send_update_mail=0
         for ped_emp in ped.get('distribution_detail'):
             if ped_emp.get('name')==poll_id:
                 if selected_option in ['Yes','No']:
                     if selected_option=='Yes':
                         ped_emp.update({'invite_accepted':1})
+                        ped.flags.dont_send_update_mail=1
                         ped.save(ignore_permissions=True)
                         frappe.set_user(approver)
                         send_ephemeral_message(
@@ -188,7 +190,8 @@ def ped_response_store(poll_id,selected_option,slack_token,channel_id,user_id,ts
                     email_template=''
                     if selected_option:
                         ped_emp.update({'invite_rejected':selected_option})
-                        ped.append('users_rejected',{'employee':distribution_details.get('employee'),'employee_name':distribution_details.get('employee_name')})
+                        ped.append('users_rejected',{'employee':distribution_details.get('employee'),'employee_name':distribution_details.get('employee_name'),'from_date':distribution_details.get('from_date'),'to_date':distribution_details.get('to_date'),'reason':selected_option})
+                        ped.flags.dont_send_update_mail=1
                         ped.save(ignore_permissions=True)
                         email_template = frappe.db.get_single_value(
                             "Slack Integration Settings", 'rejected_notification')
@@ -216,11 +219,15 @@ def sending_response_mail(email_template,ped_doc,ped_child_table,response):
         subject=email_template_doc.get('subject')
         doc.update({'employee_name':ped_child_table.get('employee_name'),'from_date_employee':ped_child_table.get('from_date'),'to_date_employee':ped_child_table.get('to_date'),'rejected_reason':response})
         content = frappe.render_template(email_template_doc.response_html, {"doc": doc})
-        frappe.sendmail(recipients=email_group_users,
-                 subject=subject,
-                 content=content,
-                 reference_doctype=doc.doctype, 
-                 reference_name=doc.name)
+        sender_email_account=frappe.db.get_single_value('Slack Integration Settings','default_email')
+        sender_id=frappe.db.get_value('Email Account',sender_email_account,['email_id'])
+        frappe.sendmail(
+            sender =sender_id,
+            recipients=email_group_users,
+            subject=subject,
+            content=content,
+            reference_doctype=doc.doctype, 
+            reference_name=doc.name)
 
 def complete_form_notification(ped):
     ped_doc=frappe.get_doc('Project Employee Distribution',ped)
@@ -244,7 +251,11 @@ def complete_form_notification(ped):
             email_template_doc=frappe.get_doc('Email Template',email_template)
             subject=email_template_doc.get('subject')
             content = frappe.render_template(email_template_doc.response_html, {"doc": ped_doc})
-            frappe.sendmail(recipients=users_list,
+            sender_email_account=frappe.db.get_single_value('Slack Integration Settings','default_email')
+            sender_id=frappe.db.get_value('Email Account',sender_email_account,['email_id'])
+            frappe.sendmail(
+                    sender =sender_id,
+                    recipients=users_list,
                     subject=subject,
                     content=content,
                     reference_doctype=ped_doc.doctype, 
@@ -287,18 +298,31 @@ def send_reminder_on_slack(users_list):
                 response = requests.post(url, headers=headers, json=payload)
 
 
-def send_reminder_on_slack_to_user(user, slack_token):
-
+def send_reminder_on_slack_to_user(pedd_details,ped_doc, slack_token):
     if slack_token and len(slack_token) > 0:
-        response_data = [{
+        response_data=[]
+        header_block = {
             "type": "header",
-            "text": {"type": "plain_text", "text": "* This is a gentle reminder to take action on proposals that are pending your approval or rejection. *"}
-        }]
+            "text": {"type": "plain_text", "text": 'Gentle Reminder'}
+        }
+        message=f'''Hi {pedd_details.get('employee_name')}, this is a reminder that you have not yet responded to the invite for {ped_doc.get('name')}-{ped_doc.get('custom_proposal_name')}.'''
+        response_data.append(header_block)
+        header_message = {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f" *{message}*"}
+        }
+        response_data.append(header_message)
+        message_action='''Kindly respond to the invite for the mentioned allocation at your earliest convenience.'''
+        header_message_action = {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f" *{message_action}*"}
+        }
+        response_data.append(header_message_action)
 
-        user_id = get_user_id_by_email(user, slack_token)
+        user_id = get_user_id_by_email(pedd_details.get('employee_user_id'), slack_token)
         if user_id:
             payload = {
-                "type": 'header',
+                "text": "Reminder",
                 "blocks": response_data
             }
             payload["channel"] = user_id
@@ -406,3 +430,43 @@ def resend_poll(ped_emp,slack_token):
                     post_poll_to_slacks(slack_token, payload,ped_emp,approver) 
         except Exception as e:
             frappe.log_error(f"Sending Poll in slack {ped_emp.get('employee')}", frappe.get_traceback(e))
+
+
+def send_no_show_employee(pedd_detail,ped_doc,slack_token):
+    frappe.enqueue(
+                    update_ped,
+                    queue="long",
+                    timeout=25000,
+                    job_name=f"No Show employee form {pedd_detail.get('employee_user_id')}",
+                    ped_name=ped_doc.name,distribution_details=pedd_detail
+                )
+    if slack_token and len(slack_token) > 0:
+        message=f'''Hi {pedd_detail.get('employee_name')}, you have been de-allocated from the proposal Proposal {ped_doc.get('name')}-"{ped_doc.get('custom_proposal_name')}"  due to no response for Duration: {pedd_detail.get('from_date')} → {pedd_detail.get('from_date')}'''
+        response_data = [{
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*{message}*"}
+        }]
+
+        user_id = get_user_id_by_email(pedd_detail.get('employee_user_id'), slack_token)
+        if user_id:
+            payload = {
+                "text": "No Show",
+                "blocks": response_data
+            }
+            payload["channel"] = user_id
+            payload = payload.copy()
+            url = "https://slack.com/api/chat.postMessage"
+            headers = {
+                "Authorization": f"Bearer {slack_token}",
+                "Content-Type": "application/json",
+            }
+            response = requests.post(url, headers=headers, json=payload)
+
+def update_ped(ped_name,distribution_details):
+    frappe.db.set_value('Project Employee Distribution Detail',distribution_details.name,'invite_rejected','No Show',update_modified=False) 
+    frappe.set_user('Administrator')
+    ped_doc=frappe.get_doc("Project Employee Distribution", ped_name)
+    ped_doc.append('users_rejected',{'employee':distribution_details.get('employee'),'employee_name':distribution_details.get('employee_name'),'from_date':distribution_details.get('from_date'),'to_date':distribution_details.get('to_date'),'reason':'No Show'})
+    ped_doc.flags.dont_send_update_mail=1
+    ped_doc.save(ignore_permissions=True)
+    complete_form_notification(ped_name)
