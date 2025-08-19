@@ -6,7 +6,7 @@ from sg_slack_integration.doc_events.poll_api import *
 from frappe.model.workflow import apply_workflow
 from frappe.core.doctype.version.version import get_diff
 from strategic_gears.strategic_gears.utils.mail import get_users_from_email_group
-from frappe.utils import getdate,now
+from frappe.utils import getdate,now,add_days,get_datetime
 
 
 def after_insert(self,method):
@@ -300,19 +300,21 @@ def send_reminder_on_slack(users_list):
 
 def send_reminder_on_slack_to_user(pedd_details,ped_doc, slack_token):
     if slack_token and len(slack_token) > 0:
+        after_hours=get_datetime(add_days(now(),.5))
+        after_tweleve_hours=after_hours.strftime("%Y-%m-%d %H:%M")
         response_data=[]
         header_block = {
             "type": "header",
             "text": {"type": "plain_text", "text": 'Gentle Reminder'}
         }
-        message=f'''Hi {pedd_details.get('employee_name')}, this is a reminder that you have not yet responded to the invite for {ped_doc.get('name')}-{ped_doc.get('custom_proposal_name')}.'''
+        message=f'''Hi {pedd_details.get('employee_name')}, you have not yet responded to the confirmation for {ped_doc.get('name')}-{ped_doc.get('custom_proposal_name')}.'''
         response_data.append(header_block)
         header_message = {
             "type": "section",
             "text": {"type": "mrkdwn", "text": f" *{message}*"}
         }
         response_data.append(header_message)
-        message_action='''Kindly respond to the invite for the mentioned allocation at your earliest convenience.'''
+        message_action=f'''Kindly respond to that before {after_tweleve_hours} to avoid being logged as a no-show'''
         header_message_action = {
             "type": "section",
             "text": {"type": "mrkdwn", "text": f" *{message_action}*"}
