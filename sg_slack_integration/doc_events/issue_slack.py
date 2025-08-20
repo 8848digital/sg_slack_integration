@@ -2,23 +2,28 @@ import frappe
 import requests
 import json
 
-SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Settings", "issue_token")  # store securely
+SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Integration Settings", "issue_token")  # store securely
 
 @frappe.whitelist(allow_guest=True)
 def create_dialog_slack():
     req = frappe.request
-    data = req.form  # Slack sends form data, not JSON
-    frappe.log_error('Received Data',data)
-    trigger_id = data.get("trigger_id")
-    user_id = data.get("user_id")
-    channel_id = data.get("channel_id")
-    # frappe.log_error('Data',data)
-    # Immediately respond to Slack within 3s (required)
-    frappe.response["type"] = "plain"
-    frappe.response["message"] = ""   # just empty response (modal opens separately)
+    req1=frappe.form_dict
+    req2=frappe.local.form_dict
+    frappe.log_error('Req',req)
+    frappe.log_error('req1',req1)
+    frappe.log_error('req2',req2)
+    # data = req.form  # Slack sends form data, not JSON
+    # frappe.log_error('Received Data',data)
+    # trigger_id = data.get("trigger_id")
+    # user_id = data.get("user_id")
+    # channel_id = data.get("channel_id")
+    # # frappe.log_error('Data',data)
+    # # Immediately respond to Slack within 3s (required)
+    # frappe.response["type"] = "plain"
+    # frappe.response["message"] = ""   # just empty response (modal opens separately)
 
-    # Open the modal asynchronously
-    open_modal(trigger_id, user_id, channel_id)
+    # # Open the modal asynchronously
+    # open_modal(trigger_id, user_id, channel_id)
 
 
 def open_modal(trigger_id, user_id, channel_id):
