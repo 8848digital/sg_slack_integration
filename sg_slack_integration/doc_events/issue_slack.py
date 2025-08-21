@@ -1,6 +1,7 @@
 import frappe
 import requests
 import json
+from sg_slack_integration.doc_events.common_function import get_email_id_from_slack_user_id
 
 SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Integration Settings", "issue_token")  # store securely
 
@@ -24,10 +25,14 @@ def create_dialog_slack():
     # Open the modal asynchronously
     open_modal(trigger_id, user_id, channel_id)
 
-
+@frappe.whitelist(allow_guest=True)
 def open_modal(trigger_id, user_id, channel_id):
     try:
-        """Open Slack modal using views.open API"""
+        # Fetch Issue Category options from Issue doctype field
+        meta = frappe.get_meta("Issue")
+        field = meta.get_field("custom_issue_category")
+        categories = field.options.split("\n") if field and field.options else []
+
         headers = {
             "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
             "Content-type": "application/json"
@@ -64,13 +69,24 @@ def open_modal(trigger_id, user_id, channel_id):
                     "type": "input",
                     "block_id": "category_block",
                     "label": {"type": "plain_text", "text": "Issue Category"},
-                    "element": {"type": "plain_text_input", "action_id": "category_input"}
+                    "element": {
+                        "type": "static_select",
+                        "action_id": "category_input",
+                        "options": [
+                            {"text": {"type": "plain_text", "text": c}, "value": c}
+                            for c in categories
+                        ]
+                    }
                 },
                 {
                     "type": "input",
                     "block_id": "type_block",
                     "label": {"type": "plain_text", "text": "Issue Type"},
-                    "element": {"type": "plain_text_input", "action_id": "type_input"}
+                    "element": {
+                        "type": "static_select",
+                        "action_id": "type_input",
+                        "options": []  # initially empty, will be filled based on category
+                    }
                 },
                 {
                     "type": "input",
@@ -81,14 +97,96 @@ def open_modal(trigger_id, user_id, channel_id):
             ]
         }
 
-        payload = {
-            "trigger_id": trigger_id,
-            "view": modal_view
+        payload = {"trigger_id": trigger_id, "view": modal_view}
+        r = requests.post("https://slack.com/api/views.open", headers=headers, data=json.dumps(payload))
+        frappe.log_error("Slack Modal Response", r.json())
+
+    except Exception as e:
+        frappe.log_error("Open Modal Error", frappe.get_traceback())
+
+@frappe.whitelist(allow_guest=True)
+def fetch_issue_types(category):
+    try:
+        issue_types = frappe.get_all(
+            "Issue Type",
+            filters={"custom_issue_category": category},
+            fields=["name"]
+        )
+
+        options = [
+            {"text": {"type": "plain_text", "text": it["name"]}, "value": it["name"]}
+            for it in issue_types
+        ]
+
+        return {"options": options}
+
+    except Exception:
+        frappe.log_error("Fetch Issue Types Error", frappe.get_traceback())
+        return {"options": []}
+    
+@frappe.whitelist(allow_guest=True)
+def handle_interaction():
+    payload = json.loads(frappe.form_dict.get("payload"))
+    action = payload.get("actions", [])[0]
+    selected_category = action.get("selected_option", {}).get("value")
+
+    if action.get("action_id") == "category_input":
+        # Fetch issue types for selected category
+        issue_types = fetch_issue_types(selected_category)
+
+        # Update the modal with new options
+        headers = {
+            "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
+            "Content-type": "application/json"
         }
 
-        r = requests.post("https://slack.com/api/views.open", headers=headers, data=json.dumps(payload))
-        frappe.log_error('response value',r.json())
-        if not r.json().get("ok"):
-            frappe.log_error(f"Slack modal open failed: {r.text}")
+        view_id = payload["view"]["id"]
+        payload_update = {
+            "view_id": view_id,
+            "hash": payload["view"]["hash"],
+            "view": payload["view"]
+        }
+
+        # inject new issue type options
+        for block in payload_update["view"]["blocks"]:
+            if block["block_id"] == "type_block":
+                block["element"]["options"] = issue_types["options"]
+
+        requests.post("https://slack.com/api/views.update", headers=headers, data=json.dumps(payload_update))
+
+
+# 3. Handle Modal Submit → Create ERPNext Issue
+@frappe.whitelist(allow_guest=True)
+def handle_modal_submission(payload):
+    """Triggered when user submits modal"""
+    try:
+        data = json.loads(payload)
+        values = data["view"]["state"]["values"]
+        user_id = data.get("user_id") 
+        slack_user_email = get_email_id_from_slack_user_id(user_id)
+        emp=frappe.get_doc('Employee',{'user_id':slack_user_email})
+
+        subject = values["subject_block"]["subject_input"]["value"]
+        priority = values["priority_block"]["priority_input"]["selected_option"]["value"]
+        category = values["category_block"]["category_input"]["selected_option"]["value"]
+        issue_type = values["type_block"]["type_input"]["selected_option"]["value"]
+        description = values["desc_block"]["desc_input"]["value"]
+
+        # Create Issue in ERPNext
+        issue = frappe.get_doc({
+            "doctype": "Issue",
+            "subject": subject,
+            "priority": priority,
+            "custom_issue_category": category,
+            "issue_type": issue_type,
+            "description": description,
+            "custom_employee":emp.get('name')
+        })
+        issue.insert(ignore_permissions=True)
+        frappe.db.commit()
+
+        return {"ok": True, "message": f"Issue {issue.name} created successfully!"}
+
     except Exception as e:
-        frappe.log_error('Open Modal',e)
+        frappe.log_error("Modal Submission Error", frappe.get_traceback())
+        return {"ok": False, "error": str(e)}
