@@ -81,17 +81,20 @@ def open_modal(trigger_id, user_id, channel_id):
                 {
                     "type": "input",
                     "block_id": "type_block",
-                    "label": {"type": "plain_text", "text": "Issue Type"},
                     "element": {
-                        "type": "static_select",
+                        "type": "external_select",
                         "action_id": "type_input",
-                        "options": [
-                        {
-                            "text": { "type": "plain_text", "text": "Bug" },
-                            "value": "Bug"
-                        },] 
+                        "placeholder": {
+                        "type": "plain_text",
+                        "text": "Select Issue Type"
+                        },
+                        "min_query_length": 0
+                    },
+                    "label": {
+                        "type": "plain_text",
+                        "text": "Issue Type"
                     }
-                },
+                    },
                 {
                     "type": "input",
                     "block_id": "desc_block",
@@ -111,6 +114,7 @@ def open_modal(trigger_id, user_id, channel_id):
 @frappe.whitelist(allow_guest=True)
 def fetch_issue_types(category):
     try:
+        frappe.log_error('Issue type',category)
         issue_types = frappe.get_all(
             "Issue Type",
             filters={"custom_issue_category": category},
@@ -165,6 +169,7 @@ def handle_modal_submission(payload):
     """Triggered when user submits modal"""
     try:
         data = json.loads(payload)
+        frappe.log_error('Data Submit',data)
         values = data["view"]["state"]["values"]
         user_id = data.get("user_id") 
         slack_user_email = get_email_id_from_slack_user_id(user_id)
