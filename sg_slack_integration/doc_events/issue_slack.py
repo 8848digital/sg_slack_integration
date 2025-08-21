@@ -112,8 +112,17 @@ def open_modal(trigger_id, user_id, channel_id):
         frappe.log_error("Open Modal Error", frappe.get_traceback())
 
 @frappe.whitelist(allow_guest=True)
-def fetch_issue_types(category):
+def fetch_issue_types():
     try:
+        payload = json.loads(frappe.request.data.decode("utf-8"))
+        frappe.log_error("Slack Interaction", payload)
+        category=''
+        if payload.get("type") == "block_suggestion":
+            action_id = payload["action_id"]
+            frappe.log_error("Slack Interaction, action_id", action_id)
+            if action_id == "type_input":  # from your modal
+                category = payload["view"]["state"]["values"]["category_block"]["category_input"]["selected_option"]["value"]
+                # return fetch_issue_types(category)
         frappe.log_error('Issue type',category)
         issue_types = frappe.get_all(
             "Issue Type",
@@ -132,6 +141,7 @@ def fetch_issue_types(category):
         frappe.log_error("Fetch Issue Types Error", frappe.get_traceback())
         return {"options": []}
     
+
 @frappe.whitelist(allow_guest=True)
 def handle_interaction():
     payload = json.loads(frappe.form_dict.get("payload"))
