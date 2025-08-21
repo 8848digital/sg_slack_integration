@@ -114,26 +114,42 @@ def open_modal(trigger_id, user_id, channel_id):
 @frappe.whitelist(allow_guest=True)
 def fetch_issue_types():
     try:
-        req = frappe.form_dict
-        frappe.log_error('Slack Data Issue Type',req)
-        payload = json.loads(frappe.request.data.decode("utf-8"))
-        frappe.log_error("Slack Interaction", payload)
-        category=''
-        if payload.get("type") == "block_suggestion":
-            action_id = payload["action_id"]
-            frappe.log_error("Slack Interaction, action_id", action_id)
-            if action_id == "type_input":  # from your modal
-                category = payload["view"]["state"]["values"]["category_block"]["category_input"]["selected_option"]["value"]
-                # return fetch_issue_types(category)
-        frappe.log_error('Issue type',category)
+        payload = frappe.form_dict.get("payload")
+        frappe.log_error("payload",payload)
+        if isinstance(payload, str):
+            payload = json.loads(payload)
+
+        # Slack sends full modal context inside "view"
+        view = payload.get("view", {})
+        frappe.log_error("view",view)
+
+        # This holds current values of all inputs
+        state_values = view.get("state", {}).get("values", {})
+
+        # Extract category from state_values
+        category = None
+        if "category_block" in state_values:
+            category_data = state_values["category_block"]["category_input"]
+            category = category_data.get("selected_option", {}).get("value")
+
+        frappe.log_error(f"Selected Category: {category}", "Slack Debug")
+
+        if not category:
+            return {"options": []}  # no category selected yet
+
+        # Fetch Issue Types from ERPNext for this category
         issue_types = frappe.get_all(
             "Issue Type",
             filters={"custom_issue_category": category},
             fields=["name"]
         )
 
+        # Convert to Slack options
         options = [
-            {"text": {"type": "plain_text", "text": it["name"]}, "value": it["name"]}
+            {
+                "text": {"type": "plain_text", "text": it["name"]},
+                "value": it["name"]
+            }
             for it in issue_types
         ]
 
