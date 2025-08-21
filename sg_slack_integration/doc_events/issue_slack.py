@@ -6,16 +6,25 @@ SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Integration Settings", "issu
 
 @frappe.whitelist(allow_guest=True)
 def create_dialog_slack():
-    req1=frappe.local.form_dict
-    frappe.log_error('Received Data',req1)
+    # req1=frappe.local.form_dict
+    # frappe.log_error('Received Data',req1)
     req = frappe.request
     frappe.log_error("Get Info Payload", f"Request: {req}")
     frappe.log_error("Get Info Payload Form", f"Form: {req.form}")
     text = req.form.get("text")  # slash command input
     user_id = req.form.get("user_id")  # Slack user ID
     response_url = req.form.get("response_url")
+    frappe.log_error("Form Data", dict(frappe.request.form))
+    frappe.log_error("JSON Data", frappe.request.get_json(silent=True))
+    frappe.log_error("Raw Data", frappe.request.data)
 
-    data = req.form  # Slack sends form data, not JSON
+    frappe.log_error("Form form dict", frappe.form_dict)
+    # frappe.log_error("JSON Data", frappe.request.get_json(silent=True))
+    # frappe.log_error("Raw Data", frappe.request.data)
+    frappe.log_error('R LOcal',frappe.local.form_dict)
+
+
+    # data = req.form  # Slack sends form data, not JSON
     # trigger_id = data.get("trigger_id")
     # user_id = data.get("user_id")
     # channel_id = data.get("channel_id")
