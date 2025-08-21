@@ -29,9 +29,6 @@ def create_dialog_slack():
 def open_modal(trigger_id, user_id, channel_id):
     try:
         # Fetch Issue Category options from Issue doctype field
-        meta = frappe.get_meta("Issue")
-        field = meta.get_field("custom_issue_category")
-        categories = field.options.split("\n") if field and field.options else []
 
         headers = {
             "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
@@ -73,8 +70,11 @@ def open_modal(trigger_id, user_id, channel_id):
                         "type": "static_select",
                         "action_id": "category_input",
                         "options": [
-                            {"text": {"type": "plain_text", "text": c}, "value": c}
-                            for c in categories
+                            {"text": {"type": "plain_text", "text": "HR"}, "value": "HR"},
+                            {"text": {"type": "plain_text", "text": "Finance Team Support"}, "value": "Finance Team Support"},
+                            {"text": {"type": "plain_text", "text": "Admin"}, "value": "Admin"},
+                            {"text": {"type": "plain_text", "text": "IT"}, "value": "IT"},
+                            {"text": {"type": "plain_text", "text": "Resource Allocation"}, "value": "Resource Allocation"}
                         ]
                     }
                 },
