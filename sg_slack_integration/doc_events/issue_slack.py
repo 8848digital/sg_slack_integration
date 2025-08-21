@@ -85,7 +85,11 @@ def open_modal(trigger_id, user_id, channel_id):
                     "element": {
                         "type": "static_select",
                         "action_id": "type_input",
-                        "options": []  # initially empty, will be filled based on category
+                        "options": [
+                        {
+                            "text": { "type": "plain_text", "text": "Bug" },
+                            "value": "Bug"
+                        },] 
                     }
                 },
                 {
