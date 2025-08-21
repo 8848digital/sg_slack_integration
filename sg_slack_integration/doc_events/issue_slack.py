@@ -6,35 +6,23 @@ SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Integration Settings", "issu
 
 @frappe.whitelist(allow_guest=True)
 def create_dialog_slack():
-    # req1=frappe.local.form_dict
-    # frappe.log_error('Received Data',req1)
-    req = frappe.request
-    frappe.log_error("Get Info Payload", f"Request: {req}")
-    frappe.log_error("Get Info Payload Form", f"Form: {req.form}")
-    text = req.form.get("text")  # slash command input
-    user_id = req.form.get("user_id")  # Slack user ID
-    response_url = req.form.get("response_url")
-    frappe.log_error("Form Data", dict(frappe.request.form))
-    frappe.log_error("JSON Data", frappe.request.get_json(silent=True))
-    frappe.log_error("Raw Data", frappe.request.data)
+    req = frappe.form_dict
+    frappe.log_error('Slack Data',req)
+    token=req.get('token')
+    team_id=req.get('team_id')
+    channel_id=req.get('channel_id')
+    user_id=req.get('user_id')
+    user_name=req.get('user_name')
+    command=req.get('command')
+    api_app_id=req.get('api_app_id')
+    response_url=req.get('response_url')
+    trigger_id=req.get('trigger_id')
 
-    frappe.log_error("Form form dict", frappe.form_dict)
-    # frappe.log_error("JSON Data", frappe.request.get_json(silent=True))
-    # frappe.log_error("Raw Data", frappe.request.data)
-    frappe.log_error('R LOcal',frappe.local.form_dict)
+    frappe.response["type"] = "plain"
+    frappe.response["message"] = ""   # just empty response (modal opens separately)
 
-
-    # data = req.form  # Slack sends form data, not JSON
-    # trigger_id = data.get("trigger_id")
-    # user_id = data.get("user_id")
-    # channel_id = data.get("channel_id")
-    # # frappe.log_error('Data',data)
-    # # Immediately respond to Slack within 3s (required)
-    # frappe.response["type"] = "plain"
-    # frappe.response["message"] = ""   # just empty response (modal opens separately)
-
-    # # Open the modal asynchronously
-    # open_modal(trigger_id, user_id, channel_id)
+    # Open the modal asynchronously
+    open_modal(trigger_id, user_id, channel_id)
 
 
 def open_modal(trigger_id, user_id, channel_id):
