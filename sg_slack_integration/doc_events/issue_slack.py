@@ -114,6 +114,8 @@ def open_modal(trigger_id, user_id, channel_id):
 @frappe.whitelist(allow_guest=True)
 def fetch_issue_types():
     try:
+        req = frappe.form_dict
+        frappe.log_error('Slack Data Issue Type',req)
         payload = json.loads(frappe.request.data.decode("utf-8"))
         frappe.log_error("Slack Interaction", payload)
         category=''
