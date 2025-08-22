@@ -1,7 +1,6 @@
 import frappe
 import requests
 import json
-from sg_slack_integration.doc_events.common_function import get_email_id_from_slack_user_id
 
 SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Integration Settings", "issue_token")  # store securely
 
@@ -195,11 +194,15 @@ def handle_modal_submission(payload):
         user_id = data.get("user_id") 
         slack_user_email = get_email_id_from_slack_user_id(user_id)
         emp=frappe.get_doc('Employee',{'user_id':slack_user_email})
+        if values["category_block"]["category_input"]["selected_option"]["value"]:
+            combine_option=values["category_block"]["category_input"]["selected_option"]["value"]
+
+            category = combine_option.split('_')[0]
+            issue_type = combine_option.split('_')[-1]
 
         subject = values["subject_block"]["subject_input"]["value"]
         priority = values["priority_block"]["priority_input"]["selected_option"]["value"]
-        category = values["category_block"]["category_input"]["selected_option"]["value"]
-        issue_type = values["type_block"]["type_input"]["selected_option"]["value"]
+        
         description = values["desc_block"]["desc_input"]["value"]
 
         # Create Issue in ERPNext
@@ -220,3 +223,34 @@ def handle_modal_submission(payload):
     except Exception as e:
         frappe.log_error("Modal Submission Error", frappe.get_traceback())
         return {"ok": False, "error": str(e)}
+    
+
+
+def get_email_id_from_slack_user_id(slack_user_id):
+	"""
+	Uses Slack API to retrieve user email based on Slack user ID,
+	then checks if that email exists in ERPNext users.
+	"""
+	if not slack_user_id:
+		return None
+	token = SLACK_BOT_TOKEN
+	headers = {
+		"Authorization": f"Bearer {token}"
+	}
+
+	url = f"https://slack.com/api/users.info?user={slack_user_id}"
+	response = requests.get(url, headers=headers)
+	data = response.json()
+
+	if not data.get("ok"):
+		frappe.log_error("Slack API Error | get_email_id_from_slack_user_id", data)
+		return None
+
+	slack_email = data.get("user", {}).get("profile", {}).get("email")
+
+	if not slack_email:
+		return None
+
+	# Validate against ERPNext users
+	user_exists = frappe.db.exists("User", {"email": slack_email})
+	return slack_email if user_exists else None
