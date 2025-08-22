@@ -62,6 +62,7 @@ def open_modal(trigger_id, user_id, channel_id):
                     "type": "input",
                     "block_id": "category_block",
                     "label": {"type": "plain_text", "text": "Issue Category"},
+                    "dispatch_action": True,   # 👈 add this
                     "element": {
                         "type": "static_select",
                         "action_id": "category_selected",   # important: will trigger block_actions
@@ -79,8 +80,9 @@ def open_modal(trigger_id, user_id, channel_id):
                     "block_id": "type_block",
                     "label": {"type": "plain_text", "text": "Issue Type"},
                     "element": {
-                        "type": "plain_text_input",   # placeholder, will be replaced on update
-                        "action_id": "dummy_input"
+                        "type": "plain_text_input",
+                        "action_id": "type_placeholder",
+                        "placeholder": {"type": "plain_text", "text": "Select a category first"}
                     }
                 },
                 {
@@ -107,7 +109,7 @@ def fetch_issue_types():
         payload = frappe.form_dict.get("payload")
         if isinstance(payload, str):
             payload = json.loads(payload)
-        frappe.log_error('payload-handle_block_actions',payload)
+        frappe.log_error('Payload-handle',payload)
 
         actions = payload.get("actions", [])
         view = payload.get("view", {})
@@ -127,32 +129,27 @@ def fetch_issue_types():
         )
 
         options = [
-            {
-                "text": {"type": "plain_text", "text": it["name"]},
-                "value": it["name"]
-            }
+            {"text": {"type": "plain_text", "text": it["name"]}, "value": it["name"]}
             for it in issue_types
         ]
 
-        # Build updated modal
-        updated_view = view
-        blocks = updated_view["blocks"]
-
-        # replace type_block with real static_select
-        for b in blocks:
+        import copy
+        updated_view = copy.deepcopy(view)
+        for b in updated_view["blocks"]:
             if b["block_id"] == "type_block":
                 b["element"] = {
                     "type": "static_select",
                     "action_id": "type_selected",
+                    "placeholder": {"type": "plain_text", "text": "Select Issue Type"},
                     "options": options
                 }
-
         headers = {
             "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
             "Content-type": "application/json"
         }
         data = {
             "view_id": view_id,
+            "hash": view.get("hash"),   # include hash
             "view": updated_view
         }
         r = requests.post("https://slack.com/api/views.update", headers=headers, data=json.dumps(data))
