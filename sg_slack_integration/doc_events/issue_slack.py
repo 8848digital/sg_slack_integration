@@ -26,6 +26,16 @@ def create_dialog_slack():
     open_modal(trigger_id, user_id, channel_id)
 def open_modal(trigger_id, user_id, channel_id):
     try:
+        issue_types=frappe.get_all('Issue Type',{'custom_issue_category':['is','set']},['name','custom_issue_category'])
+        category_options = [
+        {
+            "text": {"type": "plain_text", "text": f"{d['custom_issue_category']}_{d['name']}"},
+            "value": d["name"]   # you can store name as value
+        }
+            for d in issue_types if d.get("custom_issue_category")
+        ]
+        print(category_options)
+
         headers = {
             "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
             "Content-type": "application/json"
@@ -62,27 +72,11 @@ def open_modal(trigger_id, user_id, channel_id):
                     "type": "input",
                     "block_id": "category_block",
                     "label": {"type": "plain_text", "text": "Issue Category"},
-                    "dispatch_action": True,   # 👈 add this
                     "element": {
                         "type": "static_select",
-                        "action_id": "category_selected",   # important: will trigger block_actions
-                        "options": [
-                            {"text": {"type": "plain_text", "text": "HR"}, "value": "HR"},
-                            {"text": {"type": "plain_text", "text": "Finance Team Support"}, "value": "Finance Team Support"},
-                            {"text": {"type": "plain_text", "text": "Admin"}, "value": "Admin"},
-                            {"text": {"type": "plain_text", "text": "IT"}, "value": "IT"},
-                            {"text": {"type": "plain_text", "text": "Resource Allocation"}, "value": "Resource Allocation"}
-                        ]
-                    }
-                },
-                {
-                    "type": "input",
-                    "block_id": "type_block",
-                    "label": {"type": "plain_text", "text": "Issue Type"},
-                    "element": {
-                        "type": "plain_text_input",
-                        "action_id": "type_placeholder",
-                        "placeholder": {"type": "plain_text", "text": "Select a category first"}
+                        "action_id": "category_input",
+                        "placeholder": {"type": "plain_text", "text": "Select Category"},
+                        "options": category_options
                     }
                 },
                 {
