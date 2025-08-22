@@ -2,7 +2,7 @@ import frappe
 import requests
 import json
 
-SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Integration Settings", "issue_token")  # store securely
+# SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Integration Settings", "issue_token")  # store securely
 
 @frappe.whitelist(allow_guest=True)
 def create_dialog_slack():
@@ -35,6 +35,8 @@ def open_modal(trigger_id, user_id, channel_id):
             for d in issue_types if d.get("custom_issue_category")
         ]
         print(category_options,'cat')
+        SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Integration Settings", "issue_token")  # store securely
+
 
         headers = {
             "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
@@ -171,6 +173,7 @@ def handle_modal_submission(payload):
 
         # enqueue ERPNext issue creation in background
         frappe.enqueue(create_issue_from_slack_submission, data=data, slack_user_email=slack_user_email)
+        return {"response_action": "clear"}
 
     except Exception as e:
         frappe.log_error("Modal Submission Error", frappe.get_traceback())
@@ -225,6 +228,8 @@ def get_email_id_from_slack_user_id(slack_user_id):
     """
     if not slack_user_id:
         return None
+    SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Integration Settings", "issue_token")  # store securely
+
     token = SLACK_BOT_TOKEN
     headers = {
         "Authorization": f"Bearer {token}"
