@@ -173,7 +173,7 @@ def handle_modal_submission(payload):
             priority = values["priority_block"]["priority_input"]["selected_option"]["value"]
             
             description = values["desc_block"]["desc_input"]["value"]
-
+            frappe.set_user(slack_user_email)
             # Create Issue in ERPNext
             issue = frappe.get_doc({
                 "doctype": "Issue",
