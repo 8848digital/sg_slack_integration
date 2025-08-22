@@ -33,7 +33,7 @@ def open_modal(trigger_id, user_id, channel_id):
         }
             for d in issue_types if d.get("custom_issue_category")
         ]
-        print(category_options)
+        print(category_options,'cat')
 
         headers = {
             "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
@@ -83,7 +83,18 @@ def open_modal(trigger_id, user_id, channel_id):
                     "block_id": "desc_block",
                     "label": {"type": "plain_text", "text": "Description"},
                     "element": {"type": "plain_text_input", "action_id": "desc_input", "multiline": True}
-                }
+                },
+                {
+                    "type": "input",
+                    "block_id": "attachment_block",
+                    "label": { "type": "plain_text", "text": "Attachment (File URL)" },
+                    "optional": 'true',
+                    "element": {
+                        "type": "plain_text_input",
+                        "action_id": "attachment_input",
+                        "placeholder": { "type": "plain_text", "text": "Paste file link here" }
+                    }
+                    }
             ]
         }
 
@@ -92,7 +103,8 @@ def open_modal(trigger_id, user_id, channel_id):
         frappe.log_error("Slack Modal Response", r.json())
 
     except Exception as e:
-        frappe.log_error("Open Modal Error", frappe.get_traceback())
+        print(e)
+        # frappe.log_error("Open Modal Error", frappe.get_traceback())
 
 
 @frappe.whitelist(allow_guest=True)
@@ -150,51 +162,70 @@ def fetch_issue_types():
 
     except Exception:
         frappe.log_error("Block Actions Error", frappe.get_traceback())
-    
-# 3. Handle Modal Submit → Create ERPNext Issue
+        
 @frappe.whitelist(allow_guest=True)
 def handle_modal_submission(payload):
     """Triggered when user submits modal"""
     try:
         data = json.loads(payload)
-        frappe.log_error('Data Submit',data)
+        frappe.log_error('Data Submit', data)
         values = data["view"]["state"]["values"]
-        user_id = data.get('user').get('id')
+        user_id = data.get('user', {}).get('id')
         slack_user_email = get_email_id_from_slack_user_id(user_id)
-        if frappe.db.exists('Employee',{'user_id':slack_user_email}):
-            emp=frappe.get_doc('Employee',{'user_id':slack_user_email})
-            if values["category_block"]["category_input"]["selected_option"]["value"]:
-                combine_option=values["category_block"]["category_input"]["selected_option"]["value"]
 
-                category = combine_option.split('_')[0]
-                issue_type = combine_option.split('_')[-1]
+        # respond to Slack first → so modal closes properly
+        frappe.local.response["http_status_code"] = 200
+        frappe.local.response["type"] = "json"
+        frappe.local.response["response_type"] = "clear"
+        frappe.local.response["message"] = {"response_action": "clear"}
 
-            subject = values["subject_block"]["subject_input"]["value"]
-            priority = values["priority_block"]["priority_input"]["selected_option"]["value"]
-            
-            description = values["desc_block"]["desc_input"]["value"]
-            frappe.set_user(slack_user_email)
-            # Create Issue in ERPNext
-            issue = frappe.get_doc({
-                "doctype": "Issue",
-                "subject": subject,
-                "priority": priority,
-                "custom_issue_category": category,
-                "issue_type": issue_type,
-                "description": description,
-                "custom_employee":emp.get('name')
-            })
-            issue.insert(ignore_permissions=True)
-            frappe.db.commit()
-
-            return {"ok": True, "message": f"Issue {issue.name} created successfully!"}
-        else:
-            return {"ok": False, "error": 'No employee linked with the user'}
+        # enqueue ERPNext issue creation in background
+        frappe.enqueue(create_issue_from_slack_submission, data=data, slack_user_email=slack_user_email)
 
     except Exception as e:
         frappe.log_error("Modal Submission Error", frappe.get_traceback())
-        return {"ok": False, "error": str(e)}
-    
+        return {
+            "response_action": "errors",
+            "errors": {"desc_block": "Something went wrong. Please try again."}
+        }
+
+
+def create_issue_from_slack_submission(data, slack_user_email):
+    """Actually create ERPNext Issue in background"""
+    try:
+        values = data["view"]["state"]["values"]
+        emp = None
+        if frappe.db.exists('Employee', {'user_id': slack_user_email}):
+            emp = frappe.get_doc('Employee', {'user_id': slack_user_email})
+
+        if values["category_block"]["category_input"]["selected_option"]["value"]:
+            combine_option = values["category_block"]["category_input"]["selected_option"]["value"]
+            category = combine_option.split('_')[0]
+            issue_type = combine_option.split('_')[-1]
+        else:
+            category, issue_type = None, None
+
+        subject = values["subject_block"]["subject_input"]["value"]
+        priority = values["priority_block"]["priority_input"]["selected_option"]["value"]
+        description = values["desc_block"]["desc_input"]["value"]
+
+        frappe.set_user(slack_user_email)
+
+        issue = frappe.get_doc({
+            "doctype": "Issue",
+            "subject": subject,
+            "priority": priority,
+            "custom_issue_category": category,
+            "issue_type": issue_type,
+            "description": description,
+            "custom_employee": emp.name if emp else None
+        })
+        issue.insert(ignore_permissions=True)
+        frappe.db.commit()
+
+    except Exception:
+        frappe.log_error("Issue Creation Error", frappe.get_traceback())
+
 
 
 def get_email_id_from_slack_user_id(slack_user_id):
