@@ -23,6 +23,7 @@ def create_dialog_slack():
 
     # Open the modal asynchronously
     open_modal(trigger_id, user_id, channel_id)
+    
 def open_modal(trigger_id, user_id, channel_id):
     try:
         issue_types=frappe.get_all('Issue Type',{'custom_issue_category':['is','set'],'custom_disable':0},['name','custom_issue_category'])
@@ -83,18 +84,7 @@ def open_modal(trigger_id, user_id, channel_id):
                     "block_id": "desc_block",
                     "label": {"type": "plain_text", "text": "Description"},
                     "element": {"type": "plain_text_input", "action_id": "desc_input", "multiline": True}
-                },
-                {
-                    "type": "input",
-                    "block_id": "attachment_block",
-                    "label": { "type": "plain_text", "text": "Attachment (File URL)" },
-                    "optional": 'true',
-                    "element": {
-                        "type": "plain_text_input",
-                        "action_id": "attachment_input",
-                        "placeholder": { "type": "plain_text", "text": "Paste file link here" }
-                    }
-                    }
+                }
             ]
         }
 
@@ -104,7 +94,7 @@ def open_modal(trigger_id, user_id, channel_id):
 
     except Exception as e:
         print(e)
-        # frappe.log_error("Open Modal Error", frappe.get_traceback())
+        frappe.log_error("Open Modal Error", frappe.get_traceback())
 
 
 @frappe.whitelist(allow_guest=True)
@@ -162,7 +152,7 @@ def fetch_issue_types():
 
     except Exception:
         frappe.log_error("Block Actions Error", frappe.get_traceback())
-        
+
 @frappe.whitelist(allow_guest=True)
 def handle_modal_submission(payload):
     """Triggered when user submits modal"""
