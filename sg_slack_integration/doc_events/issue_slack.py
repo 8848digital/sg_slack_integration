@@ -25,11 +25,11 @@ def create_dialog_slack():
     open_modal(trigger_id, user_id, channel_id)
 def open_modal(trigger_id, user_id, channel_id):
     try:
-        issue_types=frappe.get_all('Issue Type',{'custom_issue_category':['is','set']},['name','custom_issue_category'])
+        issue_types=frappe.get_all('Issue Type',{'custom_issue_category':['is','set'],'custom_disable':0},['name','custom_issue_category'])
         category_options = [
         {
             "text": {"type": "plain_text", "text": f"{d['custom_issue_category']}_{d['name']}"},
-            "value": d["name"]   # you can store name as value
+            "value": f"{d['custom_issue_category']}_{d['name']}"
         }
             for d in issue_types if d.get("custom_issue_category")
         ]
@@ -151,38 +151,6 @@ def fetch_issue_types():
     except Exception:
         frappe.log_error("Block Actions Error", frappe.get_traceback())
     
-
-@frappe.whitelist(allow_guest=True)
-def handle_interaction():
-    payload = json.loads(frappe.form_dict.get("payload"))
-    action = payload.get("actions", [])[0]
-    selected_category = action.get("selected_option", {}).get("value")
-
-    if action.get("action_id") == "category_input":
-        # Fetch issue types for selected category
-        issue_types = fetch_issue_types(selected_category)
-
-        # Update the modal with new options
-        headers = {
-            "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
-            "Content-type": "application/json"
-        }
-
-        view_id = payload["view"]["id"]
-        payload_update = {
-            "view_id": view_id,
-            "hash": payload["view"]["hash"],
-            "view": payload["view"]
-        }
-
-        # inject new issue type options
-        for block in payload_update["view"]["blocks"]:
-            if block["block_id"] == "type_block":
-                block["element"]["options"] = issue_types["options"]
-
-        requests.post("https://slack.com/api/views.update", headers=headers, data=json.dumps(payload_update))
-
-
 # 3. Handle Modal Submit → Create ERPNext Issue
 @frappe.whitelist(allow_guest=True)
 def handle_modal_submission(payload):
