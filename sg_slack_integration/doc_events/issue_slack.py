@@ -214,25 +214,38 @@ def create_issue_from_slack_submission(data, slack_user_email,user_id):
         })
         issue.insert(ignore_permissions=True)
         frappe.db.commit()
-        post_message_with_id(issue.name,user_id)
+        post_message_with_id(issue.name,user_id,emp)
 
     except Exception:
         frappe.log_error("Issue Creation Error", frappe.get_traceback())
 
-def post_message_with_id(issue,user_id):
+def post_message_with_id(issue,user_id,emp):
     slack_token = frappe.db.get_single_value("Slack Integration Settings", "issue_token")
     if slack_token and len(slack_token) > 0:
         link=frappe.utils.get_url_to_form('Issue',issue)
-        message=f'''Hi . Your issue is created and this is the link: <a href="{link}" >{issue}</a>'''
-        response_data = [{
-            "type": "section",
-            "text": {"type": "mrkdwn", "text": f"*{message}*"}
-        }]
-
+        block_data=[]
+        header_block = {
+                "type": "header",
+                "text": {"type": "plain_text", "text": 'Issue created- ' + issue}
+            }
+        block_data.append(header_block)
+        content = f'Dear {emp.get("employee_name")}, your issue have been successfully created on Erpnext'
+        sections = [
+                {"title":f'{content}','content':link},
+            ]
+        for section in sections:
+                description_block = {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text":  f"*{section['title']}*: {section['content']}"
+                    },
+                }
+                block_data.append(description_block)
         if user_id:
             payload = {
-                "text": "No Show",
-                "blocks": response_data
+                "text": "Issue Created",
+                "blocks": block_data
             }
             payload["channel"] = user_id
             payload = payload.copy()
