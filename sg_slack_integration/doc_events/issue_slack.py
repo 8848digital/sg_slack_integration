@@ -167,14 +167,13 @@ def handle_modal_submission(payload):
 
         # respond to Slack first → so modal closes properly
         frappe.local.response["http_status_code"] = 200
-        frappe.local.response["type"] = "json"
-        frappe.local.response["response_type"] = "clear"
-        frappe.local.response["message"] = {"response_action": "clear"}
+        # frappe.local.response["type"] = "json"
+        # frappe.local.response["response_type"] = "clear"
+        # frappe.local.response["message"] = {"response_action": "clear"}
 
         # enqueue ERPNext issue creation in background
-        frappe.enqueue(create_issue_from_slack_submission, data=data, slack_user_email=slack_user_email)
-        return {"response_action": "clear"}
-
+        frappe.enqueue(create_issue_from_slack_submission, data=data, slack_user_email=slack_user_email,user_id=user_id)
+        return 
     except Exception as e:
         frappe.log_error("Modal Submission Error", frappe.get_traceback())
         return {
@@ -183,7 +182,7 @@ def handle_modal_submission(payload):
         }
 
 
-def create_issue_from_slack_submission(data, slack_user_email):
+def create_issue_from_slack_submission(data, slack_user_email,user_id):
     """Actually create ERPNext Issue in background"""
     try:
         values = data["view"]["state"]["values"]
@@ -215,11 +214,34 @@ def create_issue_from_slack_submission(data, slack_user_email):
         })
         issue.insert(ignore_permissions=True)
         frappe.db.commit()
+        post_message_with_id(issue.name,user_id)
 
     except Exception:
         frappe.log_error("Issue Creation Error", frappe.get_traceback())
 
+def post_message_with_id(issue,user_id):
+    slack_token = frappe.db.get_single_value("Slack Integration Settings", "issue_token")
+    if slack_token and len(slack_token) > 0:
+        link=frappe.utils.get_url_to_form('Issue',issue)
+        message=f'''Hi . Your issue is created and this is the link: <a href="{link}" >{issue}</a>'''
+        response_data = [{
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*{message}*"}
+        }]
 
+        if user_id:
+            payload = {
+                "text": "No Show",
+                "blocks": response_data
+            }
+            payload["channel"] = user_id
+            payload = payload.copy()
+            url = "https://slack.com/api/chat.postMessage"
+            headers = {
+                "Authorization": f"Bearer {slack_token}",
+                "Content-Type": "application/json",
+            }
+            response = requests.post(url, headers=headers, json=payload)
 
 def get_email_id_from_slack_user_id(slack_user_id):
     """
