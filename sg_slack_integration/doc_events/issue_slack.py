@@ -24,12 +24,8 @@ def create_dialog_slack():
 
     # Open the modal asynchronously
     open_modal(trigger_id, user_id, channel_id)
-
-@frappe.whitelist(allow_guest=True)
 def open_modal(trigger_id, user_id, channel_id):
     try:
-        # Fetch Issue Category options from Issue doctype field
-
         headers = {
             "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
             "Content-type": "application/json"
@@ -68,7 +64,7 @@ def open_modal(trigger_id, user_id, channel_id):
                     "label": {"type": "plain_text", "text": "Issue Category"},
                     "element": {
                         "type": "static_select",
-                        "action_id": "category_input",
+                        "action_id": "category_selected",   # important: will trigger block_actions
                         "options": [
                             {"text": {"type": "plain_text", "text": "HR"}, "value": "HR"},
                             {"text": {"type": "plain_text", "text": "Finance Team Support"}, "value": "Finance Team Support"},
@@ -81,20 +77,12 @@ def open_modal(trigger_id, user_id, channel_id):
                 {
                     "type": "input",
                     "block_id": "type_block",
+                    "label": {"type": "plain_text", "text": "Issue Type"},
                     "element": {
-                        "type": "external_select",
-                        "action_id": "type_input",
-                        "placeholder": {
-                        "type": "plain_text",
-                        "text": "Select Issue Type"
-                        },
-                        "min_query_length": 0
-                    },
-                    "label": {
-                        "type": "plain_text",
-                        "text": "Issue Type"
+                        "type": "plain_text_input",   # placeholder, will be replaced on update
+                        "action_id": "dummy_input"
                     }
-                    },
+                },
                 {
                     "type": "input",
                     "block_id": "desc_block",
@@ -111,40 +99,33 @@ def open_modal(trigger_id, user_id, channel_id):
     except Exception as e:
         frappe.log_error("Open Modal Error", frappe.get_traceback())
 
+
 @frappe.whitelist(allow_guest=True)
 def fetch_issue_types():
+    """This endpoint will be called when user selects Category"""
     try:
         payload = frappe.form_dict.get("payload")
-        frappe.log_error("payload",payload)
         if isinstance(payload, str):
             payload = json.loads(payload)
+        frappe.log_error('payload-handle_block_actions',payload)
 
-        # Slack sends full modal context inside "view"
+        actions = payload.get("actions", [])
         view = payload.get("view", {})
-        frappe.log_error("view",view)
+        view_id = view.get("id")
 
-        # This holds current values of all inputs
-        state_values = view.get("state", {}).get("values", {})
+        if not actions:
+            return
 
-        # Extract category from state_values
-        category = None
-        if "category_block" in state_values:
-            category_data = state_values["category_block"]["category_input"]
-            category = category_data.get("selected_option", {}).get("value")
+        # Get selected category
+        category = actions[0]["selected_option"]["value"]
 
-        frappe.log_error(f"Selected Category: {category}", "Slack Debug")
-
-        if not category:
-            return {"options": []}  # no category selected yet
-
-        # Fetch Issue Types from ERPNext for this category
+        # Fetch issue types from ERPNext
         issue_types = frappe.get_all(
             "Issue Type",
             filters={"custom_issue_category": category},
             fields=["name"]
         )
 
-        # Convert to Slack options
         options = [
             {
                 "text": {"type": "plain_text", "text": it["name"]},
@@ -153,11 +134,32 @@ def fetch_issue_types():
             for it in issue_types
         ]
 
-        return {"options": options}
+        # Build updated modal
+        updated_view = view
+        blocks = updated_view["blocks"]
+
+        # replace type_block with real static_select
+        for b in blocks:
+            if b["block_id"] == "type_block":
+                b["element"] = {
+                    "type": "static_select",
+                    "action_id": "type_selected",
+                    "options": options
+                }
+
+        headers = {
+            "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
+            "Content-type": "application/json"
+        }
+        data = {
+            "view_id": view_id,
+            "view": updated_view
+        }
+        r = requests.post("https://slack.com/api/views.update", headers=headers, data=json.dumps(data))
+        frappe.log_error("Slack Views Update Response", r.json())
 
     except Exception:
-        frappe.log_error("Fetch Issue Types Error", frappe.get_traceback())
-        return {"options": []}
+        frappe.log_error("Block Actions Error", frappe.get_traceback())
     
 
 @frappe.whitelist(allow_guest=True)
