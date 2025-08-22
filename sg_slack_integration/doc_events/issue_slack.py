@@ -1,8 +1,7 @@
 import frappe
 import requests
 import json
-
-# SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Integration Settings", "issue_token")  # store securely
+from frappe.utils.file_manager import save_file
 
 @frappe.whitelist(allow_guest=True)
 def create_dialog_slack():
@@ -34,7 +33,6 @@ def open_modal(trigger_id, user_id, channel_id):
         }
             for d in issue_types if d.get("custom_issue_category")
         ]
-        print(category_options,'cat')
         SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Integration Settings", "issue_token")  # store securely
 
 
@@ -86,6 +84,19 @@ def open_modal(trigger_id, user_id, channel_id):
                     "block_id": "desc_block",
                     "label": {"type": "plain_text", "text": "Description"},
                     "element": {"type": "plain_text_input", "action_id": "desc_input", "multiline": True}
+                },
+                {
+                    "type": "input",
+                    "block_id": "input_block_id",
+                    "label": {
+                    "type": "plain_text",
+                    "text": "Upload Files"},
+                    "element": {
+                    "type": "file_input",
+                    "action_id": "file_input_action_id_1",
+                    "filetypes": ["jpg", "png"],
+                    "max_files": 5,
+                    },
                 }
             ]
         }
@@ -163,7 +174,8 @@ def handle_modal_submission(payload):
         frappe.log_error('Data Submit', data)
         values = data["view"]["state"]["values"]
         user_id = data.get('user', {}).get('id')
-        slack_user_email = get_email_id_from_slack_user_id(user_id)
+        SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Integration Settings", "issue_token")  # store securely
+        slack_user_email = get_email_id_from_slack_user_id(user_id,SLACK_BOT_TOKEN)
 
         # respond to Slack first → so modal closes properly
         frappe.local.response["http_status_code"] = 200
@@ -172,7 +184,7 @@ def handle_modal_submission(payload):
         # frappe.local.response["message"] = {"response_action": "clear"}
 
         # enqueue ERPNext issue creation in background
-        frappe.enqueue(create_issue_from_slack_submission, data=data, slack_user_email=slack_user_email,user_id=user_id)
+        frappe.enqueue(create_issue_from_slack_submission, data=data, slack_user_email=slack_user_email,user_id=user_id,SLACK_BOT_TOKEN=SLACK_BOT_TOKEN)
         return 
     except Exception as e:
         frappe.log_error("Modal Submission Error", frappe.get_traceback())
@@ -182,7 +194,7 @@ def handle_modal_submission(payload):
         }
 
 
-def create_issue_from_slack_submission(data, slack_user_email,user_id):
+def create_issue_from_slack_submission(data, slack_user_email,user_id,SLACK_BOT_TOKEN):
     """Actually create ERPNext Issue in background"""
     try:
         values = data["view"]["state"]["values"]
@@ -214,13 +226,19 @@ def create_issue_from_slack_submission(data, slack_user_email,user_id):
         })
         issue.insert(ignore_permissions=True)
         frappe.db.commit()
-        post_message_with_id(issue.name,user_id,emp)
+        files = []
+        file_action = values.get("input_block_id", {}).get("file_input_action_id_1")
+        if file_action and "files" in file_action:
+            files = file_action["files"]
+        if files:
+            attach_slack_files_to_issue(issue, files,SLACK_BOT_TOKEN)
+        post_message_with_id(issue.name,user_id,emp,SLACK_BOT_TOKEN)
 
     except Exception:
         frappe.log_error("Issue Creation Error", frappe.get_traceback())
 
-def post_message_with_id(issue,user_id,emp):
-    slack_token = frappe.db.get_single_value("Slack Integration Settings", "issue_token")
+def post_message_with_id(issue,user_id,emp,SLACK_BOT_TOKEN):
+    slack_token = SLACK_BOT_TOKEN
     if slack_token and len(slack_token) > 0:
         link=frappe.utils.get_url_to_form('Issue',issue)
         block_data=[]
@@ -256,14 +274,13 @@ def post_message_with_id(issue,user_id,emp):
             }
             response = requests.post(url, headers=headers, json=payload)
 
-def get_email_id_from_slack_user_id(slack_user_id):
+def get_email_id_from_slack_user_id(slack_user_id,SLACK_BOT_TOKEN):
     """
     Uses Slack API to retrieve user email based on Slack user ID,
     then checks if that email exists in ERPNext users.
     """
     if not slack_user_id:
         return None
-    SLACK_BOT_TOKEN = frappe.db.get_single_value("Slack Integration Settings", "issue_token")  # store securely
 
     token = SLACK_BOT_TOKEN
     headers = {
@@ -286,3 +303,27 @@ def get_email_id_from_slack_user_id(slack_user_id):
     # Validate against ERPNext users
     user_exists = frappe.db.exists("User", {"email": slack_email})
     return slack_email if user_exists else None
+
+def attach_slack_files_to_issue(issue, files,slack_token):
+    """Download Slack uploaded files and attach to Issue"""
+    headers = {"Authorization": f"Bearer {slack_token}"}
+
+    for f in files:
+        file_url = f.get("url_private_download")
+        file_name = f.get("name")
+
+        # Download from Slack
+        resp = requests.get(file_url, headers=headers)
+        if resp.status_code != 200:
+            frappe.log_error(f"Failed to download {file_name} from Slack", "Slack File Download Error")
+            continue
+
+        # Save in ERPNext
+        saved_file = save_file(
+            fname=file_name,
+            content=resp.content,
+            dt="Issue",
+            dn=issue.name,
+            folder="Home/Attachments",
+            is_private=1
+        )
