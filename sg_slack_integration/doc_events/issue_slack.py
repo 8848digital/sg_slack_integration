@@ -28,7 +28,7 @@ def open_modal(trigger_id, user_id, channel_id):
         issue_types=frappe.get_all('Issue Type',{'custom_issue_category':['is','set'],'custom_disable':0},['name','custom_issue_category'])
         category_options = [
         {
-            "text": {"type": "plain_text", "text": f"{d['custom_issue_category']}_{d['name']}"},
+            "text": {"type": "plain_text", "text": f"{d['custom_issue_category']} {d['name']}"},
             "value": f"{d['custom_issue_category']}_{d['name']}"
         }
             for d in issue_types if d.get("custom_issue_category")
@@ -56,20 +56,6 @@ def open_modal(trigger_id, user_id, channel_id):
                 },
                 {
                     "type": "input",
-                    "block_id": "priority_block",
-                    "label": {"type": "plain_text", "text": "Priority"},
-                    "element": {
-                        "type": "static_select",
-                        "action_id": "priority_input",
-                        "options": [
-                            {"text": {"type": "plain_text", "text": "Low"}, "value": "Low"},
-                            {"text": {"type": "plain_text", "text": "Medium"}, "value": "Medium"},
-                            {"text": {"type": "plain_text", "text": "High"}, "value": "High"}
-                        ]
-                    }
-                },
-                {
-                    "type": "input",
                     "block_id": "category_block",
                     "label": {"type": "plain_text", "text": "Issue Category"},
                     "element": {
@@ -87,7 +73,22 @@ def open_modal(trigger_id, user_id, channel_id):
                 },
                 {
                     "type": "input",
+                    "block_id": "priority_block",
+                    "label": {"type": "plain_text", "text": "Priority"},
+                    "element": {
+                        "type": "static_select",
+                        "action_id": "priority_input",
+                        "options": [
+                            {"text": {"type": "plain_text", "text": "Low"}, "value": "Low"},
+                            {"text": {"type": "plain_text", "text": "Medium"}, "value": "Medium"},
+                            {"text": {"type": "plain_text", "text": "High"}, "value": "High"}
+                        ]
+                    }
+                },
+                {
+                    "type": "input",
                     "block_id": "input_block_id",
+                    "optional": True,
                     "label": {
                     "type": "plain_text",
                     "text": "Upload Files"},
