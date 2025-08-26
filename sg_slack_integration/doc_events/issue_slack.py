@@ -7,21 +7,16 @@ from frappe.utils.file_manager import save_file
 def create_dialog_slack():
     req = frappe.form_dict
     frappe.log_error('Slack Data',req)
-    token=req.get('token')
-    team_id=req.get('team_id')
     channel_id=req.get('channel_id')
     user_id=req.get('user_id')
-    user_name=req.get('user_name')
-    command=req.get('command')
-    api_app_id=req.get('api_app_id')
-    response_url=req.get('response_url')
     trigger_id=req.get('trigger_id')
 
-    frappe.response["type"] = "plain"
-    frappe.response["message"] = ""   # just empty response (modal opens separately)
-
+    # frappe.response["type"] = "plain"
+    frappe.response["message"] = "⏳Opening......."   # just empty response (modal opens separately)
+    frappe.enqueue(open_modal, trigger_id=trigger_id, user_id=user_id,channel_id=channel_id)
+    # return 
     # Open the modal asynchronously
-    open_modal(trigger_id, user_id, channel_id)
+    # open_modal(trigger_id, user_id, channel_id)
     
 def open_modal(trigger_id, user_id, channel_id):
     try:
