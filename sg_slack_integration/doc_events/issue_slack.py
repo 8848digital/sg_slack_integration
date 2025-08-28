@@ -12,7 +12,7 @@ def create_dialog_slack():
     trigger_id=req.get('trigger_id')
 
     # frappe.response["type"] = "plain"
-    frappe.response["message"] = "Uploading your ticket to the system, I'll send you a message once completed"   # just empty response (modal opens separately)
+    frappe.response["text"] = "Uploading your ticket to the system, I'll send you a message once completed"   # just empty response (modal opens separately)
     frappe.enqueue(open_modal, trigger_id=trigger_id, user_id=user_id,channel_id=channel_id)
     # return 
     # Open the modal asynchronously
